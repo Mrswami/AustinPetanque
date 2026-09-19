@@ -9,6 +9,24 @@ document.addEventListener('DOMContentLoaded', () => {
   initHashRouting();
 });
 
+// Mobile Drawer
+window.toggleDrawer = () => {
+  const drawer = document.getElementById('mobile-drawer');
+  const btn = document.getElementById('hamburger-btn');
+  drawer.classList.toggle('open');
+  btn.classList.toggle('open');
+  document.body.style.overflow = drawer.classList.contains('open') ? 'hidden' : '';
+};
+
+window.closeDrawer = () => {
+  const drawer = document.getElementById('mobile-drawer');
+  const btn = document.getElementById('hamburger-btn');
+  drawer.classList.remove('open');
+  btn.classList.remove('open');
+  document.body.style.overflow = '';
+};
+
+
 // Hash routing for Admin view
 function initHashRouting() {
   const handleRoute = () => {

@@ -13,11 +13,23 @@
 </head>
 <body>
 
+  <!-- Mobile Drawer -->
+  <div class="mobile-drawer" id="mobile-drawer">
+    <button class="drawer-close" onclick="closeDrawer()"><i class="fa-solid fa-xmark"></i></button>
+    <a href="#about" onclick="closeDrawer()">About</a>
+    <a href="#courts" onclick="closeDrawer()">Courts</a>
+    <a href="#scoreboard" onclick="closeDrawer()">Live Tracker</a>
+    <a href="#events" onclick="closeDrawer()">Events</a>
+    <a href="#rules" onclick="closeDrawer()">Rules</a>
+    <a href="#admin" onclick="closeDrawer()"><i class="fa-solid fa-user-shield"></i> Admin</a>
+    <button class="btn-primary" onclick="closeDrawer(); openModal()"><i class="fa-solid fa-user-plus"></i> Join Club</button>
+  </div>
+
   <!-- Navigation -->
-  <nav class="navbar">
+  <nav class="navbar" id="navbar">
     <div class="nav-container">
       <a href="#" class="logo">
-        <div class="logo-icon"><img src="logo.jpg" alt="Austin Petanque Monkey Logo"></div>
+        <div class="logo-icon"></div>
         Austin Pétanque
       </a>
       <ul class="nav-links">
@@ -28,7 +40,12 @@
         <li><a href="#rules">Rules</a></li>
         <li><a href="#admin"><i class="fa-solid fa-user-shield"></i> Admin</a></li>
       </ul>
-      <button class="btn-primary" onclick="openModal()"><i class="fa-solid fa-user-plus"></i> Join Club</button>
+      <button class="btn-primary" style="display:none;" id="nav-join-btn" onclick="openModal()"><i class="fa-solid fa-user-plus"></i> Join Club</button>
+      <button class="hamburger" id="hamburger-btn" onclick="toggleDrawer()" aria-label="Open menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
   </nav>
 

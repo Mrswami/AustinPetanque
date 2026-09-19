@@ -125,23 +125,27 @@ h1, h2, h3, h4, h5, h6 {
   max-height: 44px;
   border-radius: var(--radius-full);
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background-image: url('logo.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   box-shadow: var(--shadow-glow);
   border: 1.5px solid var(--primary-amber);
-  background: var(--bg-dark);
   flex-shrink: 0;
-}
-
-.logo-icon img {
-  width: 44px;
-  height: 44px;
-  max-width: 44px;
-  max-height: 44px;
-  object-fit: cover;
   display: block;
 }
+
+/* Show Join Club on desktop, hamburger hidden on desktop */
+#nav-join-btn {
+  display: inline-flex !important;
+}
+@media (max-width: 768px) {
+  #nav-join-btn {
+    display: none !important;
+  }
+}
+
+
 
 .nav-links {
   display: flex;
@@ -647,16 +651,178 @@ footer {
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
-/* Responsive */
+/* =====================
+   Hamburger Menu
+===================== */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text-main);
+  border-radius: 2px;
+  transition: var(--transition-fast);
+}
+
+.hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
+.hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-drawer {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+  background: rgba(9, 12, 21, 0.97);
+  backdrop-filter: blur(20px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 40px;
+}
+
+.mobile-drawer.open {
+  display: flex;
+}
+
+.mobile-drawer a {
+  color: var(--text-main);
+  text-decoration: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  transition: var(--transition-fast);
+}
+
+.mobile-drawer a:hover,
+.mobile-drawer a:active {
+  color: var(--primary-amber);
+}
+
+.mobile-drawer .drawer-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.mobile-drawer .btn-primary {
+  margin-top: 16px;
+  font-size: 1.1rem;
+  padding: 14px 32px;
+}
+
+/* =====================
+   Mobile Responsive
+===================== */
 @media (max-width: 768px) {
+  /* Nav */
   .nav-links {
     display: none;
   }
+  .hamburger {
+    display: flex;
+  }
+  .navbar {
+    padding: 14px 5%;
+  }
+  /* Prevent hero text overflow */
+  .hero {
+    padding: 100px 5% 60px;
+  }
+  .hero-title {
+    font-size: clamp(1.8rem, 7vw, 2.8rem);
+  }
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+  .hero-cta {
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero-cta .btn-primary,
+  .hero-cta .btn-secondary {
+    width: 100%;
+    justify-content: center;
+    max-width: 320px;
+  }
+  /* Stats: single column on mobile */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 40px;
+  }
+  .stat-number {
+    font-size: 1.6rem;
+  }
+  /* Sections */
+  .section {
+    padding: 60px 5%;
+    scroll-margin-top: 70px;
+  }
+  .section-title {
+    font-size: 1.8rem;
+  }
+  /* Courts */
+  .locations-grid {
+    grid-template-columns: 1fr;
+  }
+  /* Scoreboard */
   .scoreboard-body {
     grid-template-columns: 1fr;
   }
+  .scoreboard-wrapper {
+    padding: 20px;
+  }
+  .score-display {
+    font-size: 3rem;
+  }
+  /* Events */
   .event-card {
     flex-direction: column;
     align-items: flex-start;
+    gap: 14px;
+  }
+  /* Rules */
+  .rules-grid {
+    grid-template-columns: 1fr;
+  }
+  /* Footer */
+  .footer-content {
+    flex-direction: column;
+    gap: 28px;
+  }
+  .footer-brand {
+    max-width: 100%;
+  }
+  /* Modal */
+  .modal-content {
+    padding: 24px 20px;
   }
 }
