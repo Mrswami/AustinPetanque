@@ -200,13 +200,12 @@ window.setPointHolder = (team) => {
       btnB.classList.add('active');
     }
 
-    // 🎵 Whistle when losing team steals the cochonnet
+    // 🎵 Whistle ONLY when the claiming team is currently LOSING (score behind by 1+)
     const teamAisLosing = teamAScore < teamBScore;
     const teamBisLosing = teamBScore < teamAScore;
-    const stolenFromOther = previousHolder !== null && previousHolder !== team;
     const lostTeamSteals = (team === 'A' && teamAisLosing) || (team === 'B' && teamBisLosing);
 
-    if (lostTeamSteals || stolenFromOther) {
+    if (lostTeamSteals) {
       playWhistle();
     }
   }
