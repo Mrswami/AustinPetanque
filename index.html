@@ -17,7 +17,7 @@
   <nav class="navbar">
     <div class="nav-container">
       <a href="#" class="logo">
-        <div class="logo-icon"><i class="fa-solid fa-bowling-ball"></i></div>
+        <div class="logo-icon"><img src="logo.jpg" alt="Austin Petanque Monkey Logo"></div>
         Austin Pétanque
       </a>
       <ul class="nav-links">
@@ -26,216 +26,259 @@
         <li><a href="#scoreboard">Live Tracker</a></li>
         <li><a href="#events">Events</a></li>
         <li><a href="#rules">Rules</a></li>
+        <li><a href="#admin"><i class="fa-solid fa-user-shield"></i> Admin</a></li>
       </ul>
       <button class="btn-primary" onclick="openModal()"><i class="fa-solid fa-user-plus"></i> Join Club</button>
     </div>
   </nav>
 
-  <!-- Hero Section -->
-  <section class="hero" id="about">
-    <div class="hero-bg">
-      <img src="hero.jpg" alt="Austin Pétanque Game under Live Oaks">
-    </div>
-    <div class="hero-gradient-overlay"></div>
-    <div class="hero-content">
-      <div class="glass-pill"><i class="fa-solid fa-location-dot"></i> Austin, Texas • Founded 2026</div>
-      <h1 class="hero-title">Precision, Camaraderie & French Tradition in ATX</h1>
-      <p class="hero-subtitle">
-        Whether you are a seasoned *tireur* or trying your first throw, join Austin's premier Pétanque community under the oak trees.
-      </p>
-      <div class="hero-cta">
-        <button class="btn-primary" onclick="openModal()"><i class="fa-solid fa-user-plus"></i> Become a Member</button>
-        <a href="#courts" class="btn-secondary"><i class="fa-solid fa-map-location-dot"></i> Find Local Courts</a>
+  <!-- Main Public Content -->
+  <div id="public-view">
+    <!-- Hero Section -->
+    <section class="hero" id="about">
+      <div class="hero-bg">
+        <img src="hero.jpg" alt="Austin Pétanque Game under Live Oaks">
       </div>
+      <div class="hero-gradient-overlay"></div>
+      <div class="hero-content">
+        <div class="glass-pill"><i class="fa-solid fa-location-dot"></i> Austin, Texas • Founded 2026</div>
+        <h1 class="hero-title">Precision, Camaraderie & French Tradition in ATX</h1>
+        <p class="hero-subtitle">
+          Whether you are a seasoned *tireur* or trying your first throw, join Austin's premier Pétanque community under the oak trees.
+        </p>
+        <div class="hero-cta">
+          <button class="btn-primary" onclick="openModal()"><i class="fa-solid fa-user-plus"></i> Become a Member</button>
+          <a href="#courts" class="btn-secondary"><i class="fa-solid fa-map-location-dot"></i> Find Local Courts</a>
+        </div>
 
-      <div class="stats-grid">
-        <div class="stat-card glass-panel">
-          <div class="stat-number">4+</div>
-          <div class="stat-label">Austin Pitch Locations</div>
-        </div>
-        <div class="stat-card glass-panel">
-          <div class="stat-number">150+</div>
-          <div class="stat-label">Active Members</div>
-        </div>
-        <div class="stat-card glass-panel">
-          <div class="stat-number">Weekly</div>
-          <div class="stat-label">Casual Meetups & Wine</div>
-        </div>
-        <div class="stat-card glass-panel">
-          <div class="stat-number">13</div>
-          <div class="stat-label">Points To Victory</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Court Locations Section -->
-  <section class="section" id="courts">
-    <div class="section-header">
-      <div class="glass-pill"><i class="fa-solid fa-map"></i> Terrains & Pitch Locations</div>
-      <h2 class="section-title">Where We Play in Austin</h2>
-      <p class="section-desc">Pétanque pitches across iconic Austin parks with shade, fine gravel, and friendly matches.</p>
-    </div>
-
-    <div class="locations-grid">
-      <div class="location-card glass-panel">
-        <div>
-          <span class="location-badge"><i class="fa-solid fa-circle"></i> Active Weekend Location</span>
-          <h3 class="location-name">Pease District Park</h3>
-          <div class="location-details">
-            <p><i class="fa-solid fa-location-dot"></i> 1100 Kingsbury St, Austin, TX</p>
-            <p><i class="fa-solid fa-clock"></i> Saturdays & Sundays • 10:00 AM</p>
-            <p><i class="fa-solid fa-tree"></i> Shaded crushed limestone terrain under live oaks.</p>
+        <div class="stats-grid">
+          <div class="stat-card glass-panel">
+            <div class="stat-number">4+</div>
+            <div class="stat-label">Austin Pitch Locations</div>
           </div>
-        </div>
-        <button class="btn-secondary" onclick="openModal()"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
-      </div>
-
-      <div class="location-card glass-panel">
-        <div>
-          <span class="location-badge"><i class="fa-solid fa-circle"></i> Casual Sunset Games</span>
-          <h3 class="location-name">French Legation State Historic Site</h3>
-          <div class="location-details">
-            <p><i class="fa-solid fa-location-dot"></i> 802 San Marcos St, East Austin</p>
-            <p><i class="fa-solid fa-clock"></i> Thursday Evenings • 5:30 PM</p>
-            <p><i class="fa-solid fa-wine-glass"></i> Historic lawn pétanque, wine & aperitif atmosphere.</p>
+          <div class="stat-card glass-panel">
+            <div class="stat-number">150+</div>
+            <div class="stat-label">Active Members</div>
           </div>
-        </div>
-        <button class="btn-secondary" onclick="openModal()"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
-      </div>
-
-      <div class="location-card glass-panel">
-        <div>
-          <span class="location-badge"><i class="fa-solid fa-circle"></i> Tournament Terrain</span>
-          <h3 class="location-name">Mueller Lake Park</h3>
-          <div class="location-details">
-            <p><i class="fa-solid fa-location-dot"></i> 4550 Mueller Blvd, Austin, TX</p>
-            <p><i class="fa-solid fa-clock"></i> Monthly Cup Tournaments</p>
-            <p><i class="fa-solid fa-trophy"></i> Multi-pitch setup ideal for doublettes & triplettes.</p>
+          <div class="stat-card glass-panel">
+            <div class="stat-number">Weekly</div>
+            <div class="stat-label">Casual Meetups & Wine</div>
           </div>
-        </div>
-        <button class="btn-secondary" onclick="openModal()"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Live Match Score Tracker Section -->
-  <section class="section" id="scoreboard">
-    <div class="section-header">
-      <div class="glass-pill"><i class="fa-solid fa-calculator"></i> Live Match Assistant</div>
-      <h2 class="section-title">Court Scoreboard</h2>
-      <p class="section-desc">Keep score during your weekend games directly from your mobile device.</p>
-    </div>
-
-    <div class="scoreboard-wrapper glass-panel">
-      <div class="scoreboard-header">
-        <div>
-          <h3 style="font-size: 1.4rem; font-weight: 700;">Match Scoreboard (Target: 13 Pts)</h3>
-          <p style="color: var(--text-muted); font-size: 0.9rem;">Record points after each *mène* (end).</p>
-        </div>
-        <button class="btn-secondary" onclick="resetScore()"><i class="fa-solid fa-rotate-right"></i> Reset Match</button>
-      </div>
-
-      <div class="scoreboard-body">
-        <div class="team-box">
-          <div class="team-name" style="color: #ef4444;"><i class="fa-solid fa-circle"></i> Team Red (Pointeurs)</div>
-          <div class="score-display" id="score-a">0</div>
-          <div class="score-controls">
-            <button class="btn-circle" onclick="updateScore('A', -1)"><i class="fa-solid fa-minus"></i></button>
-            <button class="btn-circle" onclick="updateScore('A', 1)"><i class="fa-solid fa-plus"></i></button>
-          </div>
-        </div>
-
-        <div class="vs-divider">VS</div>
-
-        <div class="team-box">
-          <div class="team-name" style="color: #3b82f6;"><i class="fa-solid fa-circle"></i> Team Blue (Tireurs)</div>
-          <div class="score-display" id="score-b" style="color: #3b82f6;">0</div>
-          <div class="score-controls">
-            <button class="btn-circle" onclick="updateScore('B', -1)"><i class="fa-solid fa-minus"></i></button>
-            <button class="btn-circle" onclick="updateScore('B', 1)"><i class="fa-solid fa-plus"></i></button>
+          <div class="stat-card glass-panel">
+            <div class="stat-number">13</div>
+            <div class="stat-label">Points To Victory</div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Upcoming Events Section -->
-  <section class="section" id="events">
-    <div class="section-header">
-      <div class="glass-pill"><i class="fa-solid fa-calendar-days"></i> Schedule</div>
-      <h2 class="section-title">Upcoming Tournaments & Socials</h2>
-      <p class="section-desc">Mark your calendar for upcoming Austin Pétanque gatherings.</p>
-    </div>
+    <!-- Court Locations Section -->
+    <section class="section" id="courts">
+      <div class="section-header">
+        <div class="glass-pill"><i class="fa-solid fa-map"></i> Terrains & Pitch Locations</div>
+        <h2 class="section-title">Where We Play in Austin</h2>
+        <p class="section-desc">Pétanque pitches across iconic Austin parks with shade, fine gravel, and friendly matches.</p>
+      </div>
 
-    <div class="events-grid">
-      <div class="event-card glass-panel">
-        <div style="display: flex; gap: 20px; align-items: center;">
-          <div class="event-date-box">
-            <div class="event-day">27</div>
-            <div class="event-month">SEP</div>
+      <div class="locations-grid">
+        <div class="location-card glass-panel">
+          <div>
+            <span class="location-badge"><i class="fa-solid fa-circle"></i> Active Weekend Location</span>
+            <h3 class="location-name">Pease District Park</h3>
+            <div class="location-details">
+              <p><i class="fa-solid fa-location-dot"></i> 1100 Kingsbury St, Austin, TX</p>
+              <p><i class="fa-solid fa-clock"></i> Saturdays & Sundays • 10:00 AM</p>
+              <p><i class="fa-solid fa-tree"></i> Shaded crushed limestone terrain under live oaks.</p>
+            </div>
           </div>
-          <div class="event-info">
-            <h3>Austin Autumn Doublettes Open</h3>
-            <div class="event-meta">
-              <span><i class="fa-solid fa-location-dot"></i> Pease Park Pitch</span>
-              <span><i class="fa-solid fa-clock"></i> 9:30 AM - 2:00 PM</span>
+          <button class="btn-secondary" onclick="openModal()"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
+        </div>
+
+        <div class="location-card glass-panel">
+          <div>
+            <span class="location-badge"><i class="fa-solid fa-circle"></i> Casual Sunset Games</span>
+            <h3 class="location-name">French Legation State Historic Site</h3>
+            <div class="location-details">
+              <p><i class="fa-solid fa-location-dot"></i> 802 San Marcos St, East Austin</p>
+              <p><i class="fa-solid fa-clock"></i> Thursday Evenings • 5:30 PM</p>
+              <p><i class="fa-solid fa-wine-glass"></i> Historic lawn pétanque, wine & aperitif atmosphere.</p>
+            </div>
+          </div>
+          <button class="btn-secondary" onclick="openModal()"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
+        </div>
+
+        <div class="location-card glass-panel">
+          <div>
+            <span class="location-badge"><i class="fa-solid fa-circle"></i> Tournament Terrain</span>
+            <h3 class="location-name">Mueller Lake Park</h3>
+            <div class="location-details">
+              <p><i class="fa-solid fa-location-dot"></i> 4550 Mueller Blvd, Austin, TX</p>
+              <p><i class="fa-solid fa-clock"></i> Monthly Cup Tournaments</p>
+              <p><i class="fa-solid fa-trophy"></i> Multi-pitch setup ideal for doublettes & triplettes.</p>
+            </div>
+          </div>
+          <button class="btn-secondary" onclick="openModal()"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Match Score Tracker Section -->
+    <section class="section" id="scoreboard">
+      <div class="section-header">
+        <div class="glass-pill"><i class="fa-solid fa-calculator"></i> Live Match Assistant</div>
+        <h2 class="section-title">Court Scoreboard</h2>
+        <p class="section-desc">Keep score during your weekend games directly from your mobile device.</p>
+      </div>
+
+      <div class="scoreboard-wrapper glass-panel">
+        <div class="scoreboard-header">
+          <div>
+            <h3 style="font-size: 1.4rem; font-weight: 700;">Match Scoreboard (Target: 13 Pts)</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Record points after each *mène* (end).</p>
+          </div>
+          <button class="btn-secondary" onclick="resetScore()"><i class="fa-solid fa-rotate-right"></i> Reset Match</button>
+        </div>
+
+        <div class="scoreboard-body">
+          <div class="team-box">
+            <div class="team-name" style="color: #ef4444;"><i class="fa-solid fa-circle"></i> Team Red (Pointeurs)</div>
+            <div class="score-display" id="score-a">0</div>
+            <div class="score-controls">
+              <button class="btn-circle" onclick="updateScore('A', -1)"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle" onclick="updateScore('A', 1)"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+
+          <div class="vs-divider">VS</div>
+
+          <div class="team-box">
+            <div class="team-name" style="color: #3b82f6;"><i class="fa-solid fa-circle"></i> Team Blue (Tireurs)</div>
+            <div class="score-display" id="score-b" style="color: #3b82f6;">0</div>
+            <div class="score-controls">
+              <button class="btn-circle" onclick="updateScore('B', -1)"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle" onclick="updateScore('B', 1)"><i class="fa-solid fa-plus"></i></button>
             </div>
           </div>
         </div>
-        <button class="btn-primary" onclick="openModal()">Register Pair</button>
+      </div>
+    </section>
+
+    <!-- Upcoming Events Section -->
+    <section class="section" id="events">
+      <div class="section-header">
+        <div class="glass-pill"><i class="fa-solid fa-calendar-days"></i> Schedule</div>
+        <h2 class="section-title">Upcoming Tournaments & Socials</h2>
+        <p class="section-desc">Mark your calendar for upcoming Austin Pétanque gatherings.</p>
       </div>
 
-      <div class="event-card glass-panel">
-        <div style="display: flex; gap: 20px; align-items: center;">
-          <div class="event-date-box">
-            <div class="event-day">04</div>
-            <div class="event-month">OCT</div>
-          </div>
-          <div class="event-info">
-            <h3>Pétanque & Pinot Social Evening</h3>
-            <div class="event-meta">
-              <span><i class="fa-solid fa-location-dot"></i> French Legation Lawn</span>
-              <span><i class="fa-solid fa-clock"></i> 5:00 PM - 8:00 PM</span>
+      <div class="events-grid">
+        <div class="event-card glass-panel">
+          <div style="display: flex; gap: 20px; align-items: center;">
+            <div class="event-date-box">
+              <div class="event-day">27</div>
+              <div class="event-month">SEP</div>
+            </div>
+            <div class="event-info">
+              <h3>Austin Autumn Doublettes Open</h3>
+              <div class="event-meta">
+                <span><i class="fa-solid fa-location-dot"></i> Pease Park Pitch</span>
+                <span><i class="fa-solid fa-clock"></i> 9:30 AM - 2:00 PM</span>
+              </div>
             </div>
           </div>
+          <button class="btn-primary" onclick="openModal()">Register Pair</button>
         </div>
-        <button class="btn-secondary" onclick="openModal()">RSVP Social</button>
-      </div>
-    </div>
-  </section>
 
-  <!-- Pétanque Rules Guide -->
-  <section class="section" id="rules">
+        <div class="event-card glass-panel">
+          <div style="display: flex; gap: 20px; align-items: center;">
+            <div class="event-date-box">
+              <div class="event-day">04</div>
+              <div class="event-month">OCT</div>
+            </div>
+            <div class="event-info">
+              <h3>Pétanque & Pinot Social Evening</h3>
+              <div class="event-meta">
+                <span><i class="fa-solid fa-location-dot"></i> French Legation Lawn</span>
+                <span><i class="fa-solid fa-clock"></i> 5:00 PM - 8:00 PM</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn-secondary" onclick="openModal()">RSVP Social</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pétanque Rules Guide -->
+    <section class="section" id="rules">
+      <div class="section-header">
+        <div class="glass-pill"><i class="fa-solid fa-book-open"></i> How To Play</div>
+        <h2 class="section-title">Essential Pétanque Rules</h2>
+        <p class="section-desc">Learn the fundamentals of the game in 4 quick steps.</p>
+      </div>
+
+      <div class="rules-grid">
+        <div class="rule-card glass-panel">
+          <div class="rule-icon"><i class="fa-solid fa-bullseye"></i></div>
+          <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">1. The Cochonnet</h3>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">Draw a throwing circle (35-50 cm). Throw the small wooden target ball (*cochonnet* or jack) 6 to 10 meters away.</p>
+        </div>
+
+        <div class="rule-card glass-panel">
+          <div class="rule-icon"><i class="fa-solid fa-shoe-prints"></i></div>
+          <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">2. Feet Anchored</h3>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">Pétanque comes from *pès tancats* (feet planted on the ground). Stand inside the circle with both feet flat when throwing.</p>
+        </div>
+
+        <div class="rule-card glass-panel">
+          <div class="rule-icon"><i class="fa-solid fa-crosshair"></i></div>
+          <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">3. Point or Shoot</h3>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">*Pointers* roll boules closest to the jack. *Shooters* lob boules to knock opponent boules away (*carreau*).</p>
+        </div>
+
+        <div class="rule-card glass-panel">
+          <div class="rule-icon"><i class="fa-solid fa-trophy"></i></div>
+          <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">4. Scoring to 13</h3>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">The team closest to the jack scores 1 point for each boule closer than the opponent's best boule. First to 13 wins!</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Founder Admin Section -->
+  <section class="section" id="admin" style="padding-top: 130px; display: none;">
     <div class="section-header">
-      <div class="glass-pill"><i class="fa-solid fa-book-open"></i> How To Play</div>
-      <h2 class="section-title">Essential Pétanque Rules</h2>
-      <p class="section-desc">Learn the fundamentals of the game in 4 quick steps.</p>
+      <div class="glass-pill"><i class="fa-solid fa-user-shield"></i> Founder Control Center</div>
+      <h2 class="section-title">Account Approval Dashboard</h2>
+      <p class="section-desc">Manage pending member requests and approve account creations for <strong>noless42@gmail.com</strong>.</p>
     </div>
 
-    <div class="rules-grid">
-      <div class="rule-card glass-panel">
-        <div class="rule-icon"><i class="fa-solid fa-bullseye"></i></div>
-        <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">1. The Cochonnet</h3>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">Draw a throwing circle (35-50 cm). Throw the small wooden target ball (*cochonnet* or jack) 6 to 10 meters away.</p>
+    <!-- Admin Login Panel -->
+    <div id="admin-login-box" class="glass-panel" style="max-width: 440px; margin: 0 auto; padding: 32px;">
+      <h3 style="margin-bottom: 16px; text-align: center;"><i class="fa-solid fa-lock"></i> Founder Authentication</h3>
+      <div class="form-group">
+        <label>Founder Email</label>
+        <input type="email" id="admin-email-input" class="form-input" value="noless42@gmail.com">
+      </div>
+      <div class="form-group">
+        <label>Founder Passcode</label>
+        <input type="password" id="admin-pass-input" class="form-input" placeholder="Enter passcode">
+      </div>
+      <button class="btn-primary" onclick="loginAdmin()" style="width: 100%; justify-content: center;"><i class="fa-solid fa-key"></i> Unlock Dashboard</button>
+      <div id="admin-login-error" style="color: #ef4444; margin-top: 12px; text-align: center; font-size: 0.9rem;"></div>
+    </div>
+
+    <!-- Admin Active Dashboard -->
+    <div id="admin-dashboard-box" class="glass-panel" style="padding: 32px; display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <h3>Pending Applications (<span id="pending-count">0</span>)</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Notifications automatically delivered to <strong>noless42@gmail.com</strong>.</p>
+        </div>
+        <button class="btn-secondary" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Lock Dashboard</button>
       </div>
 
-      <div class="rule-card glass-panel">
-        <div class="rule-icon"><i class="fa-solid fa-shoe-prints"></i></div>
-        <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">2. Feet Anchored</h3>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">Pétanque comes from *pès tancats* (feet planted on the ground). Stand inside the circle with both feet flat when throwing.</p>
-      </div>
-
-      <div class="rule-card glass-panel">
-        <div class="rule-icon"><i class="fa-solid fa-crosshair"></i></div>
-        <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">3. Point or Shoot</h3>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">*Pointers* roll boules closest to the jack. *Shooters* lob boules to knock opponent boules away (*carreau*).</p>
-      </div>
-
-      <div class="rule-card glass-panel">
-        <div class="rule-icon"><i class="fa-solid fa-trophy"></i></div>
-        <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">4. Scoring to 13</h3>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">The team closest to the jack scores 1 point for each boule closer than the opponent's best boule. First to 13 wins!</p>
+      <div id="applications-list" class="events-grid">
+        <!-- Rendered dynamically -->
       </div>
     </div>
   </section>
@@ -245,7 +288,7 @@
     <div class="footer-content">
       <div class="footer-brand">
         <div class="logo">
-          <div class="logo-icon"><i class="fa-solid fa-bowling-ball"></i></div>
+          <div class="logo-icon"><img src="logo.jpg" alt="Austin Petanque Monkey Logo"></div>
           Austin Pétanque
         </div>
         <p>Connecting Pétanque enthusiasts across Austin, Texas. Casual games, tournaments, and good times under the oaks.</p>
@@ -257,12 +300,13 @@
           <li><a href="#scoreboard">Live Scoreboard</a></li>
           <li><a href="#events">Tournaments</a></li>
           <li><a href="#rules">Rules & Guide</a></li>
+          <li><a href="#admin">Founder Dashboard</a></li>
         </ul>
       </div>
       <div>
-        <h4 style="font-size: 1.1rem; margin-bottom: 16px;">Hosted Domain</h4>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">Official Web App Domain:</p>
-        <a href="https://austinpetanque.web.app" style="color: var(--primary-amber); text-decoration: none; font-weight: 600;">austinpetanque.web.app</a>
+        <h4 style="font-size: 1.1rem; margin-bottom: 16px;">Founder Notifications</h4>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Alerts sent to:</p>
+        <span style="color: var(--primary-amber); font-weight: 600;">noless42@gmail.com</span>
       </div>
     </div>
     <div class="footer-bottom">
@@ -275,9 +319,9 @@
     <div class="modal-content glass-panel">
       <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
       <div style="text-align: center; margin-bottom: 24px;">
-        <div class="logo-icon" style="margin: 0 auto 12px; width: 50px; height: 50px; font-size: 1.4rem;"><i class="fa-solid fa-bowling-ball"></i></div>
+        <div class="logo-icon" style="margin: 0 auto 12px; width: 50px; height: 50px;"><img src="logo.jpg" alt="Austin Petanque Monkey Logo"></div>
         <h2 style="font-size: 1.8rem; font-weight: 800;">Join Austin Pétanque</h2>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">Sign up for weekend meetups, tournament invitations, and court updates.</p>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Applications are sent to <strong>noless42@gmail.com</strong> for founder approval.</p>
       </div>
 
       <form id="join-form">
