@@ -48,11 +48,55 @@ function renderBoules(team) {
 
 window.cycleBoule = (team, index) => {
   const current = bouleStates[team][index];
-  // 0 (right, circle) → 1 (left, slash) → 2 (left, star) → 0 (right, circle)
-  bouleStates[team][index] = (current + 1) % 3;
+  const newState = (current + 1) % 3;
+  bouleStates[team][index] = newState;
+
+  // ★ Star revocation: when marking a ball as close (★),
+  // immediately revoke all opponent stars → they revert to slash (thrown, not scoring)
+  if (newState === 2) {
+    const other = team === 'A' ? 'B' : 'A';
+    let revoked = false;
+    bouleStates[other] = bouleStates[other].map(s => { if (s === 2) { revoked = true; return 1; } return s; });
+    if (revoked) renderBoules(other);
+  }
+
   renderBoules(team);
-  updateFromStars(); // auto-set point holder based on star count
+  updateFromStars();
+  checkAllThrown();
 };
+
+// ─── New Mène button ──────────────────────────────────────────────────────────
+// Appears when last boule is in hand OR all boules are thrown
+function checkAllThrown() {
+  const inHandA = bouleStates.A.filter(s => s === 0).length;
+  const inHandB = bouleStates.B.filter(s => s === 0).length;
+  const total = inHandA + inHandB;
+  const btn = document.getElementById('new-mene-btn');
+  if (!btn) return;
+
+  if (total === 0) {
+    // All 12 boules thrown — mène is over
+    btn.style.display = 'flex';
+    btn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> New Mène`;
+    btn.classList.add('pulse-mene');
+  } else if (total === 1) {
+    // Very last boule still in hand
+    btn.style.display = 'flex';
+    btn.innerHTML = `<i class="fa-solid fa-flag-checkered"></i> Last Boule — Reset`;
+    btn.classList.remove('pulse-mene');
+  } else {
+    btn.style.display = 'none';
+    btn.classList.remove('pulse-mene');
+  }
+}
+
+window.resetMene = () => {
+  // Reset boule tracker only — score stays
+  resetBoules();
+  const btn = document.getElementById('new-mene-btn');
+  if (btn) btn.style.display = 'none';
+};
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ─── Star-driven point holder ─────────────────────────────────────────────────
 // Count ★ (state 2) per team and auto-illuminate the leading team.
