@@ -244,6 +244,8 @@ function initNavbar() {
 let teamAScore = 0;
 let teamBScore = 0;
 let pointHolder = null; // 'A', 'B', or null
+let matchWinner = null; // 'A', 'B', or null
+let confettiAnimationId = null;
 
 function initScoreboard() {
   const scoreAEl = document.getElementById('score-a');
@@ -251,33 +253,288 @@ function initScoreboard() {
 
   window.updateScore = (team, delta) => {
     if (team === 'A') {
-      teamAScore = Math.max(0, Math.min(13, teamAScore + delta));
-      scoreAEl.textContent = teamAScore;
-      if (teamAScore === 13) alert('🏆 Victory! Team Red / Pointing Masters won with 13 points!');
+      teamAScore = Math.max(0, Math.min(25, teamAScore + delta));
+      if (scoreAEl) scoreAEl.textContent = teamAScore;
     } else if (team === 'B') {
-      teamBScore = Math.max(0, Math.min(13, teamBScore + delta));
-      scoreBEl.textContent = teamBScore;
-      if (teamBScore === 13) alert('🏆 Victory! Team Blue / Shooters won with 13 points!');
+      teamBScore = Math.max(0, Math.min(25, teamBScore + delta));
+      if (scoreBEl) scoreBEl.textContent = teamBScore;
     }
     updateLeadIndicators();
+    checkWinCondition();
   };
 
   window.resetScore = () => {
     teamAScore = 0;
     teamBScore = 0;
     pointHolder = null;
-    scoreAEl.textContent = '0';
-    scoreBEl.textContent = '0';
+    matchWinner = null;
+    if (scoreAEl) scoreAEl.textContent = '0';
+    if (scoreBEl) scoreBEl.textContent = '0';
     const boxA = document.getElementById('team-box-a');
     const boxB = document.getElementById('team-box-b');
     if (boxA) boxA.classList.remove('has-point-red', 'has-point-blue', 'point-inactive');
     if (boxB) boxB.classList.remove('has-point-red', 'has-point-blue', 'point-inactive');
     document.getElementById('point-btn-a')?.classList.remove('active');
     document.getElementById('point-btn-b')?.classList.remove('active');
+    hideVictoryCelebration();
     resetBoules();
     updateLeadIndicators();
   };
 }
+
+// ─── Win Condition Check ──────────────────────────────────────────────────────
+// Rule: target 13 points (e.g. 13-10). A team wins when they reach 13 points
+// AND win by two (lead by at least 2 points). If tied 12-12 or above, the game
+// continues until a team achieves a 2-point lead (e.g. 14-12, 15-13).
+function checkWinCondition() {
+  let winner = null;
+  if (teamAScore >= 13 && (teamAScore - teamBScore >= 2)) {
+    winner = 'A';
+  } else if (teamBScore >= 13 && (teamBScore - teamAScore >= 2)) {
+    winner = 'B';
+  }
+
+  if (winner && winner !== matchWinner) {
+    matchWinner = winner;
+    const winnerName = winner === 'A' ? 'Team Red' : 'Team Blue';
+    triggerVictoryCelebration(winner, winnerName);
+  } else if (!winner && matchWinner) {
+    // If score was manually rolled back below win threshold
+    matchWinner = null;
+    hideVictoryCelebration();
+  }
+}
+
+// ─── Victory UI & Celebrations ────────────────────────────────────────────────
+window.hideVictoryCelebration = () => {
+  const overlay = document.getElementById('victory-overlay');
+  if (overlay) overlay.style.display = 'none';
+  stopConfetti();
+};
+
+function triggerVictoryCelebration(winner, winnerName) {
+  const overlay = document.getElementById('victory-overlay');
+  const title = document.getElementById('victory-title');
+  const subtitle = document.getElementById('victory-subtitle');
+
+  if (title) {
+    title.textContent = `${winnerName} Wins!`;
+    title.className = `victory-title ${winner === 'A' ? 'red' : 'blue'}`;
+  }
+  if (subtitle) {
+    subtitle.innerHTML = `Final Match Score: <strong>${teamAScore} &ndash; ${teamBScore}</strong>`;
+  }
+  if (overlay) {
+    overlay.style.display = 'flex';
+  }
+
+  // 1. Play celebratory fanfare + roaring stadium cheer sound
+  playCelebrationSound();
+
+  // 2. Announce winner via speech synthesis ("Team Red wins!" / "Team Blue wins!")
+  announceWinner(winnerName);
+
+  // 3. Trigger confetti shower
+  runConfetti();
+}
+
+// ─── Speech Synthesis Announcement ───────────────────────────────────────────
+function announceWinner(winnerName) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(`${winnerName} wins!`);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.15;
+    utterance.volume = 1.0;
+
+    const speak = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const preferred = voices.find(v => v.lang.startsWith('en') &&
+          (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Alex'))) ||
+          voices.find(v => v.lang.startsWith('en'));
+        if (preferred) utterance.voice = preferred;
+      }
+      window.speechSynthesis.speak(utterance);
+    };
+
+    // Trigger announcement 750ms after celebratory fanfare starts
+    setTimeout(speak, 750);
+  } catch (err) {
+    console.warn('Speech synthesis unavailable:', err);
+  }
+}
+
+// ─── Web Audio Celebration Sound (Fanfare + Cheering Crowd) ───────────────────
+function playCelebrationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // 1. Triumphant Brass Fanfare: C5, E5, G5, High C6 chord
+    const fanfareNotes = [
+      { f: 523.25, start: 0.00, dur: 0.22 }, // C5
+      { f: 659.25, start: 0.20, dur: 0.22 }, // E5
+      { f: 783.99, start: 0.40, dur: 0.26 }, // G5
+      { f: 1046.50, start: 0.65, dur: 1.80 }, // High C6
+      { f: 783.99, start: 0.65, dur: 1.80 },  // G5 harmony
+      { f: 659.25, start: 0.65, dur: 1.80 },  // E5 harmony
+      { f: 523.25, start: 0.65, dur: 1.80 }   // C5 base
+    ];
+
+    fanfareNotes.forEach(({ f, start, dur }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(f, ctx.currentTime + start);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2800, ctx.currentTime + start);
+      filter.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + start + dur);
+
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + start + 0.04);
+      gain.gain.setValueAtTime(0.32, ctx.currentTime + start + dur * 0.7);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + dur);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur);
+    });
+
+    // 2. Synthesized Stadium Crowd Cheering & Applause (4.5s roar)
+    const bufferSize = Math.floor(ctx.sampleRate * 4.5);
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const channelData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      channelData[i] = (Math.random() * 2 - 1) * (0.85 + 0.3 * Math.sin(i * 0.0002));
+    }
+
+    const crowdSource = ctx.createBufferSource();
+    crowdSource.buffer = noiseBuffer;
+
+    const crowdFilter1 = ctx.createBiquadFilter();
+    crowdFilter1.type = 'bandpass';
+    crowdFilter1.frequency.setValueAtTime(800, ctx.currentTime);
+    crowdFilter1.Q.setValueAtTime(2.0, ctx.currentTime);
+
+    const crowdFilter2 = ctx.createBiquadFilter();
+    crowdFilter2.type = 'bandpass';
+    crowdFilter2.frequency.setValueAtTime(2200, ctx.currentTime);
+    crowdFilter2.Q.setValueAtTime(1.8, ctx.currentTime);
+
+    const crowdGain = ctx.createGain();
+    crowdGain.gain.setValueAtTime(0.001, ctx.currentTime);
+    crowdGain.gain.exponentialRampToValueAtTime(0.48, ctx.currentTime + 0.7);
+    crowdGain.gain.setValueAtTime(0.48, ctx.currentTime + 2.8);
+    crowdGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 4.5);
+
+    crowdSource.connect(crowdFilter1);
+    crowdSource.connect(crowdFilter2);
+    crowdFilter1.connect(crowdGain);
+    crowdFilter2.connect(crowdGain);
+    crowdGain.connect(ctx.destination);
+
+    crowdSource.start(ctx.currentTime + 0.15);
+
+    // 3. Whistles / Cheering Screams in Crowd
+    [0.85, 1.5, 2.3].forEach((startTime, idx) => {
+      const wOsc = ctx.createOscillator();
+      const wGain = ctx.createGain();
+      wOsc.type = 'sine';
+      const baseFreq = 1600 + idx * 350;
+      wOsc.frequency.setValueAtTime(baseFreq, ctx.currentTime + startTime);
+      wOsc.frequency.linearRampToValueAtTime(baseFreq + 700, ctx.currentTime + startTime + 0.2);
+      wOsc.frequency.linearRampToValueAtTime(baseFreq + 100, ctx.currentTime + startTime + 0.4);
+
+      wGain.gain.setValueAtTime(0.001, ctx.currentTime + startTime);
+      wGain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + startTime + 0.05);
+      wGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + 0.45);
+
+      wOsc.connect(wGain);
+      wGain.connect(ctx.destination);
+      wOsc.start(ctx.currentTime + startTime);
+      wOsc.stop(ctx.currentTime + startTime + 0.48);
+    });
+
+    setTimeout(() => {
+      try { ctx.close(); } catch(e) {}
+    }, 5000);
+  } catch (err) {
+    console.warn('Audio celebration error:', err);
+  }
+}
+
+// ─── Confetti Animation ───────────────────────────────────────────────────────
+function runConfetti() {
+  const canvas = document.getElementById('victory-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const parent = canvas.parentElement;
+  canvas.width = parent ? parent.offsetWidth : window.innerWidth;
+  canvas.height = parent ? parent.offsetHeight : 450;
+
+  const colors = ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#ec4899', '#fbbf24', '#ffffff'];
+  const confettiCount = 90;
+  const pieces = [];
+
+  for (let i = 0; i < confettiCount; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * -canvas.height,
+      size: Math.random() * 8 + 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      speed: Math.random() * 3 + 2.5,
+      angle: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 8,
+      wobble: Math.random() * 20,
+      wobbleSpeed: Math.random() * 0.1 + 0.05
+    });
+  }
+
+  let frame = 0;
+  if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    frame++;
+
+    pieces.forEach(p => {
+      p.y += p.speed;
+      p.angle += p.rotSpeed;
+      p.x += Math.sin(frame * p.wobbleSpeed) * 1.5;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.angle * Math.PI) / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      ctx.restore();
+
+      if (p.y > canvas.height + 20) {
+        p.y = -20;
+        p.x = Math.random() * canvas.width;
+      }
+    });
+
+    confettiAnimationId = requestAnimationFrame(draw);
+  }
+
+  draw();
+}
+
+function stopConfetti() {
+  if (confettiAnimationId) {
+    cancelAnimationFrame(confettiAnimationId);
+    confettiAnimationId = null;
+  }
+}
+
 
 // ─── Whistle Sound (Web Audio API, no file needed) ───────────────────────────
 

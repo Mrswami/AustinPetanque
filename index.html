@@ -148,6 +148,20 @@
       </div>
 
       <div class="scoreboard-wrapper glass-panel">
+        <!-- Victory Celebration Overlay -->
+        <div id="victory-overlay" class="victory-overlay" style="display: none;">
+          <canvas id="victory-canvas" class="victory-canvas"></canvas>
+          <div class="victory-content">
+            <div class="victory-trophy">🏆</div>
+            <h3 id="victory-title" class="victory-title">Team Red Wins!</h3>
+            <p id="victory-subtitle" class="victory-subtitle">Final Match Score: 13 &ndash; 10</p>
+            <div class="victory-actions">
+              <button class="btn-primary" onclick="resetScore()"><i class="fa-solid fa-rotate-right"></i> Play Again</button>
+              <button class="btn-secondary" onclick="hideVictoryCelebration()"><i class="fa-solid fa-xmark"></i> Dismiss</button>
+            </div>
+          </div>
+        </div>
+
         <div class="scoreboard-header">
           <div>
             <h3 style="font-size: 1.4rem; font-weight: 700;">Match Scoreboard (Target: 13 Pts)</h3>
