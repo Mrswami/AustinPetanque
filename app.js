@@ -99,14 +99,78 @@ function initScoreboard() {
   };
 }
 
+// ─── Whistle Sound (Web Audio API, no file needed) ───────────────────────────
+
+function playWhistle() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Main whistle tone
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(3200, ctx.currentTime);
+    filter.Q.setValueAtTime(12, ctx.currentTime);
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(2800, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(3400, ctx.currentTime + 0.08);
+    osc.frequency.linearRampToValueAtTime(3100, ctx.currentTime + 0.22);
+    osc.frequency.linearRampToValueAtTime(3600, ctx.currentTime + 0.35);
+    osc.frequency.linearRampToValueAtTime(3200, ctx.currentTime + 0.55);
+
+    gainNode.gain.setValueAtTime(0, ctx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.45, ctx.currentTime + 0.02);
+    gainNode.gain.setValueAtTime(0.45, ctx.currentTime + 0.45);
+    gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.65);
+
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.65);
+
+    // Second short toot after brief pause (ref double-blow)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    const filter2 = ctx.createBiquadFilter();
+    filter2.type = 'bandpass';
+    filter2.frequency.setValueAtTime(3400, ctx.currentTime + 0.75);
+    filter2.Q.setValueAtTime(14, ctx.currentTime + 0.75);
+    osc2.type = 'sawtooth';
+    osc2.frequency.setValueAtTime(3400, ctx.currentTime + 0.75);
+    osc2.frequency.linearRampToValueAtTime(3800, ctx.currentTime + 0.95);
+    gain2.gain.setValueAtTime(0, ctx.currentTime + 0.75);
+    gain2.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.78);
+    gain2.gain.setValueAtTime(0.5, ctx.currentTime + 0.95);
+    gain2.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.1);
+    osc2.connect(filter2);
+    filter2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(ctx.currentTime + 0.75);
+    osc2.stop(ctx.currentTime + 1.1);
+
+    osc.onended = () => ctx.close();
+  } catch (e) {
+    console.log('Audio not available:', e);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Set which team currently has the point (closest to cochonnet)
 window.setPointHolder = (team) => {
   if (pointHolder === team) {
-    // Toggle off
+    // Toggle off — no sound
     pointHolder = null;
     clearPointHolder();
   } else {
+    const previousHolder = pointHolder;
     pointHolder = team;
+
     const boxA = document.getElementById('team-box-a');
     const boxB = document.getElementById('team-box-b');
     const btnA = document.getElementById('point-btn-a');
@@ -124,6 +188,19 @@ window.setPointHolder = (team) => {
     } else {
       boxB.classList.add('has-point-blue');
       btnB.classList.add('active');
+    }
+
+    // 🎵 Whistle logic:
+    // Fire when the claiming team was LOSING on the scoreboard (comeback steal)
+    // or when they snatch it from the other team who had it
+    const teamAisLosing = teamAScore < teamBScore;
+    const teamBisLosing = teamBScore < teamAScore;
+    const stolenFromOther = previousHolder !== null && previousHolder !== team;
+
+    const lostTeamSteals = (team === 'A' && teamAisLosing) || (team === 'B' && teamBisLosing);
+
+    if (lostTeamSteals || stolenFromOther) {
+      playWhistle();
     }
   }
   updateLeadIndicators();
