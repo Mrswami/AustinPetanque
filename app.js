@@ -11,23 +11,45 @@ document.addEventListener('DOMContentLoaded', () => {
   renderBoules('B');
 });
 
-// ─── Boule Tracker ────────────────────────────────────────────────────────────
-// State: 0 = in hand (circle), 1 = thrown (slash), 2 = close ball (★)
+// ─── Boule Tracker (two-zone) ────────────────────────────────────────────────
+// State: 0 = in-hand (right zone, circle)
+//        1 = thrown  (left zone, slash)
+//        2 = close ball (left zone, ★ star)
 const bouleStates = { A: [0,0,0,0,0,0], B: [0,0,0,0,0,0] };
 
 function renderBoules(team) {
-  const container = document.getElementById(`boules-${team === 'A' ? 'a' : 'b'}`);
-  if (!container) return;
-  const colorClass = team === 'A' ? 'red' : 'blue';
-  container.innerHTML = bouleStates[team].map((state, i) => `
-    <div class="boule ${colorClass} state-${state}"
-         onclick="cycleBoule('${team}', ${i})"
-         title="Tap to cycle: in hand → thrown → close ball"></div>
-  `).join('');
+  const t = team === 'A' ? 'a' : 'b';
+  const leftEl  = document.getElementById(`boules-${t}-left`);
+  const rightEl = document.getElementById(`boules-${t}-right`);
+  if (!leftEl || !rightEl) return;
+
+  const color = team === 'A' ? 'red' : 'blue';
+
+  // LEFT zone: slashes (state 1) then stars (state 2), ordered by index
+  leftEl.innerHTML = bouleStates[team]
+    .map((state, i) => ({ state, i }))
+    .filter(b => b.state === 1 || b.state === 2)
+    .map(({ state, i }) =>
+      `<div class="boule ${color} state-${state}"
+            onclick="cycleBoule('${team}', ${i})"
+            title="${state === 1 ? 'Tap to mark as close ball ★' : 'Tap to return to hand'}"></div>`
+    ).join('');
+
+  // RIGHT zone: circles (state 0), ordered by index
+  rightEl.innerHTML = bouleStates[team]
+    .map((state, i) => ({ state, i }))
+    .filter(b => b.state === 0)
+    .map(({ state, i }) =>
+      `<div class="boule ${color} state-0"
+            onclick="cycleBoule('${team}', ${i})"
+            title="Tap to throw"></div>`
+    ).join('');
 }
 
 window.cycleBoule = (team, index) => {
-  bouleStates[team][index] = (bouleStates[team][index] + 1) % 3;
+  const current = bouleStates[team][index];
+  // 0 (right, circle) → 1 (left, slash) → 2 (left, star) → 0 (right, circle)
+  bouleStates[team][index] = (current + 1) % 3;
   renderBoules(team);
 };
 
