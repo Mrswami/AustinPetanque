@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "kimboocherly-app"
+  },
+  "targets": {
+    "kimboocherly-app": {
+      "hosting": {
+        "austinpetanque": [
+          "austinpetanque"
+        ]
+      }
+    }
+  }
+}
