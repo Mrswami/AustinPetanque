@@ -435,14 +435,94 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 16px;
 }
 
+/* Score + boule row layout */
+.score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .score-display {
-  font-size: 4rem;
+  font-size: 3.6rem;
   font-weight: 900;
   font-family: 'Outfit', sans-serif;
   color: var(--primary-amber);
-  margin-bottom: 16px;
+  line-height: 1;
+  min-width: 52px;
+  text-align: center;
   transition: all 0.3s ease;
 }
+
+/* Boule tracker row */
+.boule-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+
+/* Individual boule */
+.boule {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* State 0: in hand — filled circle */
+.boule.state-0 {
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  opacity: 0.85;
+}
+.boule.state-0::after { display: none; }
+
+/* State 1: thrown — slash line */
+.boule.state-1 {
+  background: transparent;
+  border: 2px solid currentColor;
+  opacity: 0.5;
+}
+.boule.state-1::after {
+  content: '';
+  position: absolute;
+  width: 130%;
+  height: 2.5px;
+  background: currentColor;
+  border-radius: 2px;
+  transform: rotate(-45deg);
+  opacity: 0.9;
+}
+
+/* State 2: close ball — gold star */
+.boule.state-2 {
+  background: rgba(245, 158, 11, 0.15);
+  border: 2px solid var(--primary-amber);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+}
+.boule.state-2::after {
+  content: '★';
+  position: absolute;
+  font-size: 0.9rem;
+  color: var(--primary-amber);
+  line-height: 1;
+}
+
+/* Team color tokens on boule */
+.boule.red { color: #ef4444; }
+.boule.blue { color: #3b82f6; }
+
+.boule:active { transform: scale(0.85); }
+
 
 .score-controls {
   display: flex;
@@ -916,90 +996,269 @@ footer {
 }
 
 /* =====================
-   Mobile Responsive
+   Mobile — Safe Area & Base Touch
+===================== */
+
+/* Support Dynamic Island / Notch safe areas globally */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* Minimum 44px touch targets (Apple HIG) */
+button, .boule, .btn-circle, .has-point-btn, .hamburger {
+  min-height: 44px;
+}
+.boule {
+  min-width: 38px;
+  min-height: 38px;
+  width: 38px;
+  height: 38px;
+}
+
+/* =====================
+   Hamburger Menu
+===================== */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 10px;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text-main);
+  border-radius: 2px;
+  transition: var(--transition-fast);
+}
+
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.mobile-drawer {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+  background: rgba(9, 12, 21, 0.97);
+  backdrop-filter: blur(20px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  /* Safe area padding for notch/Dynamic Island */
+  padding-top: calc(40px + var(--safe-top));
+  padding-bottom: calc(40px + var(--safe-bottom));
+  padding-left: calc(40px + var(--safe-left));
+  padding-right: calc(40px + var(--safe-right));
+}
+
+.mobile-drawer.open { display: flex; }
+
+.mobile-drawer a {
+  color: var(--text-main);
+  text-decoration: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  padding: 8px 0;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  transition: var(--transition-fast);
+}
+
+.mobile-drawer a:hover,
+.mobile-drawer a:active { color: var(--primary-amber); }
+
+.mobile-drawer .drawer-close {
+  position: absolute;
+  top: calc(24px + var(--safe-top));
+  right: calc(24px + var(--safe-right));
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.8rem;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-drawer .btn-primary {
+  margin-top: 16px;
+  font-size: 1.1rem;
+  padding: 14px 32px;
+}
+
+/* =====================
+   ≤ 768px — All phones
 ===================== */
 @media (max-width: 768px) {
-  /* Nav */
-  .nav-links {
-    display: none;
-  }
-  .hamburger {
-    display: flex;
-  }
+  /* Navbar + safe-area for notch/Dynamic Island */
   .navbar {
-    padding: 14px 5%;
+    padding-top: calc(14px + var(--safe-top));
+    padding-bottom: 14px;
+    padding-left: calc(5% + var(--safe-left));
+    padding-right: calc(5% + var(--safe-right));
   }
-  /* Prevent hero text overflow */
+  .navbar.scrolled {
+    padding-top: calc(12px + var(--safe-top));
+  }
+  .nav-links { display: none; }
+  .hamburger { display: flex; }
+  #nav-join-btn { display: none !important; }
+
+  /* Hero — push down past navbar + notch */
   .hero {
-    padding: 100px 5% 60px;
+    padding-top: calc(110px + var(--safe-top));
+    padding-bottom: 60px;
+    padding-left: 5%;
+    padding-right: 5%;
   }
-  .hero-title {
-    font-size: clamp(1.8rem, 7vw, 2.8rem);
-  }
-  .hero-subtitle {
-    font-size: 1rem;
-  }
-  .hero-cta {
-    flex-direction: column;
-    align-items: center;
-  }
+  .hero-title { font-size: clamp(1.7rem, 7.5vw, 2.6rem); }
+  .hero-subtitle { font-size: 0.95rem; }
+  .hero-cta { flex-direction: column; align-items: center; gap: 12px; }
   .hero-cta .btn-primary,
   .hero-cta .btn-secondary {
     width: 100%;
+    max-width: 340px;
     justify-content: center;
-    max-width: 320px;
+    padding: 14px 20px;
+    min-height: 52px;
   }
-  /* Stats: single column on mobile */
+
+  /* Stats: 2 columns */
   .stats-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 40px;
+    gap: 10px;
+    margin-top: 32px;
   }
-  .stat-number {
-    font-size: 1.6rem;
-  }
+  .stat-number { font-size: 1.5rem; }
+  .stat-label { font-size: 0.75rem; }
+
   /* Sections */
   .section {
-    padding: 60px 5%;
-    scroll-margin-top: 70px;
+    padding: 56px 4%;
+    scroll-margin-top: calc(72px + var(--safe-top));
   }
-  .section-title {
-    font-size: 1.8rem;
-  }
+  .section-title { font-size: 1.7rem; }
+  .section-desc { font-size: 0.95rem; }
+
   /* Courts */
-  .locations-grid {
-    grid-template-columns: 1fr;
-  }
-  /* Scoreboard */
+  .locations-grid { grid-template-columns: 1fr; }
+
+  /* ── Scoreboard ─────────────── */
   .scoreboard-body {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
-  .scoreboard-wrapper {
-    padding: 20px;
+  .scoreboard-wrapper { padding: 16px; }
+  .scoreboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
   }
-  .score-display {
-    font-size: 3rem;
+
+  /* Score + boule row */
+  .score-row {
+    justify-content: space-between;
+    gap: 10px;
   }
+  .score-display { font-size: 2.8rem; min-width: 48px; }
+  .boule-row { grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .boule { width: 38px; height: 38px; min-width: 38px; min-height: 38px; }
+
+  /* Has the Point button */
+  .has-point-btn { padding: 12px 14px; font-size: 0.88rem; min-height: 48px; }
+
+  /* Score +/- controls */
+  .score-controls { gap: 14px; }
+  .btn-circle { width: 48px; height: 48px; font-size: 1.2rem; }
+
+  /* vs-col */
+  .vs-col { flex-direction: row; justify-content: center; gap: 16px; }
+  .vs-divider { font-size: 1.4rem; }
+
   /* Events */
   .event-card {
     flex-direction: column;
     align-items: flex-start;
     gap: 14px;
+    padding: 16px;
   }
   /* Rules */
-  .rules-grid {
-    grid-template-columns: 1fr;
-  }
+  .rules-grid { grid-template-columns: 1fr; }
+
   /* Footer */
-  .footer-content {
-    flex-direction: column;
-    gap: 28px;
+  .footer-content { flex-direction: column; gap: 24px; }
+  .footer-brand { max-width: 100%; }
+  footer {
+    padding-bottom: calc(30px + var(--safe-bottom));
   }
-  .footer-brand {
+
+  /* Modal — account for keyboard & safe area */
+  .modal-backdrop { padding: 16px; align-items: flex-end; }
+  .modal-content {
+    padding: 24px 18px;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: calc(24px + var(--safe-bottom));
     max-width: 100%;
   }
-  /* Modal */
-  .modal-content {
-    padding: 24px 20px;
-  }
+  .form-input { font-size: 1rem; padding: 14px 14px; min-height: 52px; }
+}
+
+/* =====================
+   iPhone 13 mini / SE — 375px
+===================== */
+@media (max-width: 380px) {
+  .hero-title { font-size: clamp(1.5rem, 8vw, 2rem); }
+  .score-display { font-size: 2.4rem; min-width: 42px; }
+  .boule { width: 34px; height: 34px; min-width: 34px; min-height: 34px; }
+  .team-box { padding: 14px 12px; }
+  .glass-pill { font-size: 0.75rem; padding: 5px 12px; }
+  .section-title { font-size: 1.5rem; }
+  .stat-card { padding: 14px 10px; }
+  .stats-grid { gap: 8px; }
+}
+
+/* =====================
+   iPhone 13 Pro Max / 14 Plus / 15 Plus — 428–440px
+===================== */
+@media (min-width: 420px) and (max-width: 768px) {
+  .boule { width: 42px; height: 42px; min-width: 42px; min-height: 42px; }
+  .score-display { font-size: 3.2rem; }
+  .hero-title { font-size: clamp(2rem, 7vw, 2.8rem); }
+  .team-box { padding: 20px 16px; }
+}
+
+/* =====================
+   iPhone 16 Pro / 16 Pro Max — 402–440px tall notch
+   Ensure safe-area is respected at all sizes
+===================== */
+@media (min-width: 390px) and (max-width: 768px) {
+  .score-row { gap: 14px; }
+  .boule-row { gap: 8px; }
 }

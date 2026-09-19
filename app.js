@@ -7,7 +7,38 @@ document.addEventListener('DOMContentLoaded', () => {
   initModal();
   initFormSubmission();
   initHashRouting();
+  renderBoules('A');
+  renderBoules('B');
 });
+
+// ─── Boule Tracker ────────────────────────────────────────────────────────────
+// State: 0 = in hand (circle), 1 = thrown (slash), 2 = close ball (★)
+const bouleStates = { A: [0,0,0,0,0,0], B: [0,0,0,0,0,0] };
+
+function renderBoules(team) {
+  const container = document.getElementById(`boules-${team === 'A' ? 'a' : 'b'}`);
+  if (!container) return;
+  const colorClass = team === 'A' ? 'red' : 'blue';
+  container.innerHTML = bouleStates[team].map((state, i) => `
+    <div class="boule ${colorClass} state-${state}"
+         onclick="cycleBoule('${team}', ${i})"
+         title="Tap to cycle: in hand → thrown → close ball"></div>
+  `).join('');
+}
+
+window.cycleBoule = (team, index) => {
+  bouleStates[team][index] = (bouleStates[team][index] + 1) % 3;
+  renderBoules(team);
+};
+
+function resetBoules() {
+  bouleStates.A = [0,0,0,0,0,0];
+  bouleStates.B = [0,0,0,0,0,0];
+  renderBoules('A');
+  renderBoules('B');
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 
 // Mobile Drawer
 window.toggleDrawer = () => {
@@ -100,6 +131,7 @@ function initScoreboard() {
     if (boxB) boxB.classList.remove('has-point-red', 'has-point-blue', 'point-inactive');
     document.getElementById('point-btn-a')?.classList.remove('active');
     document.getElementById('point-btn-b')?.classList.remove('active');
+    resetBoules();
     updateLeadIndicators();
   };
 }
