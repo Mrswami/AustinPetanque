@@ -94,7 +94,12 @@ function initScoreboard() {
     pointHolder = null;
     scoreAEl.textContent = '0';
     scoreBEl.textContent = '0';
-    clearPointHolder();
+    const boxA = document.getElementById('team-box-a');
+    const boxB = document.getElementById('team-box-b');
+    if (boxA) boxA.classList.remove('has-point-red', 'has-point-blue', 'point-inactive');
+    if (boxB) boxB.classList.remove('has-point-red', 'has-point-blue', 'point-inactive');
+    document.getElementById('point-btn-a')?.classList.remove('active');
+    document.getElementById('point-btn-b')?.classList.remove('active');
     updateLeadIndicators();
   };
 }
@@ -163,40 +168,42 @@ function playWhistle() {
 
 // Set which team currently has the point (closest to cochonnet)
 window.setPointHolder = (team) => {
+  const boxA = document.getElementById('team-box-a');
+  const boxB = document.getElementById('team-box-b');
+  const btnA = document.getElementById('point-btn-a');
+  const btnB = document.getElementById('point-btn-b');
+
   if (pointHolder === team) {
-    // Toggle off — no sound
+    // Toggle off — clear everything
     pointHolder = null;
-    clearPointHolder();
+    boxA.classList.remove('has-point-red', 'has-point-blue', 'point-inactive');
+    boxB.classList.remove('has-point-red', 'has-point-blue', 'point-inactive');
+    btnA.classList.remove('active');
+    btnB.classList.remove('active');
   } else {
     const previousHolder = pointHolder;
     pointHolder = team;
 
-    const boxA = document.getElementById('team-box-a');
-    const boxB = document.getElementById('team-box-b');
-    const btnA = document.getElementById('point-btn-a');
-    const btnB = document.getElementById('point-btn-b');
-
-    // Reset both
-    boxA.classList.remove('has-point-red', 'has-point-blue');
-    boxB.classList.remove('has-point-red', 'has-point-blue');
+    // Clear all states first
+    boxA.classList.remove('has-point-red', 'has-point-blue', 'point-inactive');
+    boxB.classList.remove('has-point-red', 'has-point-blue', 'point-inactive');
     btnA.classList.remove('active');
     btnB.classList.remove('active');
 
     if (team === 'A') {
-      boxA.classList.add('has-point-red');
+      boxA.classList.add('has-point-red');   // light up Red
+      boxB.classList.add('point-inactive');   // dim Blue
       btnA.classList.add('active');
     } else {
-      boxB.classList.add('has-point-blue');
+      boxB.classList.add('has-point-blue');   // light up Blue
+      boxA.classList.add('point-inactive');   // dim Red
       btnB.classList.add('active');
     }
 
-    // 🎵 Whistle logic:
-    // Fire when the claiming team was LOSING on the scoreboard (comeback steal)
-    // or when they snatch it from the other team who had it
+    // 🎵 Whistle when losing team steals the cochonnet
     const teamAisLosing = teamAScore < teamBScore;
     const teamBisLosing = teamBScore < teamAScore;
     const stolenFromOther = previousHolder !== null && previousHolder !== team;
-
     const lostTeamSteals = (team === 'A' && teamAisLosing) || (team === 'B' && teamBisLosing);
 
     if (lostTeamSteals || stolenFromOther) {

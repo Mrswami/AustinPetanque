@@ -411,15 +411,22 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Glowing active state for the team that has the point */
 .team-box.has-point-red {
-  border-color: rgba(239, 68, 68, 0.6);
-  background: rgba(239, 68, 68, 0.08);
-  box-shadow: 0 0 40px rgba(239, 68, 68, 0.25), inset 0 0 30px rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.8) !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  box-shadow: 0 0 50px rgba(239, 68, 68, 0.35), 0 0 0 2px rgba(239,68,68,0.4), inset 0 0 40px rgba(239, 68, 68, 0.08) !important;
 }
 
 .team-box.has-point-blue {
-  border-color: rgba(59, 130, 246, 0.6);
-  background: rgba(59, 130, 246, 0.08);
-  box-shadow: 0 0 40px rgba(59, 130, 246, 0.25), inset 0 0 30px rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.8) !important;
+  background: rgba(59, 130, 246, 0.12) !important;
+  box-shadow: 0 0 50px rgba(59, 130, 246, 0.35), 0 0 0 2px rgba(59,130,246,0.4), inset 0 0 40px rgba(59, 130, 246, 0.08) !important;
+}
+
+/* Dim the team that does NOT have the point */
+.team-box.point-inactive {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+  border-color: rgba(255,255,255,0.04) !important;
 }
 
 .team-name {
@@ -501,23 +508,27 @@ h1, h2, h3, h4, h5, h6 {
   color: #3b82f6;
 }
 
-/* Active / lit up state */
+/* Active / lit up state — use !important to beat base styles */
 .has-point-btn.red.active {
-  background: rgba(239, 68, 68, 0.18);
-  border-color: #ef4444;
-  color: #ef4444;
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4), 0 0 0 3px rgba(239, 68, 68, 0.12);
+  background: rgba(239, 68, 68, 0.28) !important;
+  border-color: #ef4444 !important;
+  border-width: 2px !important;
+  color: #ef4444 !important;
+  box-shadow: 0 0 28px rgba(239, 68, 68, 0.6), 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+  text-shadow: 0 0 12px rgba(239,68,68,0.7);
 }
 
 .has-point-btn.blue.active {
-  background: rgba(59, 130, 246, 0.18);
-  border-color: #3b82f6;
-  color: #3b82f6;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.12);
+  background: rgba(59, 130, 246, 0.28) !important;
+  border-color: #3b82f6 !important;
+  border-width: 2px !important;
+  color: #3b82f6 !important;
+  box-shadow: 0 0 28px rgba(59, 130, 246, 0.6), 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  text-shadow: 0 0 12px rgba(59,130,246,0.7);
 }
 
 .has-point-btn.active i {
-  transform: scale(1.3);
+  transform: scale(1.4) !important;
 }
 
 /* Ripple pulse inside button when active */
