@@ -51,13 +51,90 @@ window.cycleBoule = (team, index) => {
   // 0 (right, circle) → 1 (left, slash) → 2 (left, star) → 0 (right, circle)
   bouleStates[team][index] = (current + 1) % 3;
   renderBoules(team);
+  updateFromStars(); // auto-set point holder based on star count
 };
+
+// ─── Star-driven point holder ─────────────────────────────────────────────────
+// Count ★ (state 2) per team and auto-illuminate the leading team.
+// Star advantage = how many of your balls are closer than opponent's nearest.
+function updateFromStars() {
+  const starsA = bouleStates.A.filter(s => s === 2).length;
+  const starsB = bouleStates.B.filter(s => s === 2).length;
+
+  const boxA = document.getElementById('team-box-a');
+  const boxB = document.getElementById('team-box-b');
+  const btnA = document.getElementById('point-btn-a');
+  const btnB = document.getElementById('point-btn-b');
+  const leadDiff = document.getElementById('lead-diff');
+  const leadBanner = document.getElementById('lead-banner');
+
+  if (!boxA || !boxB) return;
+
+  // Clear all point states first
+  boxA.classList.remove('has-point-red', 'has-point-blue', 'point-inactive');
+  boxB.classList.remove('has-point-red', 'has-point-blue', 'point-inactive');
+  btnA?.classList.remove('active');
+  btnB?.classList.remove('active');
+
+  if (starsA === 0 && starsB === 0) {
+    // No stars — clear mène indicator, keep score-based lead
+    pointHolder = null;
+    updateLeadIndicators();
+    return;
+  }
+
+  if (starsA > starsB) {
+    // Team Red has the point by (starsA - starsB)
+    pointHolder = 'A';
+    boxA.classList.add('has-point-red');
+    boxB.classList.add('point-inactive');
+    btnA?.classList.add('active');
+    const margin = starsA - starsB;
+    const pts = margin === 1 ? 'pt' : 'pts';
+    if (leadDiff) {
+      leadDiff.className = 'lead-diff red';
+      leadDiff.innerHTML = `★ +${margin} ${pts}`;
+    }
+    if (leadBanner) {
+      leadBanner.style.display = 'block';
+      leadBanner.className = 'lead-banner red';
+      leadBanner.innerHTML = `★ <strong>Team Red</strong> has the point &mdash; <strong>${margin} ${pts}</strong> closer`;
+    }
+  } else if (starsB > starsA) {
+    // Team Blue has the point
+    pointHolder = 'B';
+    boxB.classList.add('has-point-blue');
+    boxA.classList.add('point-inactive');
+    btnB?.classList.add('active');
+    const margin = starsB - starsA;
+    const pts = margin === 1 ? 'pt' : 'pts';
+    if (leadDiff) {
+      leadDiff.className = 'lead-diff blue';
+      leadDiff.innerHTML = `★ +${margin} ${pts}`;
+    }
+    if (leadBanner) {
+      leadBanner.style.display = 'block';
+      leadBanner.className = 'lead-banner blue';
+      leadBanner.innerHTML = `★ <strong>Team Blue</strong> has the point &mdash; <strong>${margin} ${pts}</strong> closer`;
+    }
+  } else {
+    // Equal stars — contested!
+    pointHolder = null;
+    if (leadDiff) {
+      leadDiff.className = 'lead-diff tied';
+      leadDiff.innerHTML = `★ Tied`;
+    }
+    if (leadBanner) leadBanner.style.display = 'none';
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function resetBoules() {
   bouleStates.A = [0,0,0,0,0,0];
   bouleStates.B = [0,0,0,0,0,0];
   renderBoules('A');
   renderBoules('B');
+  updateFromStars();
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
