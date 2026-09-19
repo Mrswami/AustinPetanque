@@ -405,6 +405,21 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--radius-md);
   border: 1px solid var(--border-glass);
   text-align: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+/* Glowing active state for the team that has the point */
+.team-box.has-point-red {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.08);
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.25), inset 0 0 30px rgba(239, 68, 68, 0.05);
+}
+
+.team-box.has-point-blue {
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: 0 0 40px rgba(59, 130, 246, 0.25), inset 0 0 30px rgba(59, 130, 246, 0.05);
 }
 
 .team-name {
@@ -419,12 +434,14 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Outfit', sans-serif;
   color: var(--primary-amber);
   margin-bottom: 16px;
+  transition: all 0.3s ease;
 }
 
 .score-controls {
   display: flex;
   gap: 12px;
   justify-content: center;
+  margin-bottom: 16px;
 }
 
 .btn-circle {
@@ -448,13 +465,162 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--primary-amber);
 }
 
-.vs-divider {
+/* Has the Point illuminating button */
+.has-point-btn {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 4px;
+}
+
+.has-point-btn i {
+  font-size: 0.85rem;
+  transition: all 0.35s ease;
+}
+
+.has-point-btn.red:hover {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+}
+
+.has-point-btn.blue:hover {
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #3b82f6;
+}
+
+/* Active / lit up state */
+.has-point-btn.red.active {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: #ef4444;
+  color: #ef4444;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4), 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.has-point-btn.blue.active {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: #3b82f6;
+  color: #3b82f6;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.has-point-btn.active i {
+  transform: scale(1.3);
+}
+
+/* Ripple pulse inside button when active */
+.point-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.has-point-btn.red.active .point-pulse {
+  animation: pulse-red 2s ease-in-out infinite;
+}
+
+.has-point-btn.blue.active .point-pulse {
+  animation: pulse-blue 2s ease-in-out infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: inset 0 0 0 0 rgba(239,68,68,0); opacity: 0; }
+  50% { box-shadow: inset 0 0 20px 4px rgba(239,68,68,0.25); opacity: 1; }
+}
+
+@keyframes pulse-blue {
+  0%, 100% { box-shadow: inset 0 0 0 0 rgba(59,130,246,0); opacity: 0; }
+  50% { box-shadow: inset 0 0 20px 4px rgba(59,130,246,0.25); opacity: 1; }
+}
+
+/* Center column with VS + lead diff */
+.vs-col {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.vs-divider {
   font-size: 1.8rem;
   font-weight: 900;
   color: var(--text-dim);
   font-family: 'Outfit', sans-serif;
 }
+
+/* Lead differential badge */
+.lead-diff {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  min-width: 80px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.lead-diff.red {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.lead-diff.blue {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #3b82f6;
+}
+
+.lead-diff.tied {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-glass);
+  color: var(--text-muted);
+}
+
+/* Top lead banner */
+.lead-banner {
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: center;
+  margin-bottom: 20px;
+  animation: bannerIn 0.4s ease;
+}
+
+.lead-banner.red {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.lead-banner.blue {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+@keyframes bannerIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 
 /* Events List */
 .events-grid {

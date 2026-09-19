@@ -69,11 +69,12 @@ function initNavbar() {
 // Live Score Tracker State & Functions
 let teamAScore = 0;
 let teamBScore = 0;
+let pointHolder = null; // 'A', 'B', or null
 
 function initScoreboard() {
   const scoreAEl = document.getElementById('score-a');
   const scoreBEl = document.getElementById('score-b');
-  
+
   window.updateScore = (team, delta) => {
     if (team === 'A') {
       teamAScore = Math.max(0, Math.min(13, teamAScore + delta));
@@ -84,15 +85,86 @@ function initScoreboard() {
       scoreBEl.textContent = teamBScore;
       if (teamBScore === 13) alert('🏆 Victory! Team Blue / Shooters won with 13 points!');
     }
+    updateLeadIndicators();
   };
 
   window.resetScore = () => {
     teamAScore = 0;
     teamBScore = 0;
+    pointHolder = null;
     scoreAEl.textContent = '0';
     scoreBEl.textContent = '0';
+    clearPointHolder();
+    updateLeadIndicators();
   };
 }
+
+// Set which team currently has the point (closest to cochonnet)
+window.setPointHolder = (team) => {
+  if (pointHolder === team) {
+    // Toggle off
+    pointHolder = null;
+    clearPointHolder();
+  } else {
+    pointHolder = team;
+    const boxA = document.getElementById('team-box-a');
+    const boxB = document.getElementById('team-box-b');
+    const btnA = document.getElementById('point-btn-a');
+    const btnB = document.getElementById('point-btn-b');
+
+    // Reset both
+    boxA.classList.remove('has-point-red', 'has-point-blue');
+    boxB.classList.remove('has-point-red', 'has-point-blue');
+    btnA.classList.remove('active');
+    btnB.classList.remove('active');
+
+    if (team === 'A') {
+      boxA.classList.add('has-point-red');
+      btnA.classList.add('active');
+    } else {
+      boxB.classList.add('has-point-blue');
+      btnB.classList.add('active');
+    }
+  }
+  updateLeadIndicators();
+};
+
+function clearPointHolder() {
+  document.getElementById('team-box-a').classList.remove('has-point-red', 'has-point-blue');
+  document.getElementById('team-box-b').classList.remove('has-point-red', 'has-point-blue');
+  document.getElementById('point-btn-a').classList.remove('active');
+  document.getElementById('point-btn-b').classList.remove('active');
+}
+
+function updateLeadIndicators() {
+  const leadDiff = document.getElementById('lead-diff');
+  const leadBanner = document.getElementById('lead-banner');
+  const diff = teamAScore - teamBScore;
+
+  if (!leadDiff || !leadBanner) return;
+
+  if (diff === 0) {
+    leadDiff.className = 'lead-diff tied';
+    leadDiff.textContent = 'Tied';
+    leadBanner.style.display = 'none';
+  } else if (diff > 0) {
+    const pts = diff === 1 ? 'pt' : 'pts';
+    leadDiff.className = 'lead-diff red';
+    leadDiff.textContent = `🔴 +${diff} ${pts}`;
+    leadBanner.style.display = 'block';
+    leadBanner.className = 'lead-banner red';
+    leadBanner.innerHTML = `🔴 <strong>Team Red</strong> leads by <strong>${diff} ${pts}</strong>`;
+  } else {
+    const absDiff = Math.abs(diff);
+    const pts = absDiff === 1 ? 'pt' : 'pts';
+    leadDiff.className = 'lead-diff blue';
+    leadDiff.textContent = `🔵 +${absDiff} ${pts}`;
+    leadBanner.style.display = 'block';
+    leadBanner.className = 'lead-banner blue';
+    leadBanner.innerHTML = `🔵 <strong>Team Blue</strong> leads by <strong>${absDiff} ${pts}</strong>`;
+  }
+}
+
 
 // Modal Handlers
 function initModal() {

@@ -151,31 +151,50 @@
         <div class="scoreboard-header">
           <div>
             <h3 style="font-size: 1.4rem; font-weight: 700;">Match Scoreboard (Target: 13 Pts)</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Record points after each *mène* (end).</p>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Tap <strong>Has the Point ✦</strong> to mark who's closest to the cochonnet.</p>
           </div>
           <button class="btn-secondary" onclick="resetScore()"><i class="fa-solid fa-rotate-right"></i> Reset Match</button>
         </div>
 
-        <div class="scoreboard-body">
-          <div class="team-box">
-            <div class="team-name" style="color: #ef4444;"><i class="fa-solid fa-circle"></i> Team Red (Pointeurs)</div>
+        <!-- Lead banner -->
+        <div id="lead-banner" class="lead-banner" style="display:none;"></div>
+
+        <div class="scoreboard-body" id="scoreboard-body">
+
+          <!-- Team Red -->
+          <div class="team-box" id="team-box-a">
+            <div class="team-name" style="color: #ef4444;"><i class="fa-solid fa-circle"></i> Team Red <span style="font-size: 0.75rem; opacity: 0.7;">(Pointeurs)</span></div>
             <div class="score-display" id="score-a">0</div>
             <div class="score-controls">
-              <button class="btn-circle" onclick="updateScore('A', -1)"><i class="fa-solid fa-minus"></i></button>
-              <button class="btn-circle" onclick="updateScore('A', 1)"><i class="fa-solid fa-plus"></i></button>
+              <button class="btn-circle" onclick="updateScore('A', -1)" title="Remove point"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle" onclick="updateScore('A', 1)" title="Add point"><i class="fa-solid fa-plus"></i></button>
             </div>
+            <button class="has-point-btn red" id="point-btn-a" onclick="setPointHolder('A')">
+              <span class="point-pulse"></span>
+              <i class="fa-solid fa-star"></i> Has the Point
+            </button>
           </div>
 
-          <div class="vs-divider">VS</div>
+          <!-- Center divider -->
+          <div class="vs-col">
+            <div class="vs-divider">VS</div>
+            <div id="lead-diff" class="lead-diff"></div>
+          </div>
 
-          <div class="team-box">
-            <div class="team-name" style="color: #3b82f6;"><i class="fa-solid fa-circle"></i> Team Blue (Tireurs)</div>
+          <!-- Team Blue -->
+          <div class="team-box" id="team-box-b">
+            <div class="team-name" style="color: #3b82f6;"><i class="fa-solid fa-circle"></i> Team Blue <span style="font-size: 0.75rem; opacity: 0.7;">(Tireurs)</span></div>
             <div class="score-display" id="score-b" style="color: #3b82f6;">0</div>
             <div class="score-controls">
-              <button class="btn-circle" onclick="updateScore('B', -1)"><i class="fa-solid fa-minus"></i></button>
-              <button class="btn-circle" onclick="updateScore('B', 1)"><i class="fa-solid fa-plus"></i></button>
+              <button class="btn-circle" onclick="updateScore('B', -1)" title="Remove point"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle" onclick="updateScore('B', 1)" title="Add point"><i class="fa-solid fa-plus"></i></button>
             </div>
+            <button class="has-point-btn blue" id="point-btn-b" onclick="setPointHolder('B')">
+              <span class="point-pulse"></span>
+              <i class="fa-solid fa-star"></i> Has the Point
+            </button>
           </div>
+
         </div>
       </div>
     </section>
