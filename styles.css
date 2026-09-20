@@ -86,14 +86,16 @@ h1, h2, h3, h4, h5, h6 {
   left: 0;
   width: 100%;
   z-index: 1000;
-  padding: 16px 5%;
+  padding: 14px 5%;
+  background: #090c15;
+  border-bottom: 1px solid var(--border-glass);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
   transition: var(--transition-normal);
 }
 
 .navbar.scrolled {
-  background: rgba(9, 12, 21, 0.85);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-glass);
+  background: #090c15;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   padding: 12px 5%;
 }
 
@@ -1162,13 +1164,9 @@ button:not(.boule), .btn-circle, .has-point-btn, .hamburger {
   .hamburger { display: flex; }
   #nav-join-btn { display: none !important; }
 
-  /* Mobile scorekeeper standalone view: hide main navbar to maximize court area */
-  body.route-score .navbar {
-    display: none !important;
-  }
-  
-  body.route-score .score-standalone-view {
-    padding-top: calc(14px + var(--safe-top)) !important;
+  .score-standalone-view {
+    padding-top: calc(80px + var(--safe-top)) !important;
+    padding-bottom: calc(84px + var(--safe-bottom)) !important;
   }
 
   /* Hero — push down past navbar + notch */
@@ -1396,7 +1394,7 @@ button:not(.boule), .btn-circle, .has-point-btn, .hamburger {
 ===================== */
 .score-standalone-view {
   min-height: 100vh;
-  padding: 96px 16px 40px 16px;
+  padding: 92px 16px 40px 16px;
   background: radial-gradient(circle at 50% 0%, #172138 0%, var(--bg-dark) 70%);
   display: flex;
   flex-direction: column;

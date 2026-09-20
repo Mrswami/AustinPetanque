@@ -299,33 +299,6 @@
   <div id="score-view" class="score-standalone-view" style="display: none;">
     <div class="score-court-container">
       
-      <!-- Courtside Action Bar -->
-      <div class="courtside-bar">
-        <a href="#about" class="courtside-back-btn" title="Back to Club Portal">
-          <i class="fa-solid fa-arrow-left"></i> <span>Club</span>
-        </a>
-        <div class="courtside-title-box">
-          <h2 class="courtside-title"><i class="fa-solid fa-bullseye" style="color:var(--primary-amber);"></i> Match Court</h2>
-          <button class="sync-status-pill" id="sync-status-pill" onclick="openMatchSyncModal()" title="View Match PIN / Cloud Sync">
-            <span class="sync-dot"></span> <span id="sync-label">Local Match</span>
-          </button>
-        </div>
-        <div class="courtside-actions">
-          <button class="action-btn" id="sunlight-toggle-btn" onclick="toggleSunlightMode()" title="Toggle Sunlight High-Contrast Mode">
-            <i class="fa-solid fa-sun"></i>
-          </button>
-          <button class="action-btn" id="wakelock-toggle-btn" onclick="toggleWakeLock()" title="Keep Screen Awake (Wake Lock)">
-            <i class="fa-solid fa-lightbulb"></i>
-          </button>
-          <button class="action-btn" onclick="openMatchSyncModal()" title="Live Match Sync & Share">
-            <i class="fa-solid fa-tower-broadcast"></i>
-          </button>
-          <button class="action-btn reset" onclick="resetScore()" title="Reset Match">
-            <i class="fa-solid fa-rotate-right"></i>
-          </button>
-        </div>
-      </div>
-
       <!-- Scoreboard Card -->
       <div class="scoreboard-wrapper glass-panel">
         <!-- Victory Celebration Overlay -->
@@ -342,12 +315,25 @@
           </div>
         </div>
 
-        <div class="scoreboard-header" style="margin-bottom: 14px;">
+        <div class="scoreboard-header" style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
           <div>
-            <h3 style="font-size: 1.3rem; font-weight: 700;">Target: 13 Points (Win by 2)</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem;">Tap circle to throw (/), tap slash to mark point holder (★).</p>
+            <h3 style="font-size: 1.35rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-bullseye" style="color:var(--primary-amber);"></i> Target: 13 Points (Win by 2)
+            </h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Tap circle to throw (/), tap slash to mark point holder (★).</p>
           </div>
-          <button class="btn-secondary" onclick="resetScore()"><i class="fa-solid fa-rotate-right"></i> Reset Match</button>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <button class="sync-status-pill" id="sync-status-pill" onclick="openMatchSyncModal()" title="View Match PIN / Cloud Sync">
+              <span class="sync-dot"></span> <span id="sync-label">Local Match</span>
+            </button>
+            <button class="action-btn" id="sunlight-toggle-btn" onclick="toggleSunlightMode()" title="Toggle Sunlight High-Contrast Mode">
+              <i class="fa-solid fa-sun"></i>
+            </button>
+            <button class="action-btn" id="wakelock-toggle-btn" onclick="toggleWakeLock()" title="Keep Screen Awake (Wake Lock)">
+              <i class="fa-solid fa-lightbulb"></i>
+            </button>
+            <button class="btn-secondary" onclick="resetScore()" title="Reset Match"><i class="fa-solid fa-rotate-right"></i> Reset Match</button>
+          </div>
         </div>
 
         <!-- Lead banner -->
