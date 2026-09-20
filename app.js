@@ -283,6 +283,23 @@ function initHashRouting() {
       if (scoreView) scoreView.style.display = 'none';
       if (adminSection) adminSection.style.display = 'block';
       window.scrollTo(0, 0);
+
+      const isAdmin = isCurrentUserAdmin(currentUser);
+      const loginBox = document.getElementById('admin-login-box');
+      const dashboardBox = document.getElementById('admin-dashboard-box');
+      const roleStatus = document.getElementById('admin-role-status');
+
+      if (isAdmin) {
+        if (loginBox) loginBox.style.display = 'none';
+        if (dashboardBox) dashboardBox.style.display = 'block';
+        if (roleStatus) {
+          roleStatus.innerHTML = `<span class="badge-role-founder"><i class="fa-solid fa-crown"></i> Founder Console Active (${currentUser?.email || 'noless42@gmail.com'})</span>`;
+        }
+        renderAdminDashboard();
+      } else {
+        if (loginBox) loginBox.style.display = 'block';
+        if (dashboardBox) dashboardBox.style.display = 'none';
+      }
       
       const urlParams = new URLSearchParams(queryString || '');
       const approveId = urlParams.get('approve');
@@ -1682,14 +1699,58 @@ function initFormSubmission() {
   });
 }
 
-// Founder Admin Auth & Actions
+// Founder Admin Auth, Role Management & Silent Triggers
+const ADMIN_EMAILS = ['noless42@gmail.com'];
+
+window.isCurrentUserAdmin = (user = currentUser) => {
+  if (localStorage.getItem('austin_petanque_admin_unlocked') === 'true') return true;
+  if (!user || !user.email) return false;
+  return ADMIN_EMAILS.includes(user.email.toLowerCase().trim());
+};
+
+function isCurrentUserAdmin(user = currentUser) {
+  return window.isCurrentUserAdmin(user);
+}
+
+// Silent Founder Access Triggers
+let logoClickCount = 0;
+let logoClickTimer = null;
+window.handleLogoClick = (e) => {
+  logoClickCount++;
+  clearTimeout(logoClickTimer);
+  if (logoClickCount >= 3) {
+    logoClickCount = 0;
+    window.location.hash = '#admin';
+    return;
+  }
+  logoClickTimer = setTimeout(() => { logoClickCount = 0; }, 1200);
+};
+
+window.openFounderAdminSilently = () => {
+  window.location.hash = '#admin';
+};
+
+// Keyboard shortcut: Ctrl+Shift+A or Alt+A opens Admin silently
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') || (e.altKey && e.key.toLowerCase() === 'a')) {
+    e.preventDefault();
+    window.location.hash = '#admin';
+  }
+});
+
 window.loginAdmin = () => {
   const pass = document.getElementById('admin-pass-input').value;
   const errorEl = document.getElementById('admin-login-error');
 
   if (pass === 'petanque2026' || pass === 'founders' || pass === 'admin') {
+    localStorage.setItem('austin_petanque_admin_unlocked', 'true');
     document.getElementById('admin-login-box').style.display = 'none';
     document.getElementById('admin-dashboard-box').style.display = 'block';
+    const roleStatus = document.getElementById('admin-role-status');
+    if (roleStatus) {
+      roleStatus.innerHTML = `<span class="badge-role-founder"><i class="fa-solid fa-crown"></i> Founder Console Active (Passcode Authenticated)</span>`;
+    }
+    updateAuthUI(currentUser);
     renderAdminDashboard();
   } else {
     errorEl.textContent = 'Incorrect passcode. Try "founders" or "petanque2026"';
@@ -1697,8 +1758,11 @@ window.loginAdmin = () => {
 };
 
 window.logoutAdmin = () => {
+  localStorage.removeItem('austin_petanque_admin_unlocked');
   document.getElementById('admin-login-box').style.display = 'block';
   document.getElementById('admin-dashboard-box').style.display = 'none';
+  updateAuthUI(currentUser);
+  window.location.hash = '#about';
 };
 
 function autoApproveMember(appId) {
@@ -1956,6 +2020,50 @@ function updateAuthUI(user) {
 
     if (authLoginButtons) authLoginButtons.style.display = 'flex';
     if (authLoggedInBox) authLoggedInBox.style.display = 'none';
+  }
+
+  // Role-Aware UI: Founder vs Player
+  const isAdmin = isCurrentUserAdmin(user);
+  const navAdminLink = document.getElementById('nav-admin-link');
+  const drawerAdminLink = document.getElementById('drawer-admin-link');
+  const authAdminBtn = document.getElementById('auth-admin-btn');
+  const authUserRoleBadge = document.getElementById('auth-user-role-badge');
+
+  if (isAdmin) {
+    if (navAdminLink) navAdminLink.style.display = 'inline-block';
+    if (drawerAdminLink) drawerAdminLink.style.display = 'flex';
+    if (authAdminBtn) authAdminBtn.style.display = 'inline-flex';
+    if (authUserRoleBadge) {
+      authUserRoleBadge.style.display = 'inline-flex';
+      authUserRoleBadge.className = 'badge-role-founder';
+      authUserRoleBadge.innerHTML = '<i class="fa-solid fa-crown"></i> Founder / Admin';
+    }
+
+    // If currently on #admin, auto-unlock dashboard!
+    if (window.location.hash.split('?')[0] === '#admin') {
+      const loginBox = document.getElementById('admin-login-box');
+      const dashboardBox = document.getElementById('admin-dashboard-box');
+      const roleStatus = document.getElementById('admin-role-status');
+      if (loginBox) loginBox.style.display = 'none';
+      if (dashboardBox) dashboardBox.style.display = 'block';
+      if (roleStatus) {
+        roleStatus.innerHTML = `<span class="badge-role-founder"><i class="fa-solid fa-crown"></i> Founder Console Active (${user?.email || 'noless42@gmail.com'})</span>`;
+      }
+      renderAdminDashboard();
+    }
+  } else {
+    if (navAdminLink) navAdminLink.style.display = 'none';
+    if (drawerAdminLink) drawerAdminLink.style.display = 'none';
+    if (authAdminBtn) authAdminBtn.style.display = 'none';
+    if (authUserRoleBadge) {
+      if (user) {
+        authUserRoleBadge.style.display = 'inline-flex';
+        authUserRoleBadge.className = 'badge-role-player';
+        authUserRoleBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Club Member';
+      } else {
+        authUserRoleBadge.style.display = 'none';
+      }
+    }
   }
 }
 
