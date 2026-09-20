@@ -1916,3 +1916,156 @@ body.sunlight-mode .boule.state-2::after {
   gap: 6px;
 }
 
+/* =====================
+   Authentication & Player Profile Styles
+===================== */
+.nav-auth-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-auth-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-glass);
+  color: var(--text-main);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-auth-nav:hover {
+  background: var(--primary-amber);
+  color: #000;
+  border-color: var(--primary-amber);
+}
+
+.user-pill-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 4px 14px 4px 4px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.user-pill-nav:hover {
+  background: rgba(245, 158, 11, 0.18);
+  box-shadow: 0 0 14px var(--primary-glow);
+}
+
+.nav-avatar-img,
+.user-avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--primary-amber);
+  background: #1e293b;
+}
+
+.nav-user-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-buttons-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn-auth {
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.btn-google {
+  background: #ffffff;
+  color: #1f2937;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-google:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.btn-apple {
+  background: #000000;
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+
+.btn-apple:hover {
+  background: #18181b;
+  border-color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.auth-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1.5px solid rgba(245, 158, 11, 0.35);
+  color: var(--primary-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin: 0 auto;
+}
+
+.user-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  text-align: left;
+}
+
+.user-profile-badge .user-avatar-img {
+  width: 48px;
+  height: 48px;
+}
+
+.auth-autofill-hint {
+  font-size: 0.78rem;
+  color: #10b981;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+

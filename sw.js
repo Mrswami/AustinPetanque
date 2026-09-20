@@ -1,5 +1,5 @@
 // Service Worker for Austin Pétanque
-const CACHE_NAME = 'austin-petanque-v2';
+const CACHE_NAME = 'austin-petanque-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -34,8 +34,15 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Stale-while-revalidate for local assets, network-only for Firestore/external APIs
-  if (event.request.url.includes('firestore.googleapis.com') || event.request.url.includes('google-analytics')) {
+  // Network-only for Firestore, Firebase Auth, Google & Apple auth endpoints
+  if (
+    event.request.url.includes('firestore.googleapis.com') ||
+    event.request.url.includes('identitytoolkit.googleapis.com') ||
+    event.request.url.includes('securetoken.googleapis.com') ||
+    event.request.url.includes('google-analytics') ||
+    event.request.url.includes('appleid.apple.com') ||
+    event.request.url.includes('accounts.google.com')
+  ) {
     return;
   }
 

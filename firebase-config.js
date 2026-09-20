@@ -1,6 +1,7 @@
 // Firebase Configuration for Austin Pétanque
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, getDoc, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 
 const firebaseConfig = {
@@ -16,6 +17,14 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Authentication Providers
+const googleProvider = new GoogleAuthProvider();
+const appleProvider = new OAuthProvider('apple.com');
+appleProvider.addScope('email');
+appleProvider.addScope('name');
+
 let analytics;
 try {
   analytics = getAnalytics(app);
@@ -23,4 +32,26 @@ try {
   console.log("Analytics not available in local context");
 }
 
-export { app, db, analytics, collection, doc, setDoc, getDoc, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp, onSnapshot };
+export {
+  app,
+  db,
+  auth,
+  googleProvider,
+  appleProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  analytics,
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  serverTimestamp,
+  onSnapshot
+};

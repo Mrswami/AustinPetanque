@@ -1,8 +1,29 @@
 // Austin Pétanque Application Script
-import { db, collection, doc, setDoc, getDoc, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp, onSnapshot } from './firebase-config.js';
+import {
+  db,
+  auth,
+  googleProvider,
+  appleProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  serverTimestamp,
+  onSnapshot
+} from './firebase-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
+  initAuth();
   initScoreboard();
   initModal();
   initFormSubmission();
@@ -1348,3 +1369,203 @@ window.actionReject = (appId) => {
   savePendingApps(apps);
   renderAdminDashboard();
 };
+
+// ─── Firebase Authentication (Google & Apple) ────────────────────────────────
+let currentUser = null;
+
+function initAuth() {
+  const authModal = document.getElementById('auth-modal');
+  if (authModal) {
+    authModal.addEventListener('click', (e) => {
+      if (e.target === authModal) closeAuthModal();
+    });
+  }
+
+  window.openAuthModal = () => {
+    document.getElementById('auth-modal')?.classList.add('active');
+  };
+
+  window.closeAuthModal = () => {
+    document.getElementById('auth-modal')?.classList.remove('active');
+    const msg = document.getElementById('auth-status-msg');
+    if (msg) msg.textContent = '';
+  };
+
+  window.loginWithGoogle = async () => {
+    const statusMsg = document.getElementById('auth-status-msg');
+    const googleBtn = document.getElementById('google-signin-btn');
+    try {
+      if (statusMsg) {
+        statusMsg.textContent = 'Connecting to Google...';
+        statusMsg.style.color = 'var(--primary-amber)';
+      }
+      if (googleBtn) googleBtn.disabled = true;
+
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      if (statusMsg) {
+        statusMsg.textContent = `Welcome, ${user.displayName || 'Player'}!`;
+        statusMsg.style.color = '#10b981';
+      }
+
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          displayName: user.displayName || 'Pétanqueur',
+          email: user.email,
+          photoURL: user.photoURL,
+          lastLogin: serverTimestamp(),
+          provider: 'google.com'
+        }, { merge: true });
+      } catch (e) {
+        console.warn('Firestore user profile save notice:', e);
+      }
+
+      setTimeout(() => {
+        closeAuthModal();
+      }, 900);
+    } catch (err) {
+      console.warn('Google sign-in error:', err);
+      if (statusMsg) {
+        statusMsg.style.color = '#ef4444';
+        if (err.code === 'auth/popup-closed-by-user') {
+          statusMsg.textContent = 'Sign-in window was closed.';
+        } else if (err.code === 'auth/popup-blocked') {
+          statusMsg.textContent = 'Popup was blocked by browser. Please allow popups.';
+        } else {
+          statusMsg.textContent = `Sign-in notice: ${err.message || 'Unable to sign in.'}`;
+        }
+      }
+    } finally {
+      if (googleBtn) googleBtn.disabled = false;
+    }
+  };
+
+  window.loginWithApple = async () => {
+    const statusMsg = document.getElementById('auth-status-msg');
+    const appleBtn = document.getElementById('apple-signin-btn');
+    try {
+      if (statusMsg) {
+        statusMsg.textContent = 'Connecting to Apple...';
+        statusMsg.style.color = 'var(--primary-amber)';
+      }
+      if (appleBtn) appleBtn.disabled = true;
+
+      const result = await signInWithPopup(auth, appleProvider);
+      const user = result.user;
+      
+      if (statusMsg) {
+        statusMsg.textContent = `Welcome, ${user.displayName || 'Player'}!`;
+        statusMsg.style.color = '#10b981';
+      }
+
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          displayName: user.displayName || 'Apple Pétanqueur',
+          email: user.email,
+          photoURL: user.photoURL,
+          lastLogin: serverTimestamp(),
+          provider: 'apple.com'
+        }, { merge: true });
+      } catch (e) {
+        console.warn('Firestore user profile save notice:', e);
+      }
+
+      setTimeout(() => {
+        closeAuthModal();
+      }, 900);
+    } catch (err) {
+      console.warn('Apple sign-in error:', err);
+      if (statusMsg) {
+        statusMsg.style.color = '#ef4444';
+        if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
+          statusMsg.textContent = 'Apple Sign-In is ready! In Firebase Console, enable Apple under Auth > Sign-in method with your Apple Developer Team ID.';
+        } else if (err.code === 'auth/popup-closed-by-user') {
+          statusMsg.textContent = 'Sign-in window was closed.';
+        } else {
+          statusMsg.textContent = `Apple Sign-In: ${err.message || 'Please configure Apple ID in Firebase Console.'}`;
+        }
+      }
+    } finally {
+      if (appleBtn) appleBtn.disabled = false;
+    }
+  };
+
+  window.handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      closeAuthModal();
+    } catch (err) {
+      console.warn('Sign-out error:', err);
+    }
+  };
+
+  // Auth State Listener
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    updateAuthUI(user);
+  });
+}
+
+function updateAuthUI(user) {
+  const navLoginBtn = document.getElementById('nav-login-btn');
+  const navUserPill = document.getElementById('nav-user-pill');
+  const navUserName = document.getElementById('nav-user-name');
+  const navUserAvatar = document.getElementById('nav-user-avatar');
+
+  const drawerLoginBtn = document.getElementById('drawer-login-btn');
+  const drawerUserPill = document.getElementById('drawer-user-pill');
+  const drawerUserName = document.getElementById('drawer-user-name');
+  const drawerUserAvatar = document.getElementById('drawer-user-avatar');
+
+  const authLoginButtons = document.getElementById('auth-login-buttons');
+  const authLoggedInBox = document.getElementById('auth-logged-in-box');
+  const authUserName = document.getElementById('auth-user-name');
+  const authUserEmail = document.getElementById('auth-user-email');
+  const authUserAvatar = document.getElementById('auth-user-avatar');
+
+  const defaultAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f59e0b"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>';
+
+  if (user) {
+    const displayName = user.displayName || user.email?.split('@')[0] || 'Player';
+    const photoURL = user.photoURL || defaultAvatar;
+
+    if (navLoginBtn) navLoginBtn.style.display = 'none';
+    if (navUserPill) navUserPill.style.display = 'inline-flex';
+    if (navUserName) navUserName.textContent = displayName;
+    if (navUserAvatar) navUserAvatar.src = photoURL;
+
+    if (drawerLoginBtn) drawerLoginBtn.style.display = 'none';
+    if (drawerUserPill) drawerUserPill.style.display = 'flex';
+    if (drawerUserName) drawerUserName.textContent = displayName;
+    if (drawerUserAvatar) drawerUserAvatar.src = photoURL;
+
+    if (authLoginButtons) authLoginButtons.style.display = 'none';
+    if (authLoggedInBox) authLoggedInBox.style.display = 'block';
+    if (authUserName) authUserName.textContent = displayName;
+    if (authUserEmail) authUserEmail.textContent = user.email || 'Verified Account';
+    if (authUserAvatar) authUserAvatar.src = photoURL;
+
+    // Autofill forms
+    const checkinName = document.getElementById('checkin-name');
+    if (checkinName && !checkinName.value) checkinName.value = displayName;
+
+    const memberName = document.getElementById('member-name');
+    if (memberName && !memberName.value) memberName.value = displayName;
+
+    const memberEmail = document.getElementById('member-email');
+    if (memberEmail && !memberEmail.value && user.email) memberEmail.value = user.email;
+  } else {
+    if (navLoginBtn) navLoginBtn.style.display = 'inline-flex';
+    if (navUserPill) navUserPill.style.display = 'none';
+
+    if (drawerLoginBtn) drawerLoginBtn.style.display = 'inline-flex';
+    if (drawerUserPill) drawerUserPill.style.display = 'none';
+
+    if (authLoginButtons) authLoginButtons.style.display = 'flex';
+    if (authLoggedInBox) authLoggedInBox.style.display = 'none';
+  }
+}
+
