@@ -1712,7 +1712,7 @@ body.sunlight-mode .boule.state-2::after {
    Persistent Bottom Dock (Mobile Only)
 ===================== */
 .bottom-dock {
-  display: none;
+  display: none !important;
 }
 
 @media (max-width: 768px) {
@@ -1727,7 +1727,7 @@ body.sunlight-mode .boule.state-2::after {
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border-top: 1px solid var(--border-glass);
-    display: flex;
+    display: flex !important;
     justify-content: space-around;
     align-items: center;
     z-index: 1000;
