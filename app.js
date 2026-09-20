@@ -252,7 +252,20 @@ function initHashRouting() {
     dockCourts?.classList.remove('active');
     dockScore?.classList.remove('active');
 
-    if (baseHash === '#score' || baseHash === '#scoreboard') {
+    const isScore = baseHash === '#score' || baseHash === '#scoreboard';
+    document.body.classList.toggle('route-score', isScore);
+
+    // Update active nav-links for desktop and mobile drawer
+    document.querySelectorAll('.nav-links a, .mobile-drawer a').forEach(a => {
+      const href = a.getAttribute('href');
+      if (href === baseHash || (href === '#about' && (baseHash === '' || baseHash === '#' || baseHash === '#about'))) {
+        a.classList.add('active');
+      } else {
+        a.classList.remove('active');
+      }
+    });
+
+    if (isScore) {
       if (publicView) publicView.style.display = 'none';
       if (adminSection) adminSection.style.display = 'none';
       if (scoreView) scoreView.style.display = 'flex';
@@ -269,6 +282,7 @@ function initHashRouting() {
       if (publicView) publicView.style.display = 'none';
       if (scoreView) scoreView.style.display = 'none';
       if (adminSection) adminSection.style.display = 'block';
+      window.scrollTo(0, 0);
       
       const urlParams = new URLSearchParams(queryString || '');
       const approveId = urlParams.get('approve');
@@ -1181,7 +1195,24 @@ function updateLeadIndicators() {
 function initModal() {
   const modal = document.getElementById('membership-modal');
   
-  window.openModal = () => {
+  window.openModal = (type = 'membership', title = 'Join Austin Pétanque', subtitle = 'Applications are sent to <strong>noless42@gmail.com</strong> for founder approval.') => {
+    const modalTitle = document.getElementById('membership-modal-title');
+    const modalSub = document.getElementById('membership-modal-subtitle');
+    const submitBtn = document.getElementById('membership-submit-btn');
+
+    if (modalTitle) modalTitle.textContent = title;
+    if (modalSub) modalSub.innerHTML = subtitle;
+
+    if (submitBtn) {
+      if (type === 'tournament') {
+        submitBtn.innerHTML = '<i class="fa-solid fa-trophy"></i> Register for Tournament';
+      } else if (type === 'rsvp') {
+        submitBtn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Confirm Match RSVP';
+      } else {
+        submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Application';
+      }
+    }
+
     modal.classList.add('active');
   };
 
