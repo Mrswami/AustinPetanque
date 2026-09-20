@@ -32,7 +32,7 @@ function renderBoules(team) {
     .map(({ state, i }) =>
       `<div class="boule ${color} state-${state}"
             onclick="cycleBoule('${team}', ${i})"
-            title="${state === 1 ? 'Tap to mark as close ball ★' : 'Tap to return to hand'}"></div>`
+            title="${state === 1 ? 'Tap to mark as close ball ★' : 'Tap to unmark close ball'}"></div>`
     ).join('');
 
   // RIGHT zone: circles (state 0), ordered by index
@@ -48,7 +48,10 @@ function renderBoules(team) {
 
 window.cycleBoule = (team, index) => {
   const current = bouleStates[team][index];
-  const newState = (current + 1) % 3;
+  // 0 (right, circle in hand) -> 1 (left, thrown slash)
+  // Once thrown on left: 1 (slash) <-> 2 (star)
+  // Ball NEVER returns to hand (right) until dedicated reset button is pressed!
+  const newState = current === 0 ? 1 : (current === 1 ? 2 : 1);
   bouleStates[team][index] = newState;
 
   // ★ Star revocation: when marking a ball as close (★),
