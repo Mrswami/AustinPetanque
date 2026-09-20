@@ -7,6 +7,13 @@
   <meta name="description" content="Welcome to Austin Pétanque Club. Join casual games, weekend tournaments, and friendly boules matches across park courts in Austin, Texas.">
   <meta name="keywords" content="Austin Petanque, Petanque Texas, Petanque Austin, Boules Club, French Petanque, Austin Parks">
   
+  <!-- PWA & Mobile Optimization -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f59e0b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pétanque">
+
   <!-- Styles & Fonts -->
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -17,8 +24,8 @@
   <div class="mobile-drawer" id="mobile-drawer">
     <button class="drawer-close" onclick="closeDrawer()"><i class="fa-solid fa-xmark"></i></button>
     <a href="#about" onclick="closeDrawer()">About</a>
-    <a href="#courts" onclick="closeDrawer()">Courts</a>
-    <a href="#scoreboard" onclick="closeDrawer()">Live Tracker</a>
+    <a href="#courts" onclick="closeDrawer()">Courts & Meet</a>
+    <a href="#score" onclick="closeDrawer()"><i class="fa-solid fa-bullseye" style="color:var(--primary-amber);"></i> Scorekeeper App</a>
     <a href="#events" onclick="closeDrawer()">Events</a>
     <a href="#rules" onclick="closeDrawer()">Rules</a>
     <a href="#admin" onclick="closeDrawer()"><i class="fa-solid fa-user-shield"></i> Admin</a>
@@ -34,8 +41,8 @@
       </a>
       <ul class="nav-links">
         <li><a href="#about">About</a></li>
-        <li><a href="#courts">Courts</a></li>
-        <li><a href="#scoreboard">Live Tracker</a></li>
+        <li><a href="#courts">Courts & Meet</a></li>
+        <li><a href="#score"><i class="fa-solid fa-bullseye" style="color:var(--primary-amber);"></i> Scorekeeper</a></li>
         <li><a href="#events">Events</a></li>
         <li><a href="#rules">Rules</a></li>
         <li><a href="#admin"><i class="fa-solid fa-user-shield"></i> Admin</a></li>
@@ -137,93 +144,49 @@
           <button class="btn-secondary" onclick="openModal()"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
         </div>
       </div>
+
+      <!-- Live Pitch Activity & Check-Ins Hub -->
+      <div class="live-courts-hub glass-panel" style="margin-top: 36px; padding: 28px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
+          <div>
+            <div class="live-pulse-badge"><span class="pulse-green"></span> Live Community Activity</div>
+            <h3 style="font-size: 1.4rem; font-weight: 700; margin-top: 6px;">Who's Playing in Austin Today?</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">Real-time check-ins and triplette calls across Austin terrains.</p>
+          </div>
+          <button class="btn-primary" onclick="openCheckInModal()"><i class="fa-solid fa-location-crosshairs"></i> Check In to a Pitch</button>
+        </div>
+
+        <div class="checkin-feed" id="checkin-feed">
+          <div class="checkin-loading" style="color: var(--text-muted); text-align: center; padding: 20px;">
+            <i class="fa-solid fa-spinner fa-spin"></i> Connecting to live pitch feed...
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- Live Match Score Tracker Section -->
+    <!-- Courtside Scorekeeper Teaser Section -->
     <section class="section" id="scoreboard">
       <div class="section-header">
         <div class="glass-pill"><i class="fa-solid fa-calculator"></i> Live Match Assistant</div>
-        <h2 class="section-title">Court Scoreboard</h2>
-        <p class="section-desc">Keep score during your weekend games directly from your mobile device.</p>
+        <h2 class="section-title">Dedicated Courtside Scorekeeper</h2>
+        <p class="section-desc">Full-screen, sunlight-optimized score tracking, two-zone boule tracker, mène history, and live spectator broadcast.</p>
       </div>
 
-      <div class="scoreboard-wrapper glass-panel">
-        <!-- Victory Celebration Overlay -->
-        <div id="victory-overlay" class="victory-overlay" style="display: none;">
-          <canvas id="victory-canvas" class="victory-canvas"></canvas>
-          <div class="victory-content">
-            <div class="victory-trophy">🏆</div>
-            <h3 id="victory-title" class="victory-title">Team Red Wins!</h3>
-            <p id="victory-subtitle" class="victory-subtitle">Final Match Score: 13 &ndash; 10</p>
-            <div class="victory-actions">
-              <button class="btn-primary" onclick="resetScore()"><i class="fa-solid fa-rotate-right"></i> Play Again</button>
-              <button class="btn-secondary" onclick="hideVictoryCelebration()"><i class="fa-solid fa-xmark"></i> Dismiss</button>
-            </div>
-          </div>
+      <div class="glass-panel" style="padding: 36px 24px; text-align: center; max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 18px;">
+        <div style="font-size: 3.2rem; color: var(--primary-amber); filter: drop-shadow(0 0 16px var(--primary-glow));">
+          <i class="fa-solid fa-bullseye"></i>
         </div>
-
-        <div class="scoreboard-header">
-          <div>
-            <h3 style="font-size: 1.4rem; font-weight: 700;">Match Scoreboard (Target: 13 Pts)</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Tap <strong>Has the Point ✦</strong> to mark who's closest to the cochonnet.</p>
-          </div>
-          <button class="btn-secondary" onclick="resetScore()"><i class="fa-solid fa-rotate-right"></i> Reset Match</button>
-        </div>
-
-        <!-- Lead banner -->
-        <div id="lead-banner" class="lead-banner" style="display:none;"></div>
-
-        <div class="scoreboard-body" id="scoreboard-body">
-
-          <!-- Team Red -->
-          <div class="team-box" id="team-box-a">
-            <div class="team-name" style="color: #ef4444;"><i class="fa-solid fa-circle"></i> Team Red <span style="font-size: 0.75rem; opacity: 0.7;">(Pointeurs)</span></div>
-
-            <div class="score-row">
-              <div class="boule-zone left" id="boules-a-left"></div>
-              <div class="score-display" id="score-a">0</div>
-              <div class="boule-zone right" id="boules-a-right"></div>
-            </div>
-
-            <div class="score-controls">
-              <button class="btn-circle" onclick="updateScore('A', -1)" title="Remove point"><i class="fa-solid fa-minus"></i></button>
-              <button class="btn-circle" onclick="updateScore('A', 1)" title="Add point"><i class="fa-solid fa-plus"></i></button>
-            </div>
-            <button class="has-point-btn red" id="point-btn-a" onclick="setPointHolder('A')">
-              <span class="point-pulse"></span>
-              <i class="fa-solid fa-star"></i> Has the Point
-            </button>
-          </div>
-
-          <!-- Center divider -->
-          <div class="vs-col">
-            <div class="vs-divider">VS</div>
-            <div id="lead-diff" class="lead-diff"></div>
-            <button id="new-mene-btn" class="new-mene-btn" onclick="resetMene()" style="display:none;">
-              <i class="fa-solid fa-rotate-right"></i> New Mène
-            </button>
-          </div>
-
-          <!-- Team Blue -->
-          <div class="team-box" id="team-box-b">
-            <div class="team-name" style="color: #3b82f6;"><i class="fa-solid fa-circle"></i> Team Blue <span style="font-size: 0.75rem; opacity: 0.7;">(Tireurs)</span></div>
-
-            <div class="score-row">
-              <div class="boule-zone left" id="boules-b-left"></div>
-              <div class="score-display" id="score-b" style="color: #3b82f6;">0</div>
-              <div class="boule-zone right" id="boules-b-right"></div>
-            </div>
-
-            <div class="score-controls">
-              <button class="btn-circle" onclick="updateScore('B', -1)" title="Remove point"><i class="fa-solid fa-minus"></i></button>
-              <button class="btn-circle" onclick="updateScore('B', 1)" title="Add point"><i class="fa-solid fa-plus"></i></button>
-            </div>
-            <button class="has-point-btn blue" id="point-btn-b" onclick="setPointHolder('B')">
-              <span class="point-pulse"></span>
-              <i class="fa-solid fa-star"></i> Has the Point
-            </button>
-          </div>
-
+        <h3 style="font-size: 1.7rem; font-weight: 800;">Ready for Weekend Boules?</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 480px;">
+          Launch our standalone court app with permanent boule placement, screen wake-lock, sunlight high-contrast mode, mène timeline with undo, and 4-digit live cloud sync.
+        </p>
+        <div style="display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px;">
+          <a href="#score" class="btn-primary" style="padding: 14px 28px; font-size: 1.05rem;">
+            <i class="fa-solid fa-play"></i> Open Scorekeeper App
+          </a>
+          <button class="btn-secondary" onclick="openMatchSyncModal()" style="padding: 14px 22px;">
+            <i class="fa-solid fa-satellite-dish"></i> Join Live Match PIN
+          </button>
         </div>
       </div>
     </section>
@@ -307,6 +270,134 @@
         </div>
       </div>
     </section>
+  </div>
+
+  <!-- Dedicated Standalone Scorekeeper App View (#score) -->
+  <div id="score-view" class="score-standalone-view" style="display: none;">
+    <div class="score-court-container">
+      
+      <!-- Courtside Action Bar -->
+      <div class="courtside-bar">
+        <a href="#about" class="courtside-back-btn" title="Back to Club Portal">
+          <i class="fa-solid fa-arrow-left"></i> <span>Club</span>
+        </a>
+        <div class="courtside-title-box">
+          <h2 class="courtside-title"><i class="fa-solid fa-bullseye" style="color:var(--primary-amber);"></i> Match Court</h2>
+          <button class="sync-status-pill" id="sync-status-pill" onclick="openMatchSyncModal()" title="View Match PIN / Cloud Sync">
+            <span class="sync-dot"></span> <span id="sync-label">Local Match</span>
+          </button>
+        </div>
+        <div class="courtside-actions">
+          <button class="action-btn" id="sunlight-toggle-btn" onclick="toggleSunlightMode()" title="Toggle Sunlight High-Contrast Mode">
+            <i class="fa-solid fa-sun"></i>
+          </button>
+          <button class="action-btn" id="wakelock-toggle-btn" onclick="toggleWakeLock()" title="Keep Screen Awake (Wake Lock)">
+            <i class="fa-solid fa-lightbulb"></i>
+          </button>
+          <button class="action-btn" onclick="openMatchSyncModal()" title="Live Match Sync & Share">
+            <i class="fa-solid fa-tower-broadcast"></i>
+          </button>
+          <button class="action-btn reset" onclick="resetScore()" title="Reset Match">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scoreboard Card -->
+      <div class="scoreboard-wrapper glass-panel">
+        <!-- Victory Celebration Overlay -->
+        <div id="victory-overlay" class="victory-overlay" style="display: none;">
+          <canvas id="victory-canvas" class="victory-canvas"></canvas>
+          <div class="victory-content">
+            <div class="victory-trophy">🏆</div>
+            <h3 id="victory-title" class="victory-title">Team Red Wins!</h3>
+            <p id="victory-subtitle" class="victory-subtitle">Final Match Score: 13 &ndash; 10</p>
+            <div class="victory-actions">
+              <button class="btn-primary" onclick="resetScore()"><i class="fa-solid fa-rotate-right"></i> Play Again</button>
+              <button class="btn-secondary" onclick="hideVictoryCelebration()"><i class="fa-solid fa-xmark"></i> Dismiss</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="scoreboard-header" style="margin-bottom: 14px;">
+          <div>
+            <h3 style="font-size: 1.3rem; font-weight: 700;">Target: 13 Points (Win by 2)</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Tap circle to throw (/), tap slash to mark point holder (★).</p>
+          </div>
+          <button class="btn-secondary" onclick="resetScore()"><i class="fa-solid fa-rotate-right"></i> Reset Match</button>
+        </div>
+
+        <!-- Lead banner -->
+        <div id="lead-banner" class="lead-banner" style="display:none;"></div>
+
+        <div class="scoreboard-body" id="scoreboard-body">
+
+          <!-- Team Red -->
+          <div class="team-box" id="team-box-a">
+            <div class="team-name" style="color: #ef4444;"><i class="fa-solid fa-circle"></i> Team Red <span style="font-size: 0.75rem; opacity: 0.7;">(Pointeurs)</span></div>
+
+            <div class="score-row">
+              <div class="boule-zone left" id="boules-a-left"></div>
+              <div class="score-display" id="score-a">0</div>
+              <div class="boule-zone right" id="boules-a-right"></div>
+            </div>
+
+            <div class="score-controls">
+              <button class="btn-circle" onclick="updateScore('A', -1)" title="Remove point"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle" onclick="updateScore('A', 1)" title="Add point"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <button class="has-point-btn red" id="point-btn-a" onclick="setPointHolder('A')">
+              <span class="point-pulse"></span>
+              <i class="fa-solid fa-star"></i> Has the Point
+            </button>
+          </div>
+
+          <!-- Center divider -->
+          <div class="vs-col">
+            <div class="vs-divider">VS</div>
+            <div id="lead-diff" class="lead-diff"></div>
+            <button id="new-mene-btn" class="new-mene-btn" onclick="recordAndResetMene()" style="display:none;">
+              <i class="fa-solid fa-rotate-right"></i> Record Mène
+            </button>
+          </div>
+
+          <!-- Team Blue -->
+          <div class="team-box" id="team-box-b">
+            <div class="team-name" style="color: #3b82f6;"><i class="fa-solid fa-circle"></i> Team Blue <span style="font-size: 0.75rem; opacity: 0.7;">(Tireurs)</span></div>
+
+            <div class="score-row">
+              <div class="boule-zone left" id="boules-b-left"></div>
+              <div class="score-display" id="score-b" style="color: #3b82f6;">0</div>
+              <div class="boule-zone right" id="boules-b-right"></div>
+            </div>
+
+            <div class="score-controls">
+              <button class="btn-circle" onclick="updateScore('B', -1)" title="Remove point"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle" onclick="updateScore('B', 1)" title="Add point"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <button class="has-point-btn blue" id="point-btn-b" onclick="setPointHolder('B')">
+              <span class="point-pulse"></span>
+              <i class="fa-solid fa-star"></i> Has the Point
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Visual Mène Timeline Strip -->
+        <div class="mene-timeline-container">
+          <div class="mene-timeline-header">
+            <span><i class="fa-solid fa-timeline"></i> Mène Progression</span>
+            <button class="undo-mene-btn" id="undo-mene-btn" onclick="undoLastMene()" style="display:none;">
+              <i class="fa-solid fa-arrow-rotate-left"></i> Undo Last Mène
+            </button>
+          </div>
+          <div class="mene-timeline-strip" id="mene-timeline-strip">
+            <span class="mene-empty-hint">Completed mènes will appear here</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </div>
 
   <!-- Founder Admin Section -->
@@ -415,6 +506,119 @@
     </div>
   </div>
 
+  <!-- Persistent Courtside Bottom Dock -->
+  <nav class="bottom-dock" id="bottom-dock">
+    <a href="#about" class="dock-item" id="dock-club">
+      <i class="fa-solid fa-house"></i>
+      <span>Club</span>
+    </a>
+    <a href="#courts" class="dock-item" id="dock-courts">
+      <i class="fa-solid fa-map-pin"></i>
+      <span>Courts & Meet</span>
+    </a>
+    <a href="#score" class="dock-item" id="dock-score">
+      <i class="fa-solid fa-bullseye"></i>
+      <span>Scorekeeper</span>
+    </a>
+  </nav>
+
+  <!-- Live Match Sync & Spectator Modal -->
+  <div class="modal-backdrop" id="match-sync-modal">
+    <div class="modal-content glass-panel" style="max-width: 440px;">
+      <button class="modal-close" onclick="closeMatchSyncModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div class="sync-modal-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
+        <h2 style="font-size: 1.6rem; font-weight: 800; margin-top: 8px;">Live Match Cloud Sync</h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem;">Share live score with spectators & teammates in real time.</p>
+      </div>
+
+      <div class="sync-tabs">
+        <button class="sync-tab active" id="tab-broadcast" onclick="switchSyncTab('broadcast')">Broadcast Match</button>
+        <button class="sync-tab" id="tab-join" onclick="switchSyncTab('join')">Join with PIN</button>
+      </div>
+
+      <!-- Broadcast Pane -->
+      <div id="pane-broadcast" class="sync-pane">
+        <div class="match-code-display">
+          <span class="code-label">YOUR 4-DIGIT MATCH PIN</span>
+          <span class="code-value" id="current-match-code">----</span>
+          <button class="btn-copy-code" onclick="copyMatchCode()" id="copy-code-btn"><i class="fa-solid fa-copy"></i> Copy PIN</button>
+        </div>
+        <button class="btn-primary" style="width:100%; justify-content:center; margin-top:14px;" onclick="copyShareLink()" id="share-link-btn">
+          <i class="fa-solid fa-share-nodes"></i> Copy Spectator Link
+        </button>
+        <p style="font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 10px;">
+          Anyone with this link sees scores and boules update live in real-time.
+        </p>
+      </div>
+
+      <!-- Join Pane -->
+      <div id="pane-join" class="sync-pane" style="display: none;">
+        <div class="form-group">
+          <label for="join-match-input">Enter 4-Character Match PIN</label>
+          <input type="text" id="join-match-input" class="form-input text-center text-uppercase" placeholder="e.g. PEAS" maxlength="6" style="font-size: 1.5rem; letter-spacing: 4px; text-align: center;">
+        </div>
+        <button class="btn-primary" style="width:100%; justify-content:center;" onclick="joinMatchFromInput()">
+          <i class="fa-solid fa-satellite-dish"></i> Connect to Live Match
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Court Check-In Modal -->
+  <div class="modal-backdrop" id="checkin-modal">
+    <div class="modal-content glass-panel" style="max-width: 420px;">
+      <button class="modal-close" onclick="closeCheckInModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div class="checkin-modal-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+        <h2 style="font-size: 1.6rem; font-weight: 800; margin-top: 8px;">Check In to a Pitch</h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem;">Let the Austin Pétanque community know you're playing!</p>
+      </div>
+
+      <form id="checkin-form">
+        <div class="form-group">
+          <label for="checkin-name">Your Name</label>
+          <input type="text" id="checkin-name" class="form-input" placeholder="e.g. Jean-Luc" required>
+        </div>
+
+        <div class="form-group">
+          <label for="checkin-court">Pitch Location</label>
+          <select id="checkin-court" class="form-input" style="background: #0d121f;" required>
+            <option value="Pease Park Pitches">Pease District Park (Live Oaks)</option>
+            <option value="French Legation Lawn">French Legation State Historic Site</option>
+            <option value="Mueller Lake Park">Mueller Lake Park</option>
+            <option value="South Congress Clubhouse">South Congress Terrain</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="checkin-status">Activity Status</label>
+          <select id="checkin-status" class="form-input" style="background: #0d121f;" required>
+            <option value="Playing Now 🎯">Playing Now 🎯</option>
+            <option value="Heading there in 30 min 🚗">Heading there in 30 min 🚗</option>
+            <option value="Looking for +1 for Triplette 👥">Looking for +1 for Triplette 👥</option>
+            <option value="Casual Practice & Wine 🍷">Casual Practice & Wine 🍷</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-size: 1rem;">
+          <i class="fa-solid fa-check"></i> Post Check-In
+        </button>
+        <div id="checkin-feedback" style="margin-top: 12px; text-align: center; font-size: 0.88rem; font-weight: 600;"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Register Service Worker for offline courtside use
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('PWA Service Worker registered:', reg.scope))
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
+  </script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

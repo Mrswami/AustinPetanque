@@ -1,6 +1,6 @@
 // Firebase Configuration for Austin Pétanque
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, getDoc, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 
 const firebaseConfig = {
@@ -23,4 +23,4 @@ try {
   console.log("Analytics not available in local context");
 }
 
-export { app, db, analytics, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp };
+export { app, db, analytics, collection, doc, setDoc, getDoc, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp, onSnapshot };

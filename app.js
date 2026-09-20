@@ -1,5 +1,5 @@
 // Austin Pétanque Application Script
-import { db, collection, addDoc, getDocs, serverTimestamp } from './firebase-config.js';
+import { db, collection, doc, setDoc, getDoc, addDoc, getDocs, query, where, orderBy, limit, serverTimestamp, onSnapshot } from './firebase-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
@@ -7,8 +7,16 @@ document.addEventListener('DOMContentLoaded', () => {
   initModal();
   initFormSubmission();
   initHashRouting();
+  initSunlightPreference();
+  initCourtCheckIns();
   renderBoules('A');
   renderBoules('B');
+  renderMeneTimeline();
+
+  const checkinForm = document.getElementById('checkin-form');
+  if (checkinForm) {
+    checkinForm.addEventListener('submit', window.handleCheckInSubmit);
+  }
 });
 
 // ─── Boule Tracker (two-zone) ────────────────────────────────────────────────
@@ -66,6 +74,8 @@ window.cycleBoule = (team, index) => {
   renderBoules(team);
   updateFromStars();
   checkAllThrown();
+  triggerHaptic(20);
+  syncMatchToCloud();
 };
 
 // ─── New Mène button ──────────────────────────────────────────────────────────
@@ -78,14 +88,14 @@ function checkAllThrown() {
   if (!btn) return;
 
   if (total === 0) {
-    // All 12 boules thrown — mène is over
+    // All 12 boules thrown — mène is ready to record
     btn.style.display = 'flex';
-    btn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> New Mène`;
+    btn.innerHTML = `<i class="fa-solid fa-check"></i> Record Mène`;
     btn.classList.add('pulse-mene');
   } else if (total === 1) {
     // Very last boule still in hand
     btn.style.display = 'flex';
-    btn.innerHTML = `<i class="fa-solid fa-flag-checkered"></i> Last Boule — Reset`;
+    btn.innerHTML = `<i class="fa-solid fa-flag-checkered"></i> Last Boule`;
     btn.classList.remove('pulse-mene');
   } else {
     btn.style.display = 'none';
@@ -94,10 +104,10 @@ function checkAllThrown() {
 }
 
 window.resetMene = () => {
-  // Reset boule tracker only — score stays
   resetBoules();
   const btn = document.getElementById('new-mene-btn');
   if (btn) btn.style.display = 'none';
+  syncMatchToCloud();
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -204,26 +214,54 @@ window.closeDrawer = () => {
 };
 
 
-// Hash routing for Admin view
+// Hash routing for Standalone Scorekeeper (#score), Admin, and Club sections
 function initHashRouting() {
   const handleRoute = () => {
-    const hash = window.location.hash;
+    const rawHash = window.location.hash || '#about';
+    const [baseHash, queryString] = rawHash.split('?');
     const publicView = document.getElementById('public-view');
+    const scoreView = document.getElementById('score-view');
     const adminSection = document.getElementById('admin');
+    const dockClub = document.getElementById('dock-club');
+    const dockCourts = document.getElementById('dock-courts');
+    const dockScore = document.getElementById('dock-score');
 
-    if (hash === '#admin' || hash.startsWith('#admin?')) {
+    // Update bottom dock active item
+    dockClub?.classList.remove('active');
+    dockCourts?.classList.remove('active');
+    dockScore?.classList.remove('active');
+
+    if (baseHash === '#score' || baseHash === '#scoreboard') {
       if (publicView) publicView.style.display = 'none';
+      if (adminSection) adminSection.style.display = 'none';
+      if (scoreView) scoreView.style.display = 'flex';
+      dockScore?.classList.add('active');
+      window.scrollTo(0, 0);
+
+      // Check query params for match code
+      const urlParams = new URLSearchParams(queryString || window.location.search);
+      const matchParam = urlParams.get('match');
+      if (matchParam && matchParam !== currentMatchCode) {
+        connectToLiveMatch(matchParam.toUpperCase());
+      }
+    } else if (baseHash === '#admin') {
+      if (publicView) publicView.style.display = 'none';
+      if (scoreView) scoreView.style.display = 'none';
       if (adminSection) adminSection.style.display = 'block';
       
-      // Auto approve if query params present
-      const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+      const urlParams = new URLSearchParams(queryString || '');
       const approveId = urlParams.get('approve');
-      if (approveId) {
-        autoApproveMember(approveId);
-      }
+      if (approveId) autoApproveMember(approveId);
     } else {
       if (publicView) publicView.style.display = 'block';
+      if (scoreView) scoreView.style.display = 'none';
       if (adminSection) adminSection.style.display = 'none';
+
+      if (baseHash === '#courts') {
+        dockCourts?.classList.add('active');
+      } else {
+        dockClub?.classList.add('active');
+      }
     }
   };
 
@@ -264,6 +302,8 @@ function initScoreboard() {
     }
     updateLeadIndicators();
     checkWinCondition();
+    triggerHaptic(15);
+    syncMatchToCloud();
   };
 
   window.resetScore = () => {
@@ -271,6 +311,7 @@ function initScoreboard() {
     teamBScore = 0;
     pointHolder = null;
     matchWinner = null;
+    meneHistory = [];
     if (scoreAEl) scoreAEl.textContent = '0';
     if (scoreBEl) scoreBEl.textContent = '0';
     const boxA = document.getElementById('team-box-a');
@@ -281,7 +322,10 @@ function initScoreboard() {
     document.getElementById('point-btn-b')?.classList.remove('active');
     hideVictoryCelebration();
     resetBoules();
+    renderMeneTimeline();
     updateLeadIndicators();
+    triggerHaptic([30, 30]);
+    syncMatchToCloud();
   };
 }
 
@@ -536,6 +580,434 @@ function stopConfetti() {
     cancelAnimationFrame(confettiAnimationId);
     confettiAnimationId = null;
   }
+}
+
+// ─── Haptics Feedback Helper ────────────────────────────────────────────────
+function triggerHaptic(pattern = 15) {
+  if ('vibrate' in navigator) {
+    try { navigator.vibrate(pattern); } catch (e) {}
+  }
+}
+
+// ─── Mène Progression & History ─────────────────────────────────────────────
+let meneHistory = []; // [{ mene: 1, team: 'A'|'B', pts: 2, totalA: 2, totalB: 0 }]
+
+window.recordAndResetMene = () => {
+  const starsA = bouleStates.A.filter(s => s === 2).length;
+  const starsB = bouleStates.B.filter(s => s === 2).length;
+
+  let scoringTeam = null;
+  let pointsAwarded = 0;
+
+  if (starsA > starsB) {
+    scoringTeam = 'A';
+    pointsAwarded = starsA - starsB;
+  } else if (starsB > starsA) {
+    scoringTeam = 'B';
+    pointsAwarded = starsB - starsA;
+  } else if (pointHolder) {
+    scoringTeam = pointHolder;
+    pointsAwarded = 1;
+  }
+
+  if (scoringTeam && pointsAwarded > 0) {
+    if (scoringTeam === 'A') {
+      teamAScore = Math.max(0, Math.min(25, teamAScore + pointsAwarded));
+    } else {
+      teamBScore = Math.max(0, Math.min(25, teamBScore + pointsAwarded));
+    }
+
+    const scoreAEl = document.getElementById('score-a');
+    const scoreBEl = document.getElementById('score-b');
+    if (scoreAEl) scoreAEl.textContent = teamAScore;
+    if (scoreBEl) scoreBEl.textContent = teamBScore;
+
+    meneHistory.push({
+      mene: meneHistory.length + 1,
+      team: scoringTeam,
+      pts: pointsAwarded,
+      totalA: teamAScore,
+      totalB: teamBScore
+    });
+
+    renderMeneTimeline();
+    updateLeadIndicators();
+    checkWinCondition();
+  }
+
+  triggerHaptic([30, 40, 50]);
+  resetBoules();
+  const btn = document.getElementById('new-mene-btn');
+  if (btn) btn.style.display = 'none';
+
+  syncMatchToCloud();
+};
+
+window.undoLastMene = () => {
+  if (meneHistory.length === 0) return;
+  meneHistory.pop();
+
+  if (meneHistory.length > 0) {
+    const prev = meneHistory[meneHistory.length - 1];
+    teamAScore = prev.totalA;
+    teamBScore = prev.totalB;
+  } else {
+    teamAScore = 0;
+    teamBScore = 0;
+  }
+
+  const scoreAEl = document.getElementById('score-a');
+  const scoreBEl = document.getElementById('score-b');
+  if (scoreAEl) scoreAEl.textContent = teamAScore;
+  if (scoreBEl) scoreBEl.textContent = teamBScore;
+
+  renderMeneTimeline();
+  updateLeadIndicators();
+  checkWinCondition();
+  triggerHaptic([40, 20]);
+  syncMatchToCloud();
+};
+
+function renderMeneTimeline() {
+  const strip = document.getElementById('mene-timeline-strip');
+  const undoBtn = document.getElementById('undo-mene-btn');
+  if (!strip) return;
+
+  if (meneHistory.length === 0) {
+    strip.innerHTML = `<span class="mene-empty-hint">Completed mènes will appear here</span>`;
+    if (undoBtn) undoBtn.style.display = 'none';
+    return;
+  }
+
+  if (undoBtn) undoBtn.style.display = 'inline-flex';
+
+  strip.innerHTML = meneHistory.map(m => {
+    const isRed = m.team === 'A';
+    const teamClass = isRed ? 'red' : 'blue';
+    const icon = isRed ? '🔴' : '🔵';
+    return `<div class="mene-pill ${teamClass}">
+      <span>M${m.mene}: ${icon} +${m.pts}</span>
+    </div>`;
+  }).join('');
+
+  strip.scrollLeft = strip.scrollWidth;
+}
+
+// ─── Screen Wake-Lock API ───────────────────────────────────────────────────
+let wakeLockSentinel = null;
+
+window.toggleWakeLock = async () => {
+  const btn = document.getElementById('wakelock-toggle-btn');
+  if (!('wakeLock' in navigator)) {
+    alert('Screen Wake Lock is not supported on this browser.');
+    return;
+  }
+
+  try {
+    if (wakeLockSentinel) {
+      await wakeLockSentinel.release();
+      wakeLockSentinel = null;
+      btn?.classList.remove('active');
+    } else {
+      wakeLockSentinel = await navigator.wakeLock.request('screen');
+      btn?.classList.add('active');
+      wakeLockSentinel.addEventListener('release', () => {
+        wakeLockSentinel = null;
+        btn?.classList.remove('active');
+      });
+    }
+    triggerHaptic(20);
+  } catch (err) {
+    console.warn('Wake Lock error:', err);
+  }
+};
+
+document.addEventListener('visibilitychange', async () => {
+  const btn = document.getElementById('wakelock-toggle-btn');
+  if (wakeLockSentinel !== null && document.visibilityState === 'visible') {
+    try {
+      wakeLockSentinel = await navigator.wakeLock.request('screen');
+      btn?.classList.add('active');
+    } catch (e) {}
+  }
+});
+
+// ─── Sunlight High-Contrast Mode ────────────────────────────────────────────
+window.toggleSunlightMode = () => {
+  const btn = document.getElementById('sunlight-toggle-btn');
+  const isSun = document.body.classList.toggle('sunlight-mode');
+  btn?.classList.toggle('active', isSun);
+  localStorage.setItem('petanque_sunlight_mode', isSun ? '1' : '0');
+  triggerHaptic(25);
+};
+
+function initSunlightPreference() {
+  if (localStorage.getItem('petanque_sunlight_mode') === '1') {
+    document.body.classList.add('sunlight-mode');
+    document.getElementById('sunlight-toggle-btn')?.classList.add('active');
+  }
+}
+
+// ─── Real-Time Firestore Match Sync ─────────────────────────────────────────
+let currentMatchCode = null;
+let isHost = true;
+let matchUnsubscribe = null;
+
+function generateMatchCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 4; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+window.openMatchSyncModal = () => {
+  const modal = document.getElementById('match-sync-modal');
+  if (modal) modal.classList.add('active');
+  if (!currentMatchCode) {
+    initNewLiveMatch();
+  }
+};
+
+window.closeMatchSyncModal = () => {
+  document.getElementById('match-sync-modal')?.classList.remove('active');
+};
+
+window.switchSyncTab = (tab) => {
+  document.getElementById('tab-broadcast')?.classList.toggle('active', tab === 'broadcast');
+  document.getElementById('tab-join')?.classList.toggle('active', tab === 'join');
+  const bPane = document.getElementById('pane-broadcast');
+  const jPane = document.getElementById('pane-join');
+  if (bPane) bPane.style.display = tab === 'broadcast' ? 'block' : 'none';
+  if (jPane) jPane.style.display = tab === 'join' ? 'block' : 'none';
+};
+
+window.copyMatchCode = () => {
+  if (!currentMatchCode) return;
+  navigator.clipboard.writeText(currentMatchCode).then(() => {
+    const btn = document.getElementById('copy-code-btn');
+    if (btn) {
+      btn.innerHTML = `<i class="fa-solid fa-check"></i> Copied!`;
+      setTimeout(() => { btn.innerHTML = `<i class="fa-solid fa-copy"></i> Copy PIN`; }, 2000);
+    }
+  });
+};
+
+window.copyShareLink = () => {
+  if (!currentMatchCode) return;
+  const url = `${window.location.origin}/#score?match=${currentMatchCode}`;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('share-link-btn');
+    if (btn) {
+      btn.innerHTML = `<i class="fa-solid fa-check"></i> Link Copied!`;
+      setTimeout(() => { btn.innerHTML = `<i class="fa-solid fa-share-nodes"></i> Copy Spectator Link`; }, 2500);
+    }
+  });
+};
+
+async function initNewLiveMatch() {
+  currentMatchCode = generateMatchCode();
+  const codeEl = document.getElementById('current-match-code');
+  if (codeEl) codeEl.textContent = currentMatchCode;
+  updateSyncPill(true);
+  await syncMatchToCloud();
+}
+
+async function syncMatchToCloud() {
+  if (!currentMatchCode || !isHost) return;
+  try {
+    const matchRef = doc(db, 'live_matches', currentMatchCode);
+    await setDoc(matchRef, {
+      matchCode: currentMatchCode,
+      teamAScore,
+      teamBScore,
+      pointHolder,
+      bouleStates,
+      meneHistory,
+      matchWinner,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch (e) {
+    console.warn('Cloud sync save error:', e);
+  }
+}
+
+window.joinMatchFromInput = () => {
+  const input = document.getElementById('join-match-input');
+  if (!input || !input.value.trim()) return;
+  const code = input.value.trim().toUpperCase();
+  connectToLiveMatch(code);
+  closeMatchSyncModal();
+};
+
+async function connectToLiveMatch(code) {
+  if (matchUnsubscribe) matchUnsubscribe();
+  currentMatchCode = code;
+  isHost = false;
+
+  const codeEl = document.getElementById('current-match-code');
+  if (codeEl) codeEl.textContent = code;
+
+  try {
+    const matchRef = doc(db, 'live_matches', code);
+    matchUnsubscribe = onSnapshot(matchRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        applyRemoteMatchData(data);
+        updateSyncPill(true);
+      } else {
+        alert(`Match PIN ${code} not found on the cloud.`);
+        updateSyncPill(false);
+      }
+    });
+  } catch (err) {
+    console.warn('Failed to connect to live match:', err);
+    updateSyncPill(false);
+  }
+}
+
+function applyRemoteMatchData(data) {
+  teamAScore = data.teamAScore ?? 0;
+  teamBScore = data.teamBScore ?? 0;
+  pointHolder = data.pointHolder ?? null;
+  matchWinner = data.matchWinner ?? null;
+
+  if (data.bouleStates) {
+    bouleStates.A = data.bouleStates.A || [0,0,0,0,0,0];
+    bouleStates.B = data.bouleStates.B || [0,0,0,0,0,0];
+  }
+  if (data.meneHistory) {
+    meneHistory = data.meneHistory || [];
+  }
+
+  const scoreAEl = document.getElementById('score-a');
+  const scoreBEl = document.getElementById('score-b');
+  if (scoreAEl) scoreAEl.textContent = teamAScore;
+  if (scoreBEl) scoreBEl.textContent = teamBScore;
+
+  renderBoules('A');
+  renderBoules('B');
+  renderMeneTimeline();
+  updateLeadIndicators();
+
+  if (matchWinner) {
+    const winnerName = matchWinner === 'A' ? 'Team Red' : 'Team Blue';
+    triggerVictoryCelebration(matchWinner, winnerName);
+  } else {
+    hideVictoryCelebration();
+  }
+}
+
+function updateSyncPill(isLive) {
+  const pill = document.getElementById('sync-status-pill');
+  const label = document.getElementById('sync-label');
+  if (!pill || !label) return;
+
+  if (isLive && currentMatchCode) {
+    pill.className = 'sync-status-pill live';
+    label.textContent = `Live: ${currentMatchCode}`;
+  } else {
+    pill.className = 'sync-status-pill';
+    label.textContent = 'Local Match';
+  }
+}
+
+// ─── Real-Time Court Check-Ins ──────────────────────────────────────────────
+function initCourtCheckIns() {
+  const feed = document.getElementById('checkin-feed');
+  if (!feed) return;
+
+  try {
+    const q = query(collection(db, 'court_checkins'), orderBy('timestamp', 'desc'), limit(12));
+    onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        feed.innerHTML = `
+          <div class="checkin-card" style="text-align:center; grid-column: 1 / -1; color: var(--text-dim); padding: 24px;">
+            <p><i class="fa-solid fa-tree"></i> No active check-ins yet today. Be the first to post!</p>
+          </div>`;
+        return;
+      }
+
+      feed.innerHTML = snapshot.docs.map(doc => {
+        const d = doc.data();
+        const timeStr = formatRelativeTime(d.timestamp?.toDate ? d.timestamp.toDate() : new Date());
+        return `
+          <div class="checkin-card">
+            <div class="checkin-card-top">
+              <span class="checkin-name"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(d.name || 'Pétanqueur')}</span>
+              <span class="checkin-time">${timeStr}</span>
+            </div>
+            <div class="checkin-court"><i class="fa-solid fa-map-pin"></i> ${escapeHtml(d.court || 'Pease Park')}</div>
+            <div class="checkin-status">${escapeHtml(d.status || 'Playing Now')}</div>
+          </div>
+        `;
+      }).join('');
+    });
+  } catch (err) {
+    console.warn('Court check-in feed error:', err);
+    feed.innerHTML = `<p style="color:var(--text-dim); text-align:center; padding: 16px;">Real-time pitch feed connects live on Firebase.</p>`;
+  }
+}
+
+window.openCheckInModal = () => {
+  document.getElementById('checkin-modal')?.classList.add('active');
+};
+
+window.closeCheckInModal = () => {
+  document.getElementById('checkin-modal')?.classList.remove('active');
+};
+
+window.handleCheckInSubmit = async (e) => {
+  e.preventDefault();
+  const nameInput = document.getElementById('checkin-name');
+  const courtSelect = document.getElementById('checkin-court');
+  const statusSelect = document.getElementById('checkin-status');
+  const feedback = document.getElementById('checkin-feedback');
+
+  if (!nameInput?.value.trim()) return;
+
+  try {
+    if (feedback) {
+      feedback.textContent = 'Posting check-in to pitch...';
+      feedback.style.color = 'var(--primary-amber)';
+    }
+    await addDoc(collection(db, 'court_checkins'), {
+      name: nameInput.value.trim(),
+      court: courtSelect.value,
+      status: statusSelect.value,
+      timestamp: serverTimestamp()
+    });
+
+    if (feedback) {
+      feedback.style.color = '#10b981';
+      feedback.textContent = 'Check-in posted! See you on the terrain.';
+    }
+    setTimeout(() => {
+      closeCheckInModal();
+      if (feedback) feedback.textContent = '';
+      nameInput.value = '';
+    }, 1200);
+  } catch (err) {
+    if (feedback) {
+      feedback.style.color = '#ef4444';
+      feedback.textContent = 'Failed to post check-in. Please try again.';
+    }
+  }
+};
+
+function formatRelativeTime(date) {
+  const diff = Math.floor((new Date() - date) / 1000);
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 

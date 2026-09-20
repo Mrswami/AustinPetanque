@@ -1,0 +1,19 @@
+{
+  "name": "Austin Pétanque Club & Scorekeeper",
+  "short_name": "Pétanque",
+  "description": "Premier boules club & live courtside scorekeeper for Austin, Texas",
+  "start_url": "/#score",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f19",
+  "theme_color": "#f59e0b",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "utilities"]
+}

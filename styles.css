@@ -1414,3 +1414,505 @@ button:not(.boule), .btn-circle, .has-point-btn, .hamburger {
   flex-wrap: wrap;
   justify-content: center;
 }
+
+/* =====================
+   Standalone Dedicated Scorekeeper View (#score)
+===================== */
+.score-standalone-view {
+  min-height: 100vh;
+  padding: 16px 16px calc(84px + var(--safe-bottom)) 16px;
+  background: radial-gradient(circle at 50% 0%, #172138 0%, var(--bg-dark) 70%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.score-court-container {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Courtside Bar */
+.courtside-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: rgba(19, 26, 43, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.courtside-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  transition: var(--transition-fast);
+}
+
+.courtside-back-btn:hover {
+  color: var(--primary-amber);
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.courtside-title-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.courtside-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sync-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+.sync-status-pill.live .sync-dot {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.sync-status-pill.live {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.courtside-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-glass);
+  color: var(--text-main);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: var(--transition-fast);
+}
+
+.action-btn:hover {
+  background: var(--primary-amber);
+  color: #000;
+}
+
+.action-btn.active {
+  background: var(--primary-amber);
+  color: #000;
+  box-shadow: 0 0 14px var(--primary-glow);
+}
+
+.action-btn.reset:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* =====================
+   Sunlight High-Contrast Mode
+===================== */
+body.sunlight-mode {
+  --bg-dark: #000000;
+  --bg-card: #050505;
+  background-color: #000000;
+}
+
+body.sunlight-mode .score-standalone-view {
+  background: #000000;
+}
+
+body.sunlight-mode .glass-panel,
+body.sunlight-mode .team-box,
+body.sunlight-mode .courtside-bar {
+  background: #0a0a0a !important;
+  border: 2.5px solid #ffffff !important;
+  box-shadow: none !important;
+}
+
+body.sunlight-mode .score-display {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: none !important;
+}
+
+body.sunlight-mode .team-box.has-point-red {
+  background: #450a0a !important;
+  border-color: #ef4444 !important;
+  border-width: 4px !important;
+}
+
+body.sunlight-mode .team-box.has-point-blue {
+  background: #082f49 !important;
+  border-color: #38bdf8 !important;
+  border-width: 4px !important;
+}
+
+body.sunlight-mode .boule.state-0 {
+  filter: brightness(1.4) drop-shadow(0 0 4px #fff);
+}
+
+body.sunlight-mode .boule.state-1 {
+  border-width: 3px !important;
+}
+
+body.sunlight-mode .boule.state-2 {
+  background: #f59e0b !important;
+  border: 3px solid #ffffff !important;
+}
+
+body.sunlight-mode .boule.state-2::after {
+  color: #000 !important;
+  text-shadow: none !important;
+}
+
+/* =====================
+   Mène Timeline Strip
+===================== */
+.mene-timeline-container {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-glass);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mene-timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.undo-mene-btn {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: var(--transition-fast);
+}
+
+.undo-mene-btn:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.mene-timeline-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.mene-empty-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-style: italic;
+  padding: 4px 0;
+}
+
+.mene-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  animation: menePillIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes menePillIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.mene-pill.red {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.mene-pill.blue {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #3b82f6;
+}
+
+/* =====================
+   Persistent Bottom Dock
+===================== */
+.bottom-dock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(64px + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(9, 12, 21, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border-glass);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1000;
+}
+
+.dock-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition: var(--transition-fast);
+  padding: 6px 18px;
+  border-radius: var(--radius-md);
+}
+
+.dock-item i {
+  font-size: 1.15rem;
+}
+
+.dock-item:hover,
+.dock-item.active {
+  color: var(--primary-amber);
+}
+
+.dock-item.active i {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 0 8px var(--primary-glow));
+}
+
+/* =====================
+   Live Court Check-Ins & Feed
+===================== */
+.live-pulse-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pulse-green {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: greenPulse 1.8s infinite;
+}
+
+@keyframes greenPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.checkin-feed {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.checkin-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: var(--transition-fast);
+}
+
+.checkin-card:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.checkin-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.checkin-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.checkin-time {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.checkin-court {
+  font-size: 0.82rem;
+  color: var(--primary-amber);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.checkin-status {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  margin-top: 4px;
+}
+
+/* =====================
+   Sync Modal Components
+===================== */
+.sync-modal-icon,
+.checkin-modal-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--primary-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin: 0 auto;
+}
+
+.sync-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-full);
+  padding: 4px;
+  margin-bottom: 18px;
+}
+
+.sync-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-full);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.sync-tab.active {
+  background: var(--primary-amber);
+  color: #000;
+}
+
+.match-code-display {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1.5px dashed rgba(245, 158, 11, 0.4);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.code-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.code-value {
+  font-size: 2.4rem;
+  font-weight: 900;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 4px;
+  color: var(--primary-amber);
+}
+
+.btn-copy-code {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-glass);
+  color: var(--text-main);
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
