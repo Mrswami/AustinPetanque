@@ -143,8 +143,15 @@ h1, h2, h3, h4, h5, h6 {
   display: block;
 }
 
-/* Show Join Club on desktop, hamburger hidden on desktop */
+/* Show Join Club / Fast Sign In on desktop when logged out */
 #nav-join-btn {
+  display: inline-flex;
+}
+body.user-logged-in #nav-join-btn,
+body.user-logged-in #drawer-join-btn {
+  display: none !important;
+}
+body.user-logged-in #nav-user-pill {
   display: inline-flex !important;
 }
 @media (max-width: 768px) {
@@ -2200,18 +2207,28 @@ body.sunlight-mode .boule.state-2::after {
 .user-pill-nav {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  padding: 4px 14px 4px 4px;
+  border: 1.5px solid rgba(245, 158, 11, 0.45);
+  padding: 4px 13px 4px 5px;
   border-radius: var(--radius-full);
   cursor: pointer;
-  transition: var(--transition-fast);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
 }
 
 .user-pill-nav:hover {
-  background: rgba(245, 158, 11, 0.18);
-  box-shadow: 0 0 14px var(--primary-glow);
+  background: rgba(245, 158, 11, 0.2);
+  border-color: var(--primary-amber);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.38);
+  transform: translateY(-1px);
+}
+
+.nav-avatar-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .nav-avatar-img,
@@ -2222,16 +2239,50 @@ body.sunlight-mode .boule.state-2::after {
   object-fit: cover;
   border: 1.5px solid var(--primary-amber);
   background: #1e293b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+  display: block;
+}
+
+.nav-avatar-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(234, 88, 12, 0.45));
+  border: 1.5px solid var(--primary-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-amber);
+  font-size: 0.95rem;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+  flex-shrink: 0;
+}
+
+.nav-user-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .nav-user-name {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--text-main);
   max-width: 110px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.nav-user-chevron {
+  font-size: 0.68rem;
+  color: var(--primary-amber);
+  opacity: 0.85;
+  transition: transform 0.2s ease;
+}
+
+.user-pill-nav:hover .nav-user-chevron {
+  transform: translateY(1px);
 }
 
 .auth-buttons-group {

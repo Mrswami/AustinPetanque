@@ -2516,8 +2516,18 @@ function initAuth() {
   });
 }
 
+function renderAvatarSlot(containerEl, avatarIcon, photoURL) {
+  if (!containerEl) return;
+  if (photoURL && (photoURL.startsWith('http://') || photoURL.startsWith('https://') || (photoURL.startsWith('data:image/') && !photoURL.includes('viewBox="0 0 24 24"')))) {
+    containerEl.innerHTML = `<img src="${photoURL}" class="nav-avatar-img" alt="Avatar">`;
+  } else {
+    const icon = avatarIcon || selectedAvatarPreset || 'fa-bowling-ball';
+    containerEl.innerHTML = `<div class="nav-avatar-icon-wrap"><i class="fa-solid ${icon}"></i></div>`;
+  }
+}
+
 function updateAuthUI(user) {
-  const navLoginBtn = document.getElementById('nav-login-btn');
+  const navJoinBtn = document.getElementById('nav-join-btn');
   const navUserPill = document.getElementById('nav-user-pill');
   const navUserName = document.getElementById('nav-user-name');
   const navUserAvatar = document.getElementById('nav-user-avatar');
@@ -2526,6 +2536,9 @@ function updateAuthUI(user) {
   const drawerUserPill = document.getElementById('drawer-user-pill');
   const drawerUserName = document.getElementById('drawer-user-name');
   const drawerUserAvatar = document.getElementById('drawer-user-avatar');
+  const drawerJoinBtn = document.getElementById('drawer-join-btn');
+
+  const heroAuthCta = document.getElementById('hero-auth-cta');
 
   const authLoginButtons = document.getElementById('auth-login-buttons');
   const authLoggedInBox = document.getElementById('auth-logged-in-box');
@@ -2533,32 +2546,40 @@ function updateAuthUI(user) {
   const authUserEmail = document.getElementById('auth-user-email');
   const authUserAvatar = document.getElementById('auth-user-avatar');
 
-  const defaultAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f59e0b"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>';
-
   if (user) {
+    document.body.classList.add('user-logged-in');
+
     const profileKey = `austin_petanque_profile_${user.uid}`;
     const savedProfile = JSON.parse(localStorage.getItem(profileKey) || '{}');
 
     const displayName = savedProfile.displayName || user.displayName || user.email?.split('@')[0] || 'Player';
     const username = savedProfile.username || user.username || generateUniqueUsername(displayName, user.email);
-    const photoURL = user.photoURL || savedProfile.photoURL || defaultAvatar;
+    const photoURL = savedProfile.photoURL || user.photoURL || null;
     const avatar = savedProfile.avatar || user.avatar || 'fa-bowling-ball';
 
-    if (navLoginBtn) navLoginBtn.style.display = 'none';
+    // Top Right Navbar: hide Join button, show avatar pill
+    if (navJoinBtn) navJoinBtn.style.display = 'none';
     if (navUserPill) navUserPill.style.display = 'inline-flex';
     if (navUserName) navUserName.textContent = displayName;
-    if (navUserAvatar) navUserAvatar.src = photoURL;
+    renderAvatarSlot(navUserAvatar, avatar, photoURL);
 
+    // Mobile Drawer
     if (drawerLoginBtn) drawerLoginBtn.style.display = 'none';
+    if (drawerJoinBtn) drawerJoinBtn.style.display = 'none';
     if (drawerUserPill) drawerUserPill.style.display = 'flex';
     if (drawerUserName) drawerUserName.textContent = displayName;
-    if (drawerUserAvatar) drawerUserAvatar.src = photoURL;
+    renderAvatarSlot(drawerUserAvatar, avatar, photoURL);
+
+    // Hero CTA Update
+    if (heroAuthCta) {
+      heroAuthCta.innerHTML = `<i class="fa-solid fa-circle-user"></i> My Profile & Matches`;
+    }
 
     if (authLoginButtons) authLoginButtons.style.display = 'none';
     if (authLoggedInBox) authLoggedInBox.style.display = 'block';
     if (authUserName) authUserName.textContent = displayName;
     if (authUserEmail) authUserEmail.textContent = user.email || 'Verified Account';
-    if (authUserAvatar) authUserAvatar.src = photoURL;
+    if (authUserAvatar) authUserAvatar.src = photoURL || '';
 
     // Update Username tag
     const usernameTag = document.getElementById('auth-username-display');
@@ -2569,6 +2590,13 @@ function updateAuthUI(user) {
 
     // Update Avatar Display
     updateAvatarDisplayUI(avatar, photoURL);
+
+    // Highlight active preset
+    const items = document.querySelectorAll('.avatar-preset-item');
+    items.forEach(item => {
+      const isSelected = item.getAttribute('data-avatar') === avatar;
+      item.classList.toggle('selected', isSelected);
+    });
 
     // Update Bio & Details
     const bioInput = document.getElementById('profile-bio-input');
@@ -2599,11 +2627,18 @@ function updateAuthUI(user) {
     const memberEmail = document.getElementById('member-email');
     if (memberEmail && !memberEmail.value && user.email) memberEmail.value = user.email;
   } else {
-    if (navLoginBtn) navLoginBtn.style.display = 'inline-flex';
+    document.body.classList.remove('user-logged-in');
+
+    if (navJoinBtn) navJoinBtn.style.display = 'inline-flex';
     if (navUserPill) navUserPill.style.display = 'none';
 
     if (drawerLoginBtn) drawerLoginBtn.style.display = 'inline-flex';
+    if (drawerJoinBtn) drawerJoinBtn.style.display = 'inline-flex';
     if (drawerUserPill) drawerUserPill.style.display = 'none';
+
+    if (heroAuthCta) {
+      heroAuthCta.innerHTML = `<i class="fa-solid fa-bolt"></i> Fast Sign In / Sign Up`;
+    }
 
     if (authLoginButtons) authLoginButtons.style.display = 'flex';
     if (authLoggedInBox) authLoggedInBox.style.display = 'none';
@@ -2675,13 +2710,24 @@ window.selectAvatarPreset = (iconClass) => {
     item.classList.toggle('selected', isSelected);
   });
   updateAvatarDisplayUI(iconClass, null);
+
+  const navUserAvatar = document.getElementById('nav-user-avatar');
+  const drawerUserAvatar = document.getElementById('drawer-user-avatar');
+  renderAvatarSlot(navUserAvatar, iconClass, null);
+  renderAvatarSlot(drawerUserAvatar, iconClass, null);
 };
 
 window.previewCustomAvatarUrl = (url) => {
+  const navUserAvatar = document.getElementById('nav-user-avatar');
+  const drawerUserAvatar = document.getElementById('drawer-user-avatar');
   if (url && url.trim().length > 5) {
     updateAvatarDisplayUI(null, url.trim());
+    renderAvatarSlot(navUserAvatar, null, url.trim());
+    renderAvatarSlot(drawerUserAvatar, null, url.trim());
   } else {
     updateAvatarDisplayUI(selectedAvatarPreset, null);
+    renderAvatarSlot(navUserAvatar, selectedAvatarPreset, null);
+    renderAvatarSlot(drawerUserAvatar, selectedAvatarPreset, null);
   }
 };
 
@@ -2689,7 +2735,7 @@ function updateAvatarDisplayUI(iconClass, photoURL) {
   const avatarDisplay = document.getElementById('auth-avatar-display');
   if (!avatarDisplay) return;
 
-  if (photoURL && photoURL.startsWith('http')) {
+  if (photoURL && (photoURL.startsWith('http://') || photoURL.startsWith('https://'))) {
     avatarDisplay.innerHTML = `<img src="${photoURL}" alt="User Avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
   } else {
     const icon = iconClass || selectedAvatarPreset || 'fa-bowling-ball';

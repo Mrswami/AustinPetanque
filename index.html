@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-title" content="Pétanque">
 
   <!-- Styles & Fonts -->
-  <link rel="stylesheet" href="styles.css?v=3.8.0">
+  <link rel="stylesheet" href="styles.css?v=3.9.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -36,14 +36,14 @@
       </button>
       <div class="user-pill-nav" id="drawer-user-pill" style="display: none; width: 100%; justify-content: space-between;" onclick="closeDrawer(); openAuthModal()">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <img id="drawer-user-avatar" class="nav-avatar-img" src="" alt="Avatar">
+          <div id="drawer-user-avatar" class="nav-avatar-slot"></div>
           <span id="drawer-user-name" class="nav-user-name">Player</span>
         </div>
         <span style="font-size: 0.75rem; color: var(--primary-amber);"><i class="fa-solid fa-gear"></i></span>
       </div>
     </div>
 
-    <button class="btn-primary" onclick="closeDrawer(); openAuthModal()"><i class="fa-solid fa-bolt"></i> Fast Sign In / Sign Up</button>
+    <button class="btn-primary" id="drawer-join-btn" onclick="closeDrawer(); openAuthModal()"><i class="fa-solid fa-bolt"></i> Fast Sign In / Sign Up</button>
   </div>
 
   <!-- Navigation -->
@@ -62,15 +62,17 @@
         <li id="nav-admin-link" style="display: none;"><a href="#admin"><i class="fa-solid fa-user-shield" style="color: var(--primary-amber);"></i> Founder</a></li>
       </ul>
       <div class="nav-auth-container" id="nav-auth-container">
-        <button class="btn-auth-nav" id="nav-login-btn" onclick="openAuthModal()">
-          <i class="fa-solid fa-user"></i> <span>Sign In</span>
-        </button>
-        <div class="user-pill-nav" id="nav-user-pill" style="display: none;" onclick="openAuthModal()" title="View Account">
-          <img id="nav-user-avatar" class="nav-avatar-img" src="" alt="Avatar">
-          <span id="nav-user-name" class="nav-user-name">Player</span>
+        <!-- Logged Out CTA (Desktop Top Right) -->
+        <button class="btn-primary" id="nav-join-btn" onclick="openAuthModal()"><i class="fa-solid fa-bolt"></i> Fast Sign In / Sign Up</button>
+        <!-- Logged In Player Avatar Badge (Desktop Top Right) -->
+        <div class="user-pill-nav" id="nav-user-pill" style="display: none;" onclick="openAuthModal()" title="View Account & Profile">
+          <div id="nav-user-avatar" class="nav-avatar-slot"></div>
+          <div class="nav-user-info">
+            <span id="nav-user-name" class="nav-user-name">Player</span>
+            <span class="nav-user-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+          </div>
         </div>
       </div>
-      <button class="btn-primary" style="display:none;" id="nav-join-btn" onclick="openAuthModal()"><i class="fa-solid fa-bolt"></i> Fast Sign In / Sign Up</button>
       <button class="hamburger" id="hamburger-btn" onclick="toggleDrawer()" aria-label="Open menu">
         <span></span>
         <span></span>
@@ -94,7 +96,7 @@
           Whether you're a seasoned <em>tireur</em> or trying your first throw, join Austin's premier pétanque community under the oak trees.
         </p>
         <div class="hero-cta">
-          <button class="btn-primary" onclick="openAuthModal()"><i class="fa-solid fa-bolt"></i> Fast Sign In / Sign Up</button>
+          <button class="btn-primary" id="hero-auth-cta" onclick="openAuthModal()"><i class="fa-solid fa-bolt"></i> Fast Sign In / Sign Up</button>
           <a href="#courts" class="btn-secondary"><i class="fa-solid fa-map-location-dot"></i> Find Local Courts</a>
         </div>
 
@@ -1079,6 +1081,6 @@
       });
     }
   </script>
-  <script type="module" src="app.js?v=3.8.0"></script>
+  <script type="module" src="app.js?v=3.9.0"></script>
 </body>
 </html>
