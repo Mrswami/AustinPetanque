@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-title" content="Pétanque">
 
   <!-- Styles & Fonts -->
-  <link rel="stylesheet" href="styles.css?v=3.7.0">
+  <link rel="stylesheet" href="styles.css?v=3.8.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -361,7 +361,7 @@
             <div class="score-row">
               <div class="boule-zone left" id="boules-a-left"></div>
               <div class="score-display" id="score-a">0</div>
-              <div class="boule-zone right" id="boules-a-right"></div>
+              <div class="boule-zone right throw-btn-zone" id="boules-a-right" onclick="throwNextBoule('A')" title="Tap to throw Team Red Boule"></div>
             </div>
 
             <div class="score-controls">
@@ -390,7 +390,7 @@
             <div class="score-row">
               <div class="boule-zone left" id="boules-b-left"></div>
               <div class="score-display" id="score-b" style="color: #3b82f6;">0</div>
-              <div class="boule-zone right" id="boules-b-right"></div>
+              <div class="boule-zone right throw-btn-zone" id="boules-b-right" onclick="throwNextBoule('B')" title="Tap to throw Team Blue Boule"></div>
             </div>
 
             <div class="score-controls">
@@ -447,18 +447,108 @@
 
     <!-- Admin Active Dashboard -->
     <div id="admin-dashboard-box" class="glass-panel" style="padding: 32px; display: none;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 20px;">
         <div>
           <div id="admin-role-status" style="margin-bottom: 10px;"></div>
-          <h3>Pending Applications (<span id="pending-count">0</span>)</h3>
-          <p style="color: var(--text-muted); font-size: 0.9rem;">Notifications automatically delivered to <strong>noless42@gmail.com</strong>.</p>
+          <h3 style="font-size: 1.5rem; font-weight: 800;"><i class="fa-solid fa-users-gear" style="color: var(--primary-amber);"></i> Player Base & Profile Backend Console</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Exclusive admin view for <strong>noless42@gmail.com</strong> to sort, manage, and audit all player emails & accounts.</p>
         </div>
-        <button class="btn-secondary" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Lock Dashboard</button>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-primary" onclick="refreshPlayerBase()" style="font-size: 0.88rem; padding: 10px 16px;"><i class="fa-solid fa-rotate"></i> Refresh Sync</button>
+          <button class="btn-secondary" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Lock Dashboard</button>
+        </div>
       </div>
 
-      <div id="applications-list" class="events-grid">
-        <!-- Rendered dynamically -->
+      <!-- Summary KPI Stat Cards -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div class="glass-panel" style="padding: 16px; text-align: center; border-radius: 12px; background: rgba(255,255,255,0.03);">
+          <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Total Registered Players</div>
+          <div id="stat-total-players" style="font-size: 1.8rem; font-weight: 800; color: var(--primary-amber); margin-top: 4px;">0</div>
+        </div>
+        <div class="glass-panel" style="padding: 16px; text-align: center; border-radius: 12px; background: rgba(255,255,255,0.03);">
+          <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Email/Password Auth</div>
+          <div id="stat-email-players" style="font-size: 1.8rem; font-weight: 800; color: #10b981; margin-top: 4px;">0</div>
+        </div>
+        <div class="glass-panel" style="padding: 16px; text-align: center; border-radius: 12px; background: rgba(255,255,255,0.03);">
+          <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Social OAuth (Google/Apple)</div>
+          <div id="stat-oauth-players" style="font-size: 1.8rem; font-weight: 800; color: #3b82f6; margin-top: 4px;">0</div>
+        </div>
+        <div class="glass-panel" style="padding: 16px; text-align: center; border-radius: 12px; background: rgba(255,255,255,0.03);">
+          <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Pending Applications</div>
+          <div id="pending-count" style="font-size: 1.8rem; font-weight: 800; color: #f59e0b; margin-top: 4px;">0</div>
+        </div>
       </div>
+
+      <!-- Player Base Email Sorting & Filter Controls -->
+      <div class="glass-panel" style="padding: 18px; margin-bottom: 24px; border-radius: 12px; background: rgba(15, 23, 42, 0.4);">
+        <div style="display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: center;">
+          
+          <!-- Live Search Input -->
+          <div style="flex: 1; min-width: 240px; position: relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="text" id="player-search-input" oninput="filterAndSortPlayerBase()" class="form-input" placeholder="Search by email, player name, or UID..." style="padding-left: 38px;">
+          </div>
+
+          <!-- Email Sorting Dropdown -->
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;"><i class="fa-solid fa-arrow-down-a-z"></i> Sort Email / Profile:</label>
+            <select id="player-sort-select" onchange="filterAndSortPlayerBase()" class="form-input" style="width: auto; min-width: 180px; padding: 10px 14px;">
+              <option value="email-asc" selected>Email (A → Z)</option>
+              <option value="email-desc">Email (Z → A)</option>
+              <option value="name-asc">Player Name (A → Z)</option>
+              <option value="recent">Newest Signups First</option>
+              <option value="role">Admins & Founders First</option>
+            </select>
+
+            <select id="player-provider-filter" onchange="filterAndSortPlayerBase()" class="form-input" style="width: auto; min-width: 150px; padding: 10px 14px;">
+              <option value="all" selected>All Providers</option>
+              <option value="email">Email Auth</option>
+              <option value="google.com">Google OAuth</option>
+              <option value="apple.com">Apple OAuth</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tab Buttons for Admin Panel -->
+      <div style="display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+        <button class="auth-tab-btn active" id="admin-tab-players" onclick="switchAdminSubTab('players')" style="padding: 10px 20px; font-weight: 700;">
+          <i class="fa-solid fa-id-card"></i> Player Base Roster (<span id="roster-count-badge">0</span>)
+        </button>
+        <button class="auth-tab-btn" id="admin-tab-applications" onclick="switchAdminSubTab('applications')" style="padding: 10px 20px; font-weight: 700;">
+          <i class="fa-solid fa-user-clock"></i> Pending Applications
+        </button>
+      </div>
+
+      <!-- Admin Sub-Tab 1: Player Base Table -->
+      <div id="admin-subtab-players-content">
+        <div style="overflow-x: auto; border-radius: 12px;" class="glass-panel">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+              <tr style="background: rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--primary-amber); text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.5px;">
+                <th style="padding: 14px 16px;">Player</th>
+                <th style="padding: 14px 16px;">Email Address</th>
+                <th style="padding: 14px 16px;">Auth Provider</th>
+                <th style="padding: 14px 16px;">Role</th>
+                <th style="padding: 14px 16px;">Last Active</th>
+                <th style="padding: 14px 16px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="player-base-tbody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Admin Sub-Tab 2: Pending Applications List -->
+      <div id="admin-subtab-applications-content" style="display: none;">
+        <div id="applications-list" class="events-grid">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -651,60 +741,331 @@
     </div>
   </div>
 
-  <!-- Player Account & Auth Modal (Google / Apple) -->
+  <!-- Player Account & Auth Modal (Email / Google / Apple) -->
   <div class="modal-backdrop" id="auth-modal">
-    <div class="modal-content glass-panel" style="max-width: 420px; text-align: center;">
+    <div class="modal-content glass-panel" style="max-width: 440px; text-align: center;">
       <button class="modal-close" onclick="closeAuthModal()"><i class="fa-solid fa-xmark"></i></button>
       
       <div class="auth-modal-header">
         <div class="auth-icon-circle"><i class="fa-solid fa-bolt"></i></div>
-        <h2 style="font-size: 1.7rem; font-weight: 800; margin-top: 10px;">Fast Sign In / Sign Up</h2>
+        <h2 style="font-size: 1.6rem; font-weight: 800; margin-top: 10px;">Player Access & Profiles</h2>
         <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 4px;">
-          One-tap Google or Apple account creation. Check in to Austin pitches, track scores, and sync live matches instantly.
+          Sign in or register to sync your Austin pitch check-ins, leaderboard stats, and profile.
         </p>
       </div>
 
-      <!-- Sign In Buttons (when logged out) -->
+      <!-- Sign In / Sign Up Forms (when logged out) -->
       <div id="auth-login-buttons" class="auth-buttons-group">
-        <!-- Google Sign-In Button -->
-        <button class="btn-auth btn-google" onclick="loginWithGoogle()" id="google-signin-btn">
-          <svg class="auth-btn-icon" viewBox="0 0 24 24" width="20" height="20">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-          </svg>
-          <span>Continue with Google</span>
-        </button>
+        
+        <!-- Auth Tabs Switcher -->
+        <div class="auth-tabs" style="display: flex; gap: 6px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 12px; margin-bottom: 18px;">
+          <button type="button" class="auth-tab-btn active" id="tab-btn-login" onclick="switchAuthTab('login')">
+            <i class="fa-solid fa-right-to-bracket"></i> Email Login
+          </button>
+          <button type="button" class="auth-tab-btn" id="tab-btn-signup" onclick="switchAuthTab('signup')">
+            <i class="fa-solid fa-user-plus"></i> Sign Up
+          </button>
+          <button type="button" class="auth-tab-btn" id="tab-btn-oauth" onclick="switchAuthTab('oauth')">
+            <i class="fa-solid fa-shield-halved"></i> Social OAuth
+          </button>
+        </div>
 
-        <!-- Apple Sign-In Button -->
-        <button class="btn-auth btn-apple" onclick="loginWithApple()" id="apple-signin-btn">
-          <svg class="auth-btn-icon" viewBox="0 0 170 170" width="18" height="18" fill="currentColor">
-            <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.59-7.71-11.66-14-5.87-9.02-10.43-19.12-13.68-30.3-3.26-11.19-4.89-21.73-4.89-31.62 0-14.56 3.69-26.69 11.08-36.38 7.39-9.69 16.74-14.67 28.05-14.95 4.9.11 10.44 1.37 16.63 3.79 6.19 2.42 10.12 3.69 11.78 3.79 1.42 0 5.48-1.35 12.18-4.06 6.7-2.7 12.38-3.89 17.04-3.56 12.63.87 22.84 5.38 30.63 13.53-11.08 6.74-16.52 16.03-16.3 27.87.22 9.25 3.81 17.15 10.77 23.71 6.96 6.56 15.22 10.3 24.78 11.23-2.17 6.74-4.78 13.72-7.82 20.93zm-32.61-105.73c0-7.39 2.61-14.24 7.82-20.55 5.22-6.3 11.74-10.11 19.57-11.41.33 1.2.49 2.29.49 3.26 0 7.39-2.72 14.41-8.15 21.05-5.43 6.63-12.06 10.38-19.89 11.25-.22-1.3-.34-2.5-.34-3.6z"/>
-          </svg>
-          <span>Sign in with Apple</span>
-        </button>
+        <!-- Form 1: Email Sign In -->
+        <form id="auth-email-login-form" onsubmit="handleEmailLogin(event)" style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Email Address</label>
+            <input type="email" id="login-email-input" class="form-input" placeholder="player@example.com" required style="padding: 10px 14px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Password</label>
+              <a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.76rem; color: var(--primary-amber); text-decoration: none;">Forgot?</a>
+            </div>
+            <input type="password" id="login-password-input" class="form-input" placeholder="••••••••" required style="padding: 10px 14px;">
+          </div>
+          <button type="submit" class="btn-primary" id="email-login-btn" style="width: 100%; justify-content: center; margin-top: 4px; padding: 12px;">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In with Email
+          </button>
+        </form>
+
+        <!-- Form 2: Email Sign Up -->
+        <form id="auth-email-signup-form" onsubmit="handleEmailSignUp(event)" style="display: none; flex-direction: column; gap: 12px; text-align: left;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Full Name / Player Handle</label>
+            <input type="text" id="signup-name-input" class="form-input" placeholder="e.g. Jean-Luc Petanque" required style="padding: 10px 14px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Email Address</label>
+            <input type="email" id="signup-email-input" class="form-input" placeholder="player@example.com" required style="padding: 10px 14px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Password (min 6 chars)</label>
+            <input type="password" id="signup-password-input" class="form-input" placeholder="••••••••" minlength="6" required style="padding: 10px 14px;">
+          </div>
+          <button type="submit" class="btn-primary" id="email-signup-btn" style="width: 100%; justify-content: center; margin-top: 4px; padding: 12px; background: linear-gradient(135deg, #10b981, #059669);">
+            <i class="fa-solid fa-user-check"></i> Create Free Account
+          </button>
+        </form>
+
+        <!-- Form 3: OAuth (Google / Apple) -->
+        <div id="auth-oauth-group" style="display: none; flex-direction: column; gap: 10px;">
+          <!-- Google Sign-In Button -->
+          <button class="btn-auth btn-google" onclick="loginWithGoogle()" id="google-signin-btn">
+            <svg class="auth-btn-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <!-- Apple Sign-In Button -->
+          <button class="btn-auth btn-apple" onclick="loginWithApple()" id="apple-signin-btn">
+            <svg class="auth-btn-icon" viewBox="0 0 170 170" width="18" height="18" fill="currentColor">
+              <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.59-7.71-11.66-14-5.87-9.02-10.43-19.12-13.68-30.3-3.26-11.19-4.89-21.73-4.89-31.62 0-14.56 3.69-26.69 11.08-36.38 7.39-9.69 16.74-14.67 28.05-14.95 4.9.11 10.44 1.37 16.63 3.79 6.19 2.42 10.12 3.69 11.78 3.79 1.42 0 5.48-1.35 12.18-4.06 6.7-2.7 12.38-3.89 17.04-3.56 12.63.87 22.84 5.38 30.63 13.53-11.08 6.74-16.52 16.03-16.3 27.87.22 9.25 3.81 17.15 10.77 23.71 6.96 6.56 15.22 10.3 24.78 11.23-2.17 6.74-4.78 13.72-7.82 20.93zm-32.61-105.73c0-7.39 2.61-14.24 7.82-20.55 5.22-6.3 11.74-10.11 19.57-11.41.33 1.2.49 2.29.49 3.26 0 7.39-2.72 14.41-8.15 21.05-5.43 6.63-12.06 10.38-19.89 11.25-.22-1.3-.34-2.5-.34-3.6z"/>
+            </svg>
+            <span>Sign in with Apple</span>
+          </button>
+        </div>
+
       </div>
 
       <!-- Logged in state (when user is signed in) -->
-      <div id="auth-logged-in-box" style="display: none; margin-top: 14px;">
-        <div class="user-profile-badge">
-          <img id="auth-user-avatar" class="user-avatar-img" src="" alt="User Avatar">
-          <div style="display: flex; flex-direction: column; align-items: flex-start;">
-            <div id="auth-user-name" style="font-weight: 700; font-size: 1.05rem;">Player Name</div>
-            <div id="auth-user-email" style="font-size: 0.8rem; color: var(--text-muted);">player@example.com</div>
-            <div id="auth-user-role-badge" class="badge-role-founder" style="display: none; margin-top: 6px;"></div>
+      <div id="auth-logged-in-box" style="display: none; margin-top: 14px; text-align: left;">
+        
+        <!-- Profile Header Badge -->
+        <div class="user-profile-badge" style="margin-bottom: 14px; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="auth-avatar-display" class="avatar-large-preview" style="width: 52px; height: 52px; margin: 0; font-size: 1.4rem;">
+              <i class="fa-solid fa-circle-user"></i>
+            </div>
+            <div>
+              <div id="auth-user-name" style="font-weight: 800; font-size: 1.1rem; line-height: 1.2;">Player Name</div>
+              <div id="auth-username-display" class="username-tag" style="margin-top: 3px;">@username</div>
+              <div id="auth-user-email" style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">player@example.com</div>
+            </div>
+          </div>
+          <div id="auth-user-role-badge" class="badge-role-founder" style="display: none;"></div>
+        </div>
+
+        <!-- Subtabs: Profile & Avatar | Match History | Friends & Privacy -->
+        <div class="profile-subtabs">
+          <button type="button" class="profile-subtab-btn active" id="profile-tab-btn-info" onclick="switchProfileSubtab('info')">
+            <i class="fa-solid fa-id-card"></i> Profile & Avatar
+          </button>
+          <button type="button" class="profile-subtab-btn" id="profile-tab-btn-matches" onclick="switchProfileSubtab('matches')">
+            <i class="fa-solid fa-trophy"></i> Match History
+          </button>
+          <button type="button" class="profile-subtab-btn" id="profile-tab-btn-privacy" onclick="switchProfileSubtab('privacy')">
+            <i class="fa-solid fa-user-lock"></i> Privacy
+          </button>
+        </div>
+
+        <!-- Section 1: Profile Info, Bio & Avatar Selector -->
+        <div id="profile-subtab-content-info">
+          
+          <!-- Avatar Creator Grid -->
+          <div style="margin-bottom: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 12px;">
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--primary-amber); text-transform: uppercase; letter-spacing: 0.5px;">
+              <i class="fa-solid fa-palette"></i> Choose Avatar Badge
+            </label>
+            <div class="avatar-presets-grid" id="avatar-presets-container">
+              <button type="button" class="avatar-preset-item selected" data-avatar="fa-bowling-ball" onclick="selectAvatarPreset('fa-bowling-ball')"><i class="fa-solid fa-bowling-ball"></i></button>
+              <button type="button" class="avatar-preset-item" data-avatar="fa-trophy" onclick="selectAvatarPreset('fa-trophy')"><i class="fa-solid fa-trophy"></i></button>
+              <button type="button" class="avatar-preset-item" data-avatar="fa-crown" onclick="selectAvatarPreset('fa-crown')"><i class="fa-solid fa-crown"></i></button>
+              <button type="button" class="avatar-preset-item" data-avatar="fa-sun" onclick="selectAvatarPreset('fa-sun')"><i class="fa-solid fa-sun"></i></button>
+              <button type="button" class="avatar-preset-item" data-avatar="fa-fire" onclick="selectAvatarPreset('fa-fire')"><i class="fa-solid fa-fire"></i></button>
+              <button type="button" class="avatar-preset-item" data-avatar="fa-star" onclick="selectAvatarPreset('fa-star')"><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="avatar-preset-item" data-avatar="fa-bullseye" onclick="selectAvatarPreset('fa-bullseye')"><i class="fa-solid fa-bullseye"></i></button>
+              <button type="button" class="avatar-preset-item" data-avatar="fa-award" onclick="selectAvatarPreset('fa-award')"><i class="fa-solid fa-award"></i></button>
+              <button type="button" class="avatar-preset-item" data-avatar="fa-bolt" onclick="selectAvatarPreset('fa-bolt')"><i class="fa-solid fa-bolt"></i></button>
+              <button type="button" class="avatar-preset-item" data-avatar="fa-gem" onclick="selectAvatarPreset('fa-gem')"><i class="fa-solid fa-gem"></i></button>
+              <button type="button" class="avatar-preset-item" data-avatar="fa-shield" onclick="selectAvatarPreset('fa-shield')"><i class="fa-solid fa-shield"></i></button>
+              <button type="button" class="avatar-preset-item" data-avatar="fa-certificate" onclick="selectAvatarPreset('fa-certificate')"><i class="fa-solid fa-certificate"></i></button>
+            </div>
+            <div class="form-group" style="margin-bottom: 0; margin-top: 8px;">
+              <input type="text" id="profile-custom-avatar-url" class="form-input" placeholder="Or paste Custom Image URL (optional)" style="padding: 7px 10px; font-size: 0.78rem;" oninput="previewCustomAvatarUrl(this.value)">
+            </div>
+          </div>
+
+          <!-- Extended Bio & Info Form -->
+          <form id="profile-details-form" onsubmit="saveUserProfileSettings(event)" style="display: flex; flex-direction: column; gap: 10px;">
+            
+            <div class="form-group" style="margin-bottom: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Unique Username Handle</label>
+                <span id="username-validation-badge" class="username-status-badge available"><i class="fa-solid fa-circle-check"></i> Unique</span>
+              </div>
+              <div style="position: relative; display: flex; align-items: center;">
+                <span style="position: absolute; left: 12px; color: var(--text-muted); font-weight: 700; font-family: monospace;">@</span>
+                <input type="text" id="profile-username-input" class="form-input" placeholder="username" style="padding-left: 28px; padding: 8px 12px 8px 28px; font-family: monospace; font-weight: 700;" oninput="onUsernameInputChange(this.value)">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">About Me / Bio</label>
+              <textarea id="profile-bio-input" class="form-input" rows="2" placeholder="Tell the Austin Pétanque community about yourself..." style="padding: 8px 12px; font-size: 0.85rem; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted);">Favorite Austin Pitch</label>
+                <select id="profile-pitch-select" class="form-input" style="padding: 7px 10px; font-size: 0.82rem;">
+                  <option value="French Legation Museum">French Legation Museum</option>
+                  <option value="Pease Park Courts">Pease Park Courts</option>
+                  <option value="Zilker Park Promenade">Zilker Park Promenade</option>
+                  <option value="Mueller Lake Park">Mueller Lake Park</option>
+                  <option value="Custom Court / Backyard">Custom Court / Backyard</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted);">Playing Role</label>
+                <select id="profile-role-select" class="form-input" style="padding: 7px 10px; font-size: 0.82rem;">
+                  <option value="Pointer (Pointeur)">Pointer (Pointeur)</option>
+                  <option value="Shooter (Tireur)">Shooter (Tireur)</option>
+                  <option value="Milieu (All-Rounder)">Milieu (All-Rounder)</option>
+                  <option value="Casual Enthusiast">Casual Enthusiast</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="save-profile-btn" style="width: 100%; justify-content: center; margin-top: 6px; padding: 10px;">
+              <i class="fa-solid fa-floppy-disk"></i> Save Profile & Bio
+            </button>
+          </form>
+
+        </div>
+
+        <!-- Section 2: Match History -->
+        <div id="profile-subtab-content-matches" style="display: none;">
+          <div class="match-stats-summary">
+            <div class="match-stat-box">
+              <div class="match-stat-val" id="stat-total-matches-count">0</div>
+              <div class="match-stat-lbl">Matches</div>
+            </div>
+            <div class="match-stat-box">
+              <div class="match-stat-val" id="stat-win-rate-pct" style="color: #34d399;">0%</div>
+              <div class="match-stat-lbl">Win Rate</div>
+            </div>
+            <div class="match-stat-box">
+              <div class="match-stat-val" id="stat-wins-losses-ratio">0W - 0L</div>
+              <div class="match-stat-lbl">Record</div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Recent Matches</span>
+            <button type="button" class="btn-secondary" onclick="openLogMatchModal()" style="padding: 5px 10px; font-size: 0.78rem;">
+              <i class="fa-solid fa-plus"></i> Log Game
+            </button>
+          </div>
+
+          <div class="match-history-list" id="match-history-container">
+            <div style="text-align: center; color: var(--text-muted); font-size: 0.84rem; padding: 20px 0;">
+              <i class="fa-solid fa-trophy" style="font-size: 1.8rem; margin-bottom: 8px; opacity: 0.4;"></i>
+              <p>No recorded matches yet.<br>Click "Log Game" to record your first score!</p>
+            </div>
           </div>
         </div>
+
+        <!-- Section 3: Privacy & Friends Settings -->
+        <div id="profile-subtab-content-privacy" style="display: none;">
+          <div class="privacy-toggle-box">
+            <div>
+              <div style="font-weight: 700; font-size: 0.92rem;"><i class="fa-solid fa-shield-halved" style="color: var(--primary-amber);"></i> Friends-Only Account Privacy</div>
+              <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+                When active, only confirmed friends can view your match history and detailed bio.
+              </div>
+            </div>
+            <label class="switch" style="position: relative; inline-size: 46px; block-size: 24px; display: inline-block;">
+              <input type="checkbox" id="profile-privacy-checkbox" onchange="toggleAccountPrivacySetting(this.checked)" style="opacity: 0; inline-size: 0; block-size: 0;">
+              <span class="slider" style="position: absolute; cursor: pointer; inset-block-start: 0; inset-inline-start: 0; inset-inline-end: 0; inset-block-end: 0; background-color: rgba(255,255,255,0.2); transition: .3s; border-radius: 24px;"></span>
+            </label>
+          </div>
+
+          <div id="privacy-status-indicator" class="privacy-shield-banner" style="display: none;">
+            <i class="fa-solid fa-lock"></i> Account Privacy Mode: <strong>Friends Only</strong>. Unapproved players will see a private profile shield.
+          </div>
+
+          <div style="margin-top: 14px;">
+            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">
+              <i class="fa-solid fa-user-group"></i> Community Friends & Circle
+            </div>
+            <div id="friends-list-container" style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="font-size: 0.82rem; color: var(--text-muted); background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); padding: 10px; border-radius: 8px;">
+                <i class="fa-solid fa-circle-info"></i> All community players are visible in the <strong>Austin Community Database</strong>. Toggle Friends-Only above to restrict your account view.
+              </div>
+            </div>
+          </div>
+        </div>
+
         <button class="btn-primary" id="auth-admin-btn" onclick="closeAuthModal(); window.location.hash='#admin';" style="display: none; width: 100%; margin-top: 14px; justify-content: center;">
           <i class="fa-solid fa-user-shield"></i> Open Founder Control Center
         </button>
+
         <button class="btn-secondary" onclick="handleSignOut()" style="width: 100%; margin-top: 12px; justify-content: center;">
           <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
         </button>
       </div>
 
-      <div id="auth-status-msg" style="margin-top: 14px; font-size: 0.85rem; font-weight: 600;"></div>
+      <div id="auth-status-msg" style="margin-top: 14px; font-size: 0.85rem; font-weight: 600; text-align: center;"></div>
+    </div>
+  </div>
+
+  <!-- Log Pétanque Match Modal -->
+  <div class="modal-backdrop" id="log-match-modal">
+    <div class="modal-content glass-panel" style="max-width: 440px; text-align: left;">
+      <button class="modal-close" onclick="closeLogMatchModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div style="text-align: center; margin-bottom: 14px;">
+        <div class="auth-icon-circle" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #34d399;">
+          <i class="fa-solid fa-award"></i>
+        </div>
+        <h3 style="font-size: 1.35rem; font-weight: 800; margin-top: 8px;">Log Pétanque Match</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted);">Record game score to update your stats and match history.</p>
+      </div>
+
+      <form id="log-match-form" onsubmit="handleLogMatchSubmit(event)" style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Your Score</label>
+            <input type="number" id="match-my-score" class="form-input" min="0" max="13" value="13" required style="padding: 8px 12px; font-weight: 800; font-size: 1.1rem; text-align: center;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Opponent Score</label>
+            <input type="number" id="match-opp-score" class="form-input" min="0" max="13" value="7" required style="padding: 8px 12px; font-weight: 800; font-size: 1.1rem; text-align: center;">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Opponent Name / Team</label>
+          <input type="text" id="match-opponent-input" class="form-input" placeholder="e.g. Samantha Vance or Team Pease" required style="padding: 8px 12px;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Game Type</label>
+            <select id="match-type-select" class="form-input" style="padding: 8px 10px;">
+              <option value="Tête-à-tête (1v1)">Singles 1v1</option>
+              <option value="Doublette (2v2)">Doubles 2v2</option>
+              <option value="Triplette (3v3)">Triples 3v3</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Pitch Location</label>
+            <select id="match-pitch-select" class="form-input" style="padding: 8px 10px;">
+              <option value="French Legation">French Legation</option>
+              <option value="Pease Park">Pease Park</option>
+              <option value="Zilker Park">Zilker Park</option>
+              <option value="Mueller Lake Park">Mueller Lake Park</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 6px; padding: 12px; background: linear-gradient(135deg, #10b981, #059669);">
+          <i class="fa-solid fa-check"></i> Save Match Record
+        </button>
+      </form>
     </div>
   </div>
 
@@ -718,6 +1079,6 @@
       });
     }
   </script>
-  <script type="module" src="app.js?v=3.7.0"></script>
+  <script type="module" src="app.js?v=3.8.0"></script>
 </body>
 </html>

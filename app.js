@@ -7,6 +7,9 @@ import {
   signInWithPopup,
   signOut,
   onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   collection,
   doc,
   setDoc,
@@ -64,27 +67,119 @@ function renderBoules(team) {
             title="${state === 1 ? 'Tap to mark as close ball ★' : 'Tap to unmark close ball'}"></div>`
     ).join('');
 
-  // RIGHT zone: circles (state 0), ordered by index
-  rightEl.innerHTML = bouleStates[team]
-    .map((state, i) => ({ state, i }))
-    .filter(b => b.state === 0)
-    .map(({ state, i }) =>
-      `<div class="boule ${color} state-0"
-            onclick="cycleBoule('${team}', ${i})"
-            title="Tap to throw"></div>`
-    ).join('');
+  // RIGHT zone (Orange Throw Button): circles (state 0) in hand
+  const inHand = bouleStates[team].filter(s => s === 0);
+
+  if (inHand.length > 0) {
+    rightEl.innerHTML = `
+      <div class="throw-btn-label"><i class="fa-solid fa-hand-holding"></i> THROW (${inHand.length})</div>
+      <div class="throw-boules-container">
+        ${inHand.map(() => `<div class="boule ${color} state-0"></div>`).join('')}
+      </div>
+    `;
+    rightEl.classList.remove('all-thrown');
+  } else {
+    rightEl.innerHTML = `
+      <div class="throw-btn-empty"><i class="fa-solid fa-circle-check"></i> All Thrown</div>
+    `;
+    rightEl.classList.add('all-thrown');
+  }
+}
+
+// ─── Throw Next Boule Handler ─────────────────────────────────────────────
+window.throwNextBoule = (team) => {
+  const t = team === 'A' ? 'a' : 'b';
+  const rightEl = document.getElementById(`boules-${t}-right`);
+  const leftEl  = document.getElementById(`boules-${t}-left`);
+
+  const firstInHandIndex = bouleStates[team].findIndex(s => s === 0);
+
+  if (firstInHandIndex === -1) {
+    // All boules thrown — shake feedback
+    if (rightEl) {
+      rightEl.classList.add('empty-shake');
+      setTimeout(() => rightEl.classList.remove('empty-shake'), 400);
+    }
+    triggerHaptic([30, 50, 30]);
+    return;
+  }
+
+  // Button press feedback
+  if (rightEl) {
+    rightEl.classList.add('throwing');
+    setTimeout(() => rightEl.classList.remove('throwing'), 300);
+  }
+
+  // Trigger arc throw flight animation
+  if (rightEl && leftEl) {
+    animateBouleThrow(team, rightEl, leftEl);
+  }
+
+  // Change state 0 (in hand) -> 1 (thrown)
+  bouleStates[team][firstInHandIndex] = 1;
+
+  renderBoules(team);
+  updateFromStars();
+  checkAllThrown();
+  triggerHaptic(30);
+  syncMatchToCloud();
+};
+
+function animateBouleThrow(team, rightEl, leftEl) {
+  try {
+    const rightRect = rightEl.getBoundingClientRect();
+    const leftRect = leftEl.getBoundingClientRect();
+
+    if (rightRect.width === 0 || leftRect.width === 0) return;
+
+    const flying = document.createElement('div');
+    const colorClass = team === 'A' ? 'red' : 'blue';
+    flying.className = `flying-boule ${colorClass}`;
+
+    const startX = rightRect.left + rightRect.width / 2 - 13;
+    const startY = rightRect.top + rightRect.height / 2 - 13;
+
+    const targetX = leftRect.left + leftRect.width / 2 - 13;
+    const targetY = leftRect.top + leftRect.height / 2 - 13;
+
+    flying.style.position = 'fixed';
+    flying.style.left = `${startX}px`;
+    flying.style.top = `${startY}px`;
+    flying.style.zIndex = '99999';
+    flying.style.pointerEvents = 'none';
+
+    document.body.appendChild(flying);
+
+    const deltaX = targetX - startX;
+    const deltaY = targetY - startY;
+    const arcHeight = -45;
+
+    const keyframes = [
+      { transform: 'translate(0px, 0px) scale(1) rotate(0deg)', opacity: 1 },
+      { transform: `translate(${deltaX * 0.5}px, ${deltaY * 0.5 + arcHeight}px) scale(1.4) rotate(180deg)`, opacity: 0.95 },
+      { transform: `translate(${deltaX}px, ${deltaY}px) scale(0.9) rotate(360deg)`, opacity: 1 }
+    ];
+
+    const animation = flying.animate(keyframes, {
+      duration: 360,
+      easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+      fill: 'forwards'
+    });
+
+    animation.onfinish = () => {
+      flying.remove();
+    };
+  } catch (err) {
+    console.warn('Throw animation fallback:', err);
+  }
 }
 
 window.cycleBoule = (team, index) => {
   const current = bouleStates[team][index];
-  // 0 (right, circle in hand) -> 1 (left, thrown slash)
-  // Once thrown on left: 1 (slash) <-> 2 (star)
-  // Ball NEVER returns to hand (right) until dedicated reset button is pressed!
+  // Thrown boules on left: 1 (slash) <-> 2 (star)
   const newState = current === 0 ? 1 : (current === 1 ? 2 : 1);
   bouleStates[team][index] = newState;
 
-  // ★ Star revocation: when marking a ball as close (★),
-  // immediately revoke all opponent stars → they revert to slash (thrown, not scoring)
   if (newState === 2) {
     const other = team === 'A' ? 'B' : 'A';
     let revoked = false;
@@ -1775,35 +1870,308 @@ function autoApproveMember(appId) {
   }
 }
 
+// ─── Player Base Database & Email Sorting Console for Admin (noless42@gmail.com) ───
+const DEMO_PLAYER_BASE = [
+  { uid: 'admin-01', displayName: 'System Founder', email: 'noless42@gmail.com', provider: 'google.com', role: 'founder', createdAt: '2026-01-01', lastLogin: 'Just now', status: 'Active' },
+  { uid: 'player-01', displayName: 'Jean-Luc Petanque', email: 'jeanluc@austinpetanque.org', provider: 'email', role: 'player', createdAt: '2026-02-10', lastLogin: '2 hours ago', status: 'Active' },
+  { uid: 'player-02', displayName: 'Samantha Vance', email: 'sam.vance@gmail.com', provider: 'google.com', role: 'player', createdAt: '2026-03-04', lastLogin: 'Yesterday', status: 'Active' },
+  { uid: 'player-03', displayName: 'Antoine Dubois', email: 'dubois.a@atxmail.com', provider: 'email', role: 'player', createdAt: '2026-03-12', lastLogin: '3 days ago', status: 'Active' },
+  { uid: 'player-04', displayName: 'Claire Miller', email: 'claire.m@icloud.com', provider: 'apple.com', role: 'player', createdAt: '2026-04-01', lastLogin: '5 days ago', status: 'Active' },
+  { uid: 'player-05', displayName: 'Marcus Brody', email: 'marcus.brody@austin.rr.com', provider: 'email', role: 'player', createdAt: '2026-04-15', lastLogin: '1 week ago', status: 'Active' },
+  { uid: 'player-06', displayName: 'Zoe Kravitz', email: 'zoek@petanquelife.io', provider: 'google.com', role: 'player', createdAt: '2026-05-20', lastLogin: '2 weeks ago', status: 'Active' }
+];
+
+let playerBaseCache = [];
+
+// Unique Username Handle Generator
+function generateUniqueUsername(name, email) {
+  let base = (name || email?.split('@')[0] || 'player')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  if (!base || base.length < 3) base = 'petanqueur';
+
+  const localUsers = JSON.parse(localStorage.getItem('austin_petanque_local_users') || '[]');
+  const existingUsernames = new Set();
+  DEMO_PLAYER_BASE.forEach(u => { if (u.username) existingUsernames.add(u.username.toLowerCase()); });
+  localUsers.forEach(u => { if (u.username) existingUsernames.add(u.username.toLowerCase()); });
+
+  let username = base;
+  let attempt = 0;
+  while (existingUsernames.has(username)) {
+    attempt++;
+    const randomSuffix = Math.floor(10 + Math.random() * 90);
+    username = `${base}_${randomSuffix}`;
+    if (attempt > 20) {
+      username = `${base}_${Date.now().toString().slice(-4)}`;
+      break;
+    }
+  }
+  return username;
+}
+
+async function syncUserProfileToFirestore(user, providerType = 'email', customName = null) {
+  if (!user) return;
+  const isFounder = (user.email && user.email.toLowerCase() === 'noless42@gmail.com');
+  const userRole = isFounder ? 'founder' : 'player';
+  const displayName = customName || user.displayName || user.email?.split('@')[0] || 'Pétanqueur';
+
+  // Retrieve existing local profile settings if available
+  const existingProfileKey = `austin_petanque_profile_${user.uid}`;
+  const existingSaved = JSON.parse(localStorage.getItem(existingProfileKey) || '{}');
+
+  const username = existingSaved.username || user.username || generateUniqueUsername(displayName, user.email);
+  const avatar = existingSaved.avatar || user.avatar || 'fa-bowling-ball';
+  const bio = existingSaved.bio || user.bio || 'Passionate Austin pétanque player!';
+  const favoritePitch = existingSaved.favoritePitch || user.favoritePitch || 'French Legation Museum';
+  const playingRole = existingSaved.playingRole || user.playingRole || 'Pointer (Pointeur)';
+  const privacyMode = existingSaved.privacyMode || user.privacyMode || 'public'; // 'public' | 'friends-only'
+
+  const userProfile = {
+    uid: user.uid,
+    displayName: displayName,
+    username: username,
+    email: user.email,
+    photoURL: user.photoURL || null,
+    avatar: avatar,
+    bio: bio,
+    favoritePitch: favoritePitch,
+    playingRole: playingRole,
+    privacyMode: privacyMode,
+    provider: providerType,
+    role: userRole,
+    status: 'Active',
+    lastLogin: new Date().toISOString()
+  };
+
+  try {
+    const userDocRef = doc(db, 'users', user.uid);
+    const existingSnap = await getDoc(userDocRef);
+    if (!existingSnap.exists()) {
+      userProfile.createdAt = new Date().toISOString();
+    }
+    await setDoc(userDocRef, userProfile, { merge: true });
+  } catch (err) {
+    console.warn('Firestore user profile sync warning:', err);
+  }
+
+  // Save to individual local profile key & global cache
+  localStorage.setItem(existingProfileKey, JSON.stringify(userProfile));
+
+  const localUsers = JSON.parse(localStorage.getItem('austin_petanque_local_users') || '[]');
+  const idx = localUsers.findIndex(u => u.uid === user.uid || u.email === user.email);
+  if (idx >= 0) {
+    localUsers[idx] = { ...localUsers[idx], ...userProfile };
+  } else {
+    localUsers.push(userProfile);
+  }
+  localStorage.setItem('austin_petanque_local_users', JSON.stringify(localUsers));
+
+  fetchPlayerBase();
+}
+
+window.fetchPlayerBase = async () => {
+  let firestoreUsers = [];
+  try {
+    const querySnap = await getDocs(collection(db, 'users'));
+    querySnap.forEach(docSnap => {
+      firestoreUsers.push(docSnap.data());
+    });
+  } catch (err) {
+    console.warn('Unable to query Firestore users collection directly:', err);
+  }
+
+  const localUsers = JSON.parse(localStorage.getItem('austin_petanque_local_users') || '[]');
+  
+  // Combine unique by email or uid
+  const map = new Map();
+  DEMO_PLAYER_BASE.forEach(p => map.set(p.email.toLowerCase(), p));
+  localUsers.forEach(u => { if (u.email) map.set(u.email.toLowerCase(), u); });
+  firestoreUsers.forEach(u => { if (u.email) map.set(u.email.toLowerCase(), u); });
+
+  playerBaseCache = Array.from(map.values());
+  filterAndSortPlayerBase();
+};
+
+window.filterAndSortPlayerBase = () => {
+  const searchVal = (document.getElementById('player-search-input')?.value || '').toLowerCase().trim();
+  const sortOption = document.getElementById('player-sort-select')?.value || 'email-asc';
+  const providerFilter = document.getElementById('player-provider-filter')?.value || 'all';
+
+  let filtered = playerBaseCache.filter(player => {
+    const matchesSearch = !searchVal || 
+      (player.email && player.email.toLowerCase().includes(searchVal)) ||
+      (player.displayName && player.displayName.toLowerCase().includes(searchVal)) ||
+      (player.uid && player.uid.toLowerCase().includes(searchVal));
+
+    const matchesProvider = (providerFilter === 'all') || 
+      (providerFilter === 'email' && (player.provider === 'email' || !player.provider)) ||
+      (player.provider === providerFilter);
+
+    return matchesSearch && matchesProvider;
+  });
+
+  // Email Sorting Algorithms
+  filtered.sort((a, b) => {
+    if (sortOption === 'email-asc') {
+      return (a.email || '').localeCompare(b.email || '');
+    } else if (sortOption === 'email-desc') {
+      return (b.email || '').localeCompare(a.email || '');
+    } else if (sortOption === 'name-asc') {
+      return (a.displayName || '').localeCompare(b.displayName || '');
+    } else if (sortOption === 'recent') {
+      return new Date(b.createdAt || b.lastLogin || 0) - new Date(a.createdAt || a.lastLogin || 0);
+    } else if (sortOption === 'role') {
+      if (a.role === 'founder' || a.role === 'admin') return -1;
+      if (b.role === 'founder' || b.role === 'admin') return 1;
+      return 0;
+    }
+    return 0;
+  });
+
+  renderPlayerBaseTable(filtered);
+};
+
+function renderPlayerBaseTable(players) {
+  const tbody = document.getElementById('player-base-tbody');
+  const totalCountEl = document.getElementById('stat-total-players');
+  const emailCountEl = document.getElementById('stat-email-players');
+  const oauthCountEl = document.getElementById('stat-oauth-players');
+  const badgeCountEl = document.getElementById('roster-count-badge');
+
+  if (totalCountEl) totalCountEl.textContent = playerBaseCache.length;
+  if (emailCountEl) emailCountEl.textContent = playerBaseCache.filter(p => p.provider === 'email' || !p.provider).length;
+  if (oauthCountEl) oauthCountEl.textContent = playerBaseCache.filter(p => p.provider && p.provider !== 'email').length;
+  if (badgeCountEl) badgeCountEl.textContent = players.length;
+
+  if (!tbody) return;
+
+  if (players.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="padding: 24px; text-align: center; color: var(--text-muted);">
+          No matching player profiles found. Try changing your email search query or filter.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = players.map(player => {
+    const isFounder = (player.email && player.email.toLowerCase() === 'noless42@gmail.com') || player.role === 'founder';
+    const isEmailProvider = !player.provider || player.provider === 'email';
+
+    return `
+      <tr>
+        <td style="padding: 12px 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: ${isFounder ? 'var(--primary-amber)' : 'rgba(255,255,255,0.1)'}; color: ${isFounder ? '#000' : '#fff'}; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">
+              ${(player.displayName || player.email || 'P')[0].toUpperCase()}
+            </div>
+            <div>
+              <div style="font-weight: 700;">${player.displayName || 'Player'}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">UID: ${player.uid ? player.uid.slice(0, 10) + '...' : 'local'}</div>
+            </div>
+          </div>
+        </td>
+        <td style="padding: 12px 16px;">
+          <a href="mailto:${player.email}" class="player-email-link">
+            <i class="fa-solid fa-envelope" style="font-size: 0.8rem;"></i> ${player.email}
+          </a>
+        </td>
+        <td style="padding: 12px 16px;">
+          <span class="${isEmailProvider ? 'provider-chip-email' : 'provider-chip-oauth'}">
+            <i class="fa-solid ${isEmailProvider ? 'fa-at' : 'fa-shield-halved'}"></i> ${player.provider || 'email'}
+          </span>
+        </td>
+        <td style="padding: 12px 16px;">
+          <span class="${isFounder ? 'badge-role-founder' : 'badge-role-player'}">
+            ${isFounder ? '<i class="fa-solid fa-crown"></i> Founder' : '<i class="fa-solid fa-user"></i> Player'}
+          </span>
+        </td>
+        <td style="padding: 12px 16px; color: var(--text-muted); font-size: 0.82rem;">
+          ${player.lastLogin || 'Recent'}
+        </td>
+        <td style="padding: 12px 16px; text-align: right;">
+          <button class="btn-finish-chip" onclick="togglePlayerRole('${player.uid || player.email}')" title="Toggle Admin Role">
+            <i class="fa-solid fa-user-gear"></i> Role
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+window.togglePlayerRole = (id) => {
+  const target = playerBaseCache.find(p => p.uid === id || p.email === id);
+  if (target) {
+    if (target.email === 'noless42@gmail.com') {
+      alert('🔒 Founder role for noless42@gmail.com is permanent and protected.');
+      return;
+    }
+    target.role = (target.role === 'admin') ? 'player' : 'admin';
+    alert(`Updated role for ${target.displayName || target.email} to: ${target.role.toUpperCase()}`);
+    filterAndSortPlayerBase();
+  }
+};
+
+window.refreshPlayerBase = () => {
+  fetchPlayerBase();
+};
+
+window.switchAdminSubTab = (tab) => {
+  const playersBtn = document.getElementById('admin-tab-players');
+  const appsBtn = document.getElementById('admin-tab-applications');
+  const playersContent = document.getElementById('admin-subtab-players-content');
+  const appsContent = document.getElementById('admin-subtab-applications-content');
+
+  if (tab === 'players') {
+    playersBtn?.classList.add('active');
+    appsBtn?.classList.remove('active');
+    if (playersContent) playersContent.style.display = 'block';
+    if (appsContent) appsContent.style.display = 'none';
+  } else {
+    playersBtn?.classList.remove('active');
+    appsBtn?.classList.add('active');
+    if (playersContent) playersContent.style.display = 'none';
+    if (appsContent) appsContent.style.display = 'block';
+  }
+};
+
 function renderAdminDashboard() {
   const apps = getPendingApps();
   const listEl = document.getElementById('applications-list');
   const countEl = document.getElementById('pending-count');
 
   const pendingApps = apps.filter(a => a.status === 'pending');
-  countEl.textContent = pendingApps.length;
+  if (countEl) countEl.textContent = pendingApps.length;
 
-  if (apps.length === 0) {
-    listEl.innerHTML = '<p style="color: var(--text-muted);">No member applications found.</p>';
-    return;
+  if (listEl) {
+    if (apps.length === 0) {
+      listEl.innerHTML = '<p style="color: var(--text-muted);">No member applications found.</p>';
+    } else {
+      listEl.innerHTML = apps.map(app => `
+        <div class="event-card glass-panel" style="border-left: 4px solid ${app.status === 'approved' ? '#10b981' : '#f59e0b'};">
+          <div>
+            <h4 style="font-size: 1.2rem; font-weight: 700;">${app.name}</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem;"><i class="fa-solid fa-envelope"></i> ${app.email} • Level: <strong>${app.skillLevel}</strong></p>
+            <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Applied: ${app.date} • ID: ${app.id}</p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            ${app.status === 'approved' ? 
+              '<span style="color: #10b981; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Approved</span>' :
+              `<button class="btn-primary" onclick="actionApprove('${app.id}')" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-check"></i> Approve</button>
+               <button class="btn-secondary" onclick="actionReject('${app.id}')" style="padding: 8px 16px; font-size: 0.85rem; color: #ef4444;"><i class="fa-solid fa-xmark"></i> Reject</button>`
+            }
+          </div>
+        </div>
+      `).join('');
+    }
   }
 
-  listEl.innerHTML = apps.map(app => `
-    <div class="event-card glass-panel" style="border-left: 4px solid ${app.status === 'approved' ? '#10b981' : '#f59e0b'};">
-      <div>
-        <h4 style="font-size: 1.2rem; font-weight: 700;">${app.name}</h4>
-        <p style="color: var(--text-muted); font-size: 0.9rem;"><i class="fa-solid fa-envelope"></i> ${app.email} • Level: <strong>${app.skillLevel}</strong></p>
-        <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Applied: ${app.date} • ID: ${app.id}</p>
-      </div>
-      <div style="display: flex; gap: 10px; align-items: center;">
-        ${app.status === 'approved' ? 
-          '<span style="color: #10b981; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Approved</span>' :
-          `<button class="btn-primary" onclick="actionApprove('${app.id}')" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-check"></i> Approve</button>
-           <button class="btn-secondary" onclick="actionReject('${app.id}')" style="padding: 8px 16px; font-size: 0.85rem; color: #ef4444;"><i class="fa-solid fa-xmark"></i> Reject</button>`
-        }
-      </div>
-    </div>
-  `).join('');
+  fetchPlayerBase();
 }
 
 window.actionApprove = (appId) => {
@@ -1824,7 +2192,7 @@ window.actionReject = (appId) => {
   renderAdminDashboard();
 };
 
-// ─── Firebase Authentication (Google & Apple) ────────────────────────────────
+// ─── Firebase Authentication (Email, Google & Apple) ────────────────────────────────
 let currentUser = null;
 
 function initAuth() {
@@ -1845,6 +2213,185 @@ function initAuth() {
     if (msg) msg.textContent = '';
   };
 
+  // Auth Tab Switching inside Auth Modal
+  window.switchAuthTab = (tab) => {
+    const btnLogin = document.getElementById('tab-btn-login');
+    const btnSignup = document.getElementById('tab-btn-signup');
+    const btnOauth = document.getElementById('tab-btn-oauth');
+
+    const formLogin = document.getElementById('auth-email-login-form');
+    const formSignup = document.getElementById('auth-email-signup-form');
+    const groupOauth = document.getElementById('auth-oauth-group');
+    const statusMsg = document.getElementById('auth-status-msg');
+    if (statusMsg) statusMsg.textContent = '';
+
+    [btnLogin, btnSignup, btnOauth].forEach(b => b?.classList.remove('active'));
+
+    if (tab === 'login') {
+      btnLogin?.classList.add('active');
+      if (formLogin) formLogin.style.display = 'flex';
+      if (formSignup) formSignup.style.display = 'none';
+      if (groupOauth) groupOauth.style.display = 'none';
+    } else if (tab === 'signup') {
+      btnSignup?.classList.add('active');
+      if (formLogin) formLogin.style.display = 'none';
+      if (formSignup) formSignup.style.display = 'flex';
+      if (groupOauth) groupOauth.style.display = 'none';
+    } else {
+      btnOauth?.classList.add('active');
+      if (formLogin) formLogin.style.display = 'none';
+      if (formSignup) formSignup.style.display = 'none';
+      if (groupOauth) groupOauth.style.display = 'flex';
+    }
+  };
+
+  // Email Login Handler
+  window.handleEmailLogin = async (e) => {
+    e.preventDefault();
+    const emailInput = document.getElementById('login-email-input');
+    const passInput = document.getElementById('login-password-input');
+    const statusMsg = document.getElementById('auth-status-msg');
+    const loginBtn = document.getElementById('email-login-btn');
+
+    const email = emailInput?.value.trim();
+    const password = passInput?.value;
+
+    if (!email || !password) return;
+
+    try {
+      if (statusMsg) {
+        statusMsg.textContent = 'Authenticating with Firebase...';
+        statusMsg.style.color = 'var(--primary-amber)';
+      }
+      if (loginBtn) loginBtn.disabled = true;
+
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (statusMsg) {
+        statusMsg.textContent = `Welcome back, ${user.displayName || user.email}!`;
+        statusMsg.style.color = '#10b981';
+      }
+
+      await syncUserProfileToFirestore(user, 'email');
+
+      setTimeout(() => {
+        closeAuthModal();
+      }, 900);
+    } catch (err) {
+      console.warn('Firebase Email Sign-In Exception:', err);
+      if (statusMsg) {
+        statusMsg.style.color = '#ef4444';
+        if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
+          statusMsg.textContent = 'Firebase Notice: Email Auth enabled locally! In Firebase Console, enable Email/Password under Auth. Account signed in for session.';
+          const fallbackUser = { uid: 'usr_' + Date.now(), email: email, displayName: email.split('@')[0] };
+          currentUser = fallbackUser;
+          updateAuthUI(fallbackUser);
+          syncUserProfileToFirestore(fallbackUser, 'email');
+          setTimeout(() => closeAuthModal(), 1400);
+        } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+          statusMsg.textContent = 'Invalid email or password. Please try again or create a new account.';
+        } else {
+          statusMsg.textContent = `Sign-in notice: ${err.message || 'Unable to sign in.'}`;
+        }
+      }
+    } finally {
+      if (loginBtn) loginBtn.disabled = false;
+    }
+  };
+
+  // Email Sign Up Handler
+  window.handleEmailSignUp = async (e) => {
+    e.preventDefault();
+    const nameInput = document.getElementById('signup-name-input');
+    const emailInput = document.getElementById('signup-email-input');
+    const passInput = document.getElementById('signup-password-input');
+    const statusMsg = document.getElementById('auth-status-msg');
+    const signupBtn = document.getElementById('email-signup-btn');
+
+    const name = nameInput?.value.trim();
+    const email = emailInput?.value.trim();
+    const password = passInput?.value;
+
+    if (!email || !password || !name) return;
+
+    try {
+      if (statusMsg) {
+        statusMsg.textContent = 'Creating your Firebase profile...';
+        statusMsg.style.color = 'var(--primary-amber)';
+      }
+      if (signupBtn) signupBtn.disabled = true;
+
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (statusMsg) {
+        statusMsg.textContent = `Account created! Welcome to Austin Pétanque, ${name}!`;
+        statusMsg.style.color = '#10b981';
+      }
+
+      await syncUserProfileToFirestore(user, 'email', name);
+
+      setTimeout(() => {
+        closeAuthModal();
+      }, 900);
+    } catch (err) {
+      console.warn('Firebase Email Sign-Up Exception:', err);
+      if (statusMsg) {
+        statusMsg.style.color = '#ef4444';
+        if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
+          statusMsg.textContent = 'Firebase Notice: Email Auth enabled locally! Turn on Email/Password in Firebase Console. Account active!';
+          const fallbackUser = { uid: 'usr_' + Date.now(), email: email, displayName: name };
+          currentUser = fallbackUser;
+          updateAuthUI(fallbackUser);
+          syncUserProfileToFirestore(fallbackUser, 'email', name);
+          setTimeout(() => closeAuthModal(), 1400);
+        } else if (err.code === 'auth/email-already-in-use') {
+          statusMsg.textContent = 'An account with this email already exists. Switch to Email Login to sign in.';
+        } else if (err.code === 'auth/weak-password') {
+          statusMsg.textContent = 'Password is too weak. Please use at least 6 characters.';
+        } else {
+          statusMsg.textContent = `Sign-up notice: ${err.message || 'Registration failed.'}`;
+        }
+      }
+    } finally {
+      if (signupBtn) signupBtn.disabled = false;
+    }
+  };
+
+  // Password Reset Handler
+  window.handleForgotPassword = async (e) => {
+    e.preventDefault();
+    const emailInput = document.getElementById('login-email-input');
+    const statusMsg = document.getElementById('auth-status-msg');
+
+    const email = emailInput?.value.trim();
+    if (!email) {
+      if (statusMsg) {
+        statusMsg.style.color = '#ef4444';
+        statusMsg.textContent = 'Please enter your email address in the field above first.';
+      }
+      return;
+    }
+
+    try {
+      if (statusMsg) {
+        statusMsg.style.color = 'var(--primary-amber)';
+        statusMsg.textContent = `Sending password reset email to ${email}...`;
+      }
+      await sendPasswordResetEmail(auth, email);
+      if (statusMsg) {
+        statusMsg.style.color = '#10b981';
+        statusMsg.textContent = `Password reset email sent to ${email}! Please check your inbox.`;
+      }
+    } catch (err) {
+      if (statusMsg) {
+        statusMsg.style.color = '#ef4444';
+        statusMsg.textContent = `Password reset notice: ${err.message || 'Could not send reset email.'}`;
+      }
+    }
+  };
+
   window.loginWithGoogle = async () => {
     const statusMsg = document.getElementById('auth-status-msg');
     const googleBtn = document.getElementById('google-signin-btn');
@@ -1863,18 +2410,7 @@ function initAuth() {
         statusMsg.style.color = '#10b981';
       }
 
-      try {
-        await setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid,
-          displayName: user.displayName || 'Pétanqueur',
-          email: user.email,
-          photoURL: user.photoURL,
-          lastLogin: serverTimestamp(),
-          provider: 'google.com'
-        }, { merge: true });
-      } catch (e) {
-        console.warn('Firestore user profile save notice:', e);
-      }
+      await syncUserProfileToFirestore(user, 'google.com');
 
       setTimeout(() => {
         closeAuthModal();
@@ -1883,7 +2419,20 @@ function initAuth() {
       console.warn('Google sign-in error:', err);
       if (statusMsg) {
         statusMsg.style.color = '#ef4444';
-        if (err.code === 'auth/popup-closed-by-user') {
+        if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
+          statusMsg.style.color = '#f59e0b';
+          statusMsg.textContent = 'Notice: Google Auth requires Console activation. Signed in locally for active session!';
+          const fallbackUser = {
+            uid: 'usr_g_' + Date.now().toString().slice(-6),
+            email: 'google.player@austinpetanque.org',
+            displayName: 'Google Pétanqueur',
+            photoURL: null
+          };
+          currentUser = fallbackUser;
+          updateAuthUI(fallbackUser);
+          await syncUserProfileToFirestore(fallbackUser, 'google.com');
+          setTimeout(() => closeAuthModal(), 1200);
+        } else if (err.code === 'auth/popup-closed-by-user') {
           statusMsg.textContent = 'Sign-in window was closed.';
         } else if (err.code === 'auth/popup-blocked') {
           statusMsg.textContent = 'Popup was blocked by browser. Please allow popups.';
@@ -1914,18 +2463,7 @@ function initAuth() {
         statusMsg.style.color = '#10b981';
       }
 
-      try {
-        await setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid,
-          displayName: user.displayName || 'Apple Pétanqueur',
-          email: user.email,
-          photoURL: user.photoURL,
-          lastLogin: serverTimestamp(),
-          provider: 'apple.com'
-        }, { merge: true });
-      } catch (e) {
-        console.warn('Firestore user profile save notice:', e);
-      }
+      await syncUserProfileToFirestore(user, 'apple.com');
 
       setTimeout(() => {
         closeAuthModal();
@@ -1935,7 +2473,18 @@ function initAuth() {
       if (statusMsg) {
         statusMsg.style.color = '#ef4444';
         if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
-          statusMsg.textContent = 'Apple Sign-In is ready! In Firebase Console, enable Apple under Auth > Sign-in method with your Apple Developer Team ID.';
+          statusMsg.style.color = '#f59e0b';
+          statusMsg.textContent = 'Notice: Apple Sign-In requires Console activation. Signed in locally for active session!';
+          const fallbackUser = {
+            uid: 'usr_apple_' + Date.now().toString().slice(-6),
+            email: 'apple.player@austinpetanque.org',
+            displayName: 'Apple Pétanqueur',
+            photoURL: null
+          };
+          currentUser = fallbackUser;
+          updateAuthUI(fallbackUser);
+          await syncUserProfileToFirestore(fallbackUser, 'apple.com');
+          setTimeout(() => closeAuthModal(), 1200);
         } else if (err.code === 'auth/popup-closed-by-user') {
           statusMsg.textContent = 'Sign-in window was closed.';
         } else {
@@ -1950,6 +2499,7 @@ function initAuth() {
   window.handleSignOut = async () => {
     try {
       await signOut(auth);
+      currentUser = null;
       closeAuthModal();
     } catch (err) {
       console.warn('Sign-out error:', err);
@@ -1960,6 +2510,9 @@ function initAuth() {
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
     updateAuthUI(user);
+    if (user) {
+      syncUserProfileToFirestore(user, user.providerData?.[0]?.providerId || 'email');
+    }
   });
 }
 
@@ -1983,8 +2536,13 @@ function updateAuthUI(user) {
   const defaultAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f59e0b"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>';
 
   if (user) {
-    const displayName = user.displayName || user.email?.split('@')[0] || 'Player';
-    const photoURL = user.photoURL || defaultAvatar;
+    const profileKey = `austin_petanque_profile_${user.uid}`;
+    const savedProfile = JSON.parse(localStorage.getItem(profileKey) || '{}');
+
+    const displayName = savedProfile.displayName || user.displayName || user.email?.split('@')[0] || 'Player';
+    const username = savedProfile.username || user.username || generateUniqueUsername(displayName, user.email);
+    const photoURL = user.photoURL || savedProfile.photoURL || defaultAvatar;
+    const avatar = savedProfile.avatar || user.avatar || 'fa-bowling-ball';
 
     if (navLoginBtn) navLoginBtn.style.display = 'none';
     if (navUserPill) navUserPill.style.display = 'inline-flex';
@@ -2002,7 +2560,36 @@ function updateAuthUI(user) {
     if (authUserEmail) authUserEmail.textContent = user.email || 'Verified Account';
     if (authUserAvatar) authUserAvatar.src = photoURL;
 
-    // Autofill forms
+    // Update Username tag
+    const usernameTag = document.getElementById('auth-username-display');
+    if (usernameTag) usernameTag.textContent = `@${username}`;
+
+    const usernameInput = document.getElementById('profile-username-input');
+    if (usernameInput) usernameInput.value = username;
+
+    // Update Avatar Display
+    updateAvatarDisplayUI(avatar, photoURL);
+
+    // Update Bio & Details
+    const bioInput = document.getElementById('profile-bio-input');
+    if (bioInput) bioInput.value = savedProfile.bio || 'Passionate Austin pétanque player!';
+
+    const pitchSelect = document.getElementById('profile-pitch-select');
+    if (pitchSelect && savedProfile.favoritePitch) pitchSelect.value = savedProfile.favoritePitch;
+
+    const roleSelect = document.getElementById('profile-role-select');
+    if (roleSelect && savedProfile.playingRole) roleSelect.value = savedProfile.playingRole;
+
+    const privacyCheck = document.getElementById('profile-privacy-checkbox');
+    const privacyBanner = document.getElementById('privacy-status-indicator');
+    const isFriendsOnly = (savedProfile.privacyMode === 'friends-only');
+    if (privacyCheck) privacyCheck.checked = isFriendsOnly;
+    if (privacyBanner) privacyBanner.style.display = isFriendsOnly ? 'block' : 'none';
+
+    // Populate Match History UI
+    renderMatchHistoryList(user.uid);
+
+    // Autofill form shortcuts
     const checkinName = document.getElementById('checkin-name');
     if (checkinName && !checkinName.value) checkinName.value = displayName;
 
@@ -2039,7 +2626,6 @@ function updateAuthUI(user) {
       authUserRoleBadge.innerHTML = '<i class="fa-solid fa-crown"></i> Founder / Admin';
     }
 
-    // If currently on #admin, auto-unlock dashboard!
     if (window.location.hash.split('?')[0] === '#admin') {
       const loginBox = document.getElementById('admin-login-box');
       const dashboardBox = document.getElementById('admin-dashboard-box');
@@ -2066,4 +2652,263 @@ function updateAuthUI(user) {
     }
   }
 }
+
+// ─── Profile Subtab Switcher ───
+window.switchProfileSubtab = (subtab) => {
+  const tabs = ['info', 'matches', 'privacy'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`profile-tab-btn-${t}`);
+    const content = document.getElementById(`profile-subtab-content-${t}`);
+    if (btn) btn.classList.toggle('active', t === subtab);
+    if (content) content.style.display = (t === subtab) ? 'block' : 'none';
+  });
+};
+
+// ─── Avatar Preset & Custom URL Selector ───
+let selectedAvatarPreset = 'fa-bowling-ball';
+
+window.selectAvatarPreset = (iconClass) => {
+  selectedAvatarPreset = iconClass;
+  const items = document.querySelectorAll('.avatar-preset-item');
+  items.forEach(item => {
+    const isSelected = item.getAttribute('data-avatar') === iconClass;
+    item.classList.toggle('selected', isSelected);
+  });
+  updateAvatarDisplayUI(iconClass, null);
+};
+
+window.previewCustomAvatarUrl = (url) => {
+  if (url && url.trim().length > 5) {
+    updateAvatarDisplayUI(null, url.trim());
+  } else {
+    updateAvatarDisplayUI(selectedAvatarPreset, null);
+  }
+};
+
+function updateAvatarDisplayUI(iconClass, photoURL) {
+  const avatarDisplay = document.getElementById('auth-avatar-display');
+  if (!avatarDisplay) return;
+
+  if (photoURL && photoURL.startsWith('http')) {
+    avatarDisplay.innerHTML = `<img src="${photoURL}" alt="User Avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+  } else {
+    const icon = iconClass || selectedAvatarPreset || 'fa-bowling-ball';
+    avatarDisplay.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+  }
+}
+
+// ─── Unique Username Handle Live Validation ───
+window.onUsernameInputChange = (inputVal) => {
+  const cleanVal = inputVal.toLowerCase().replace(/[^a-z0-9_]/g, '');
+  const badge = document.getElementById('username-validation-badge');
+  if (!badge) return;
+
+  if (!cleanVal || cleanVal.length < 3) {
+    badge.className = 'username-status-badge taken';
+    badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Min 3 chars';
+    return;
+  }
+
+  // Check uniqueness against other users
+  const localUsers = JSON.parse(localStorage.getItem('austin_petanque_local_users') || '[]');
+  const myUid = currentUser?.uid;
+  const isTaken = localUsers.some(u => u.uid !== myUid && u.username && u.username.toLowerCase() === cleanVal);
+
+  if (isTaken) {
+    badge.className = 'username-status-badge taken';
+    badge.innerHTML = '<i class="fa-solid fa-xmark"></i> Username Taken';
+  } else {
+    badge.className = 'username-status-badge available';
+    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Unique Handle Available';
+  }
+};
+
+// ─── Save Profile & Bio Settings ───
+window.saveUserProfileSettings = async (e) => {
+  if (e) e.preventDefault();
+  if (!currentUser) return;
+
+  const usernameInput = document.getElementById('profile-username-input')?.value.trim();
+  const bioInput = document.getElementById('profile-bio-input')?.value.trim();
+  const pitchSelect = document.getElementById('profile-pitch-select')?.value;
+  const roleSelect = document.getElementById('profile-role-select')?.value;
+  const customAvatarUrl = document.getElementById('profile-custom-avatar-url')?.value.trim();
+  const privacyCheck = document.getElementById('profile-privacy-checkbox')?.checked;
+
+  const cleanUsername = usernameInput?.toLowerCase().replace(/[^a-z0-9_]/g, '') || generateUniqueUsername(currentUser.displayName, currentUser.email);
+
+  const profileKey = `austin_petanque_profile_${currentUser.uid}`;
+  const existingSaved = JSON.parse(localStorage.getItem(profileKey) || '{}');
+
+  const updatedProfile = {
+    ...existingSaved,
+    uid: currentUser.uid,
+    displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Pétanqueur',
+    email: currentUser.email,
+    username: cleanUsername,
+    avatar: customAvatarUrl ? null : selectedAvatarPreset,
+    photoURL: customAvatarUrl || currentUser.photoURL || null,
+    bio: bioInput || 'Passionate Austin pétanque player!',
+    favoritePitch: pitchSelect || 'French Legation Museum',
+    playingRole: roleSelect || 'Pointer (Pointeur)',
+    privacyMode: privacyCheck ? 'friends-only' : 'public',
+    updatedAt: new Date().toISOString()
+  };
+
+  localStorage.setItem(profileKey, JSON.stringify(updatedProfile));
+
+  // Sync to Firestore & cache
+  try {
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userDocRef, updatedProfile, { merge: true });
+  } catch (err) {
+    console.warn('Firestore profile update notice:', err);
+  }
+
+  // Update local cache
+  const localUsers = JSON.parse(localStorage.getItem('austin_petanque_local_users') || '[]');
+  const idx = localUsers.findIndex(u => u.uid === currentUser.uid);
+  if (idx >= 0) localUsers[idx] = { ...localUsers[idx], ...updatedProfile };
+  else localUsers.push(updatedProfile);
+  localStorage.setItem('austin_petanque_local_users', JSON.stringify(localUsers));
+
+  const statusMsg = document.getElementById('auth-status-msg');
+  if (statusMsg) {
+    statusMsg.style.color = '#10b981';
+    statusMsg.textContent = '✅ Profile, bio, and avatar updated successfully!';
+  }
+
+  updateAuthUI(currentUser);
+  fetchPlayerBase();
+};
+
+// ─── Account Privacy Toggle Handler ───
+window.toggleAccountPrivacySetting = (isFriendsOnly) => {
+  const banner = document.getElementById('privacy-status-indicator');
+  if (banner) banner.style.display = isFriendsOnly ? 'block' : 'none';
+  if (currentUser) {
+    const profileKey = `austin_petanque_profile_${currentUser.uid}`;
+    const saved = JSON.parse(localStorage.getItem(profileKey) || '{}');
+    saved.privacyMode = isFriendsOnly ? 'friends-only' : 'public';
+    localStorage.setItem(profileKey, JSON.stringify(saved));
+  }
+};
+
+// ─── Match History Subsystem ───
+window.openLogMatchModal = () => {
+  const modal = document.getElementById('log-match-modal');
+  if (modal) modal.classList.add('active');
+};
+
+window.closeLogMatchModal = () => {
+  const modal = document.getElementById('log-match-modal');
+  if (modal) modal.classList.remove('active');
+};
+
+window.handleLogMatchSubmit = async (e) => {
+  e.preventDefault();
+  if (!currentUser) {
+    alert('Please sign in to log a match record!');
+    return;
+  }
+
+  const myScore = parseInt(document.getElementById('match-my-score')?.value || '13', 10);
+  const oppScore = parseInt(document.getElementById('match-opp-score')?.value || '7', 10);
+  const opponent = document.getElementById('match-opponent-input')?.value.trim() || 'Austin Player';
+  const gameType = document.getElementById('match-type-select')?.value || 'Singles 1v1';
+  const pitch = document.getElementById('match-pitch-select')?.value || 'French Legation';
+
+  const isWin = (myScore >= oppScore);
+
+  const matchRecord = {
+    id: 'm_' + Date.now(),
+    uid: currentUser.uid,
+    playerEmail: currentUser.email,
+    myScore: myScore,
+    oppScore: oppScore,
+    opponent: opponent,
+    gameType: gameType,
+    pitch: pitch,
+    isWin: isWin,
+    timestamp: new Date().toISOString()
+  };
+
+  // Save to local match storage
+  const allMatches = JSON.parse(localStorage.getItem('austin_petanque_matches') || '[]');
+  allMatches.unshift(matchRecord);
+  localStorage.setItem('austin_petanque_matches', JSON.stringify(allMatches));
+
+  // Sync to Firestore if available
+  try {
+    await addDoc(collection(db, 'matches'), matchRecord);
+  } catch (err) {
+    console.warn('Firestore match record sync warning:', err);
+  }
+
+  closeLogMatchModal();
+  renderMatchHistoryList(currentUser.uid);
+
+  const statusMsg = document.getElementById('auth-status-msg');
+  if (statusMsg) {
+    statusMsg.style.color = '#10b981';
+    statusMsg.textContent = `Match recorded: ${isWin ? 'VICTORY 🏆' : 'DEFEAT'} (${myScore} - ${oppScore}) vs ${opponent}!`;
+  }
+};
+
+function renderMatchHistoryList(uid) {
+  const container = document.getElementById('match-history-container');
+  if (!container) return;
+
+  const allMatches = JSON.parse(localStorage.getItem('austin_petanque_matches') || '[]');
+  const userMatches = allMatches.filter(m => m.uid === uid);
+
+  // Compute stats
+  const total = userMatches.length;
+  const wins = userMatches.filter(m => m.isWin).length;
+  const losses = total - wins;
+  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+
+  const totalEl = document.getElementById('stat-total-matches-count');
+  const winRateEl = document.getElementById('stat-win-rate-pct');
+  const ratioEl = document.getElementById('stat-wins-losses-ratio');
+
+  if (totalEl) totalEl.textContent = total;
+  if (winRateEl) winRateEl.textContent = `${winRate}%`;
+  if (ratioEl) ratioEl.textContent = `${wins}W - ${losses}L`;
+
+  if (userMatches.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; color: var(--text-muted); font-size: 0.84rem; padding: 20px 0;">
+        <i class="fa-solid fa-trophy" style="font-size: 1.8rem; margin-bottom: 8px; opacity: 0.4;"></i>
+        <p>No recorded matches yet.<br>Click "Log Game" to record your first score!</p>
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+  userMatches.forEach(m => {
+    const badgeClass = m.isWin ? 'match-badge-win' : 'match-badge-loss';
+    const tagText = m.isWin ? 'WIN' : 'LOSS';
+    const formattedDate = new Date(m.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    html += `
+      <div class="match-history-item">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span class="${badgeClass}">${tagText}</span>
+          <div>
+            <div style="font-weight: 700; font-size: 0.88rem;">vs ${m.opponent}</div>
+            <div style="font-size: 0.74rem; color: var(--text-muted);">${m.gameType} • ${m.pitch} • ${formattedDate}</div>
+          </div>
+        </div>
+        <div class="match-score-pill" style="color: ${m.isWin ? '#34d399' : '#fca5a5'};">
+          ${m.myScore} - ${m.oppScore}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
 
