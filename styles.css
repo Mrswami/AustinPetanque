@@ -3252,6 +3252,7 @@ body.sunlight-mode .engraved-digit {
   }
   .scoreboard-wrapper {
     padding: 14px 8px !important;
+    overflow: visible !important;
   }
   .classic-counter-wrapper {
     width: 100%;
@@ -3377,6 +3378,7 @@ body.sunlight-mode .engraved-digit {
   }
   .scoreboard-wrapper {
     padding: 10px 4px !important;
+    overflow: visible !important;
   }
   .classic-capsule-device {
     padding: 10px 4px 14px !important;
