@@ -435,6 +435,11 @@ let pointHolder = null; // 'A', 'B', or null
 let matchWinner = null; // 'A', 'B', or null
 let confettiAnimationId = null;
 
+// Standalone Classic Handheld Points Counter State (Picture 4 Capsule Counter)
+let classicScoreA = 0; // 0 to 13
+let classicScoreB = 0; // 0 to 13
+let scoreboardMode = 'classic'; // 'classic' active by default (initially seen on mobile)
+
 function initScoreboard() {
   const scoreAEl = document.getElementById('score-a');
   const scoreBEl = document.getElementById('score-b');
@@ -474,6 +479,172 @@ function initScoreboard() {
     triggerHaptic([30, 30]);
     syncMatchToCloud();
   };
+
+  // Initialize Classic Mode Scorekeeper (demonstrated as default initial scorekeeper)
+  initClassicScorekeeper();
+}
+
+function initClassicScorekeeper() {
+  try {
+    const savedScores = JSON.parse(localStorage.getItem('austin_petanque_classic_scores') || '{"a":0,"b":0}');
+    classicScoreA = Math.max(0, Math.min(13, parseInt(savedScores.a) || 0));
+    classicScoreB = Math.max(0, Math.min(13, parseInt(savedScores.b) || 0));
+
+    // On mobile or by default, the classic scorekeeper should be initially seen!
+    const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const sessionMode = sessionStorage.getItem('austin_petanque_session_mode');
+    const savedMode = localStorage.getItem('austin_petanque_scoreboard_mode');
+
+    // On mobile, initial view is ALWAYS classic unless explicitly selected during current browser session
+    let initialMode = 'classic';
+    if (isMobile) {
+      initialMode = sessionMode || 'classic';
+    } else {
+      initialMode = sessionMode || savedMode || 'classic';
+    }
+
+    switchScoreboardMode(initialMode, false);
+  } catch (e) {
+    console.warn('Classic scorekeeper local storage read error:', e);
+    switchScoreboardMode('classic', false);
+  }
+  updateClassicDisplay();
+  setupClassicInteractions();
+}
+
+window.switchScoreboardMode = (mode, save = true) => {
+  scoreboardMode = mode;
+  const btnModern = document.getElementById('mode-btn-modern');
+  const btnClassic = document.getElementById('mode-btn-classic');
+  const modernBody = document.getElementById('scoreboard-body');
+  const classicView = document.getElementById('classic-scoreboard-view');
+  const meneTimeline = document.querySelector('.mene-timeline-container');
+  const leadBanner = document.getElementById('lead-banner');
+  const subtitle = document.getElementById('scoreboard-subtitle');
+  const resetMatchBtn = document.getElementById('reset-match-btn');
+
+  if (mode === 'classic') {
+    btnModern?.classList.remove('active');
+    btnClassic?.classList.add('active');
+    if (modernBody) modernBody.style.display = 'none';
+    if (meneTimeline) meneTimeline.style.display = 'none';
+    if (leadBanner) leadBanner.style.display = 'none';
+    if (classicView) classicView.style.display = 'block';
+    if (subtitle) subtitle.innerHTML = 'Classic 3D-printed rotary capsule counter (0–13). Standalone casual scorekeeper.';
+    if (resetMatchBtn) resetMatchBtn.style.display = 'none';
+  } else {
+    btnClassic?.classList.remove('active');
+    btnModern?.classList.add('active');
+    if (classicView) classicView.style.display = 'none';
+    if (modernBody) modernBody.style.display = '';
+    if (meneTimeline) meneTimeline.style.display = '';
+    if (leadBanner && leadBanner.textContent.trim()) leadBanner.style.display = '';
+    if (subtitle) subtitle.textContent = 'Tap circle to throw (/), tap slash to mark point holder (★).';
+    if (resetMatchBtn) resetMatchBtn.style.display = '';
+  }
+
+  if (save) {
+    try {
+      sessionStorage.setItem('austin_petanque_session_mode', mode);
+      localStorage.setItem('austin_petanque_scoreboard_mode', mode);
+    } catch (e) {}
+  }
+};
+
+window.adjustClassicScore = (team, delta) => {
+  const prevVal = team === 'A' ? classicScoreA : classicScoreB;
+  let newVal = prevVal + delta;
+  // Circular cycle 0 through 13
+  if (newVal > 13) newVal = 0;
+  if (newVal < 0) newVal = 13;
+
+  if (team === 'A') {
+    classicScoreA = newVal;
+  } else {
+    classicScoreB = newVal;
+  }
+
+  playMechanicalClickSound();
+  triggerHaptic(18);
+  animateClassicDigit(team, delta >= 0 ? 'up' : 'down');
+  updateClassicDisplay();
+
+  try {
+    localStorage.setItem('austin_petanque_classic_scores', JSON.stringify({ a: classicScoreA, b: classicScoreB }));
+  } catch (e) {}
+};
+
+window.resetClassicCounter = () => {
+  classicScoreA = 0;
+  classicScoreB = 0;
+  playMechanicalClickSound();
+  triggerHaptic([20, 20]);
+  updateClassicDisplay();
+  try {
+    localStorage.setItem('austin_petanque_classic_scores', JSON.stringify({ a: 0, b: 0 }));
+  } catch (e) {}
+};
+
+function updateClassicDisplay() {
+  const digitA = document.getElementById('classic-digit-a');
+  const digitB = document.getElementById('classic-digit-b');
+
+  if (digitA) {
+    digitA.textContent = classicScoreA;
+    if (classicScoreA === 13) digitA.classList.add('is-thirteen');
+    else digitA.classList.remove('is-thirteen');
+  }
+
+  if (digitB) {
+    digitB.textContent = classicScoreB;
+    if (classicScoreB === 13) digitB.classList.add('is-thirteen');
+    else digitB.classList.remove('is-thirteen');
+  }
+}
+
+function animateClassicDigit(team, direction) {
+  const digitEl = document.getElementById(team === 'A' ? 'classic-digit-a' : 'classic-digit-b');
+  if (!digitEl) return;
+  const offset = direction === 'up' ? -12 : 12;
+  digitEl.style.transform = `translateY(${offset}px) scale(0.9)`;
+  digitEl.style.opacity = '0.5';
+  setTimeout(() => {
+    digitEl.style.transform = 'translateY(0) scale(1)';
+    digitEl.style.opacity = '1';
+  }, 120);
+}
+
+// Gentle mechanical click tone using Web Audio API
+function playMechanicalClickSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(320, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.04);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  } catch (e) {}
+}
+
+function setupClassicInteractions() {
+  const device = document.getElementById('classic-device');
+  if (device) {
+    device.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const rect = device.getBoundingClientRect();
+      const clickY = e.clientY - rect.top;
+      const targetTeam = clickY < rect.height / 2 ? 'A' : 'B';
+      adjustClassicScore(targetTeam, e.deltaY < 0 ? 1 : -1);
+    }, { passive: false });
+  }
 }
 
 // ─── Win Condition Check ──────────────────────────────────────────────────────
@@ -2258,6 +2429,17 @@ function initAuth() {
 
     if (!email || !password) return;
 
+    // Upfront Email Address Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      if (statusMsg) {
+        statusMsg.style.color = '#ef4444';
+        statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Please enter a valid email address (e.g. <code>player@example.com</code>).';
+      }
+      emailInput?.focus();
+      return;
+    }
+
     try {
       if (statusMsg) {
         statusMsg.textContent = 'Authenticating with Firebase...';
@@ -2282,7 +2464,9 @@ function initAuth() {
       console.warn('Firebase Email Sign-In Exception:', err);
       if (statusMsg) {
         statusMsg.style.color = '#ef4444';
-        if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
+        if (err.code === 'auth/invalid-email') {
+          statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> The email address is formatted incorrectly. Please check for typos.';
+        } else if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
           statusMsg.textContent = 'Firebase Notice: Email Auth enabled locally! In Firebase Console, enable Email/Password under Auth. Account signed in for session.';
           const fallbackUser = { uid: 'usr_' + Date.now(), email: email, displayName: email.split('@')[0] };
           currentUser = fallbackUser;
@@ -2290,7 +2474,7 @@ function initAuth() {
           syncUserProfileToFirestore(fallbackUser, 'email');
           setTimeout(() => closeAuthModal(), 1400);
         } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
-          statusMsg.textContent = 'Invalid email or password. Please try again or create a new account.';
+          statusMsg.innerHTML = `No account found for this email or password incorrect. <button type="button" onclick="switchAuthTab('signup'); const sEmail = document.getElementById('signup-email-input'); if(sEmail) sEmail.value='${email}'; const sPass = document.getElementById('signup-password-input'); if(sPass) sPass.value='${password}';" style="color:var(--primary-amber); text-decoration:underline; font-weight:700; background:none; border:none; cursor:pointer; padding:0; display:inline;">Create Account Now?</button>`;
         } else {
           statusMsg.textContent = `Sign-in notice: ${err.message || 'Unable to sign in.'}`;
         }
@@ -2314,6 +2498,17 @@ function initAuth() {
     const password = passInput?.value;
 
     if (!email || !password || !name) return;
+
+    // Upfront Email Address Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      if (statusMsg) {
+        statusMsg.style.color = '#ef4444';
+        statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Please enter a valid email address (e.g. <code>player@example.com</code>).';
+      }
+      emailInput?.focus();
+      return;
+    }
 
     try {
       if (statusMsg) {
@@ -2339,7 +2534,9 @@ function initAuth() {
       console.warn('Firebase Email Sign-Up Exception:', err);
       if (statusMsg) {
         statusMsg.style.color = '#ef4444';
-        if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
+        if (err.code === 'auth/invalid-email') {
+          statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> The email address is formatted incorrectly. Please check for typos.';
+        } else if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
           statusMsg.textContent = 'Firebase Notice: Email Auth enabled locally! Turn on Email/Password in Firebase Console. Account active!';
           const fallbackUser = { uid: 'usr_' + Date.now(), email: email, displayName: name };
           currentUser = fallbackUser;
@@ -2347,7 +2544,7 @@ function initAuth() {
           syncUserProfileToFirestore(fallbackUser, 'email', name);
           setTimeout(() => closeAuthModal(), 1400);
         } else if (err.code === 'auth/email-already-in-use') {
-          statusMsg.textContent = 'An account with this email already exists. Switch to Email Login to sign in.';
+          statusMsg.innerHTML = `An account with this email already exists. <button type="button" onclick="switchAuthTab('login'); const lEmail = document.getElementById('login-email-input'); if(lEmail) lEmail.value='${email}';" style="color:var(--primary-amber); text-decoration:underline; font-weight:700; background:none; border:none; cursor:pointer; padding:0; display:inline;">Sign In Instead?</button>`;
         } else if (err.code === 'auth/weak-password') {
           statusMsg.textContent = 'Password is too weak. Please use at least 6 characters.';
         } else {
@@ -2512,6 +2709,17 @@ function initAuth() {
     updateAuthUI(user);
     if (user) {
       syncUserProfileToFirestore(user, user.providerData?.[0]?.providerId || 'email');
+    } else {
+      // Auto-show login popup for unauthenticated guests on initial visit
+      const alreadyPrompted = sessionStorage.getItem('ap_guest_auth_prompted');
+      if (!alreadyPrompted) {
+        sessionStorage.setItem('ap_guest_auth_prompted', 'true');
+        setTimeout(() => {
+          if (!currentUser) {
+            window.openAuthModal();
+          }
+        }, 1200);
+      }
     }
   });
 }

@@ -720,24 +720,62 @@ body.user-logged-in #nav-user-pill {
 }
 
 .btn-circle {
-  width: 44px;
-  height: 44px;
+  width: 58px;
+  height: 58px;
+  min-width: 58px;
+  min-height: 58px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--border-glass);
-  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.09);
   color: var(--text-main);
-  font-size: 1.2rem;
+  font-size: 1.5rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-circle:hover {
-  background: var(--primary-amber);
-  color: #000;
-  border-color: var(--primary-amber);
+  transform: scale(1.06);
+}
+
+.btn-circle:active {
+  transform: scale(0.93);
+}
+
+/* Big Distinct Minus Point Button */
+.btn-circle.btn-minus {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #fca5a5;
+}
+
+.btn-circle.btn-minus:hover,
+.btn-circle.btn-minus:active {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 0 22px rgba(239, 68, 68, 0.6);
+}
+
+/* Big Distinct Plus Point Button */
+.btn-circle.btn-plus {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.65);
+  color: #6ee7b7;
+}
+
+.btn-circle.btn-plus:hover,
+.btn-circle.btn-plus:active {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+  box-shadow: 0 0 22px rgba(16, 185, 129, 0.6);
 }
 
 /* Has the Point illuminating button */
@@ -1370,8 +1408,27 @@ button:not(.boule), .btn-circle, .has-point-btn, .hamburger {
   .has-point-btn { padding: 12px 14px; font-size: 0.88rem; min-height: 48px; }
 
   /* Score +/- controls */
-  .score-controls { gap: 14px; }
-  .btn-circle { width: 48px; height: 48px; font-size: 1.2rem; }
+  .score-controls { 
+    gap: 24px; 
+    margin-top: 16px; 
+    margin-bottom: 20px; 
+    justify-content: center;
+  }
+  .btn-circle { 
+    width: 66px; 
+    height: 66px; 
+    min-width: 66px; 
+    min-height: 66px; 
+    font-size: 1.8rem; 
+  }
+  
+  /* Extra bottom padding on mobile so bottom dock-nav never covers scorekeeper */
+  #score.section {
+    padding-bottom: 120px !important;
+  }
+  .scoreboard-wrapper {
+    padding-bottom: 28px !important;
+  }
 
   /* vs-col */
   .vs-col { flex-direction: row; justify-content: center; gap: 16px; }
@@ -2676,5 +2733,571 @@ body.sunlight-mode .boule.state-2::after {
   letter-spacing: 0.5px;
 }
 
+/* ==========================================================================
+   SCOREKEEPER MODE SWITCHER & CLASSIC 3D-PRINTED PEANUT ROTARY COUNTER
+   (Faithfully modeled after Picture 3 handheld points counter)
+   ========================================================================== */
 
+/* Mode Switcher Bar */
+.score-mode-switcher-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
+.mode-switcher-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.scoreboard-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .scoreboard-header-actions {
+    align-items: stretch;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .scoreboard-header-actions .mode-tab-group {
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+  }
+  .scoreboard-header-actions .mode-tab-btn {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+    padding: 8px 12px;
+  }
+}
+
+.mode-tab-group {
+  display: inline-flex;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.mode-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mode-tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mode-tab-btn.active {
+  background: linear-gradient(135deg, var(--primary-amber), #d97706);
+  color: #000;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.35);
+}
+
+/* Classic Counter Outer Container */
+.classic-counter-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+}
+
+/* ==========================================================================
+   PICTURE 4: 3D-PRINTED CAPSULE HANDHELD POINTS COUNTER
+   (Horizontal Pill chassis with lanyard eyelet, engraved 1 & 2, & rotary gear teeth)
+   ========================================================================== */
+
+.classic-capsule-device {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  min-height: 170px;
+  background: linear-gradient(145deg, #4a5362 0%, #363d48 55%, #2a313b 100%);
+  background-image: 
+    repeating-linear-gradient(0deg, transparent, transparent 1.5px, rgba(0, 0, 0, 0.1) 1.5px, rgba(0, 0, 0, 0.1) 3px),
+    linear-gradient(145deg, #4d5766 0%, #38404b 55%, #2b323c 100%);
+  border-radius: 90px;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 
+    0 25px 50px -10px rgba(0, 0, 0, 0.75),
+    0 12px 25px rgba(0, 0, 0, 0.5),
+    inset 0 3px 4px rgba(255, 255, 255, 0.28),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.55),
+    inset 3px 0 5px rgba(255, 255, 255, 0.12),
+    inset -3px 0 5px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 22px;
+  user-select: none;
+  touch-action: manipulation;
+  margin-top: 24px;
+}
+
+/* Top Triangular Lanyard / Carabiner Eyelet Loop */
+.classic-lanyard-eyelet {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 52px;
+  height: 28px;
+  background: linear-gradient(180deg, #4d5665 0%, #383f4a 100%);
+  border-radius: 18px 18px 4px 4px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-bottom: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.4);
+  z-index: 2;
+}
+
+.eyelet-hole {
+  width: 24px;
+  height: 14px;
+  background: #0f172a;
+  border-radius: 50%;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.9), 0 1px 1px rgba(255,255,255,0.2);
+  border: 1px solid rgba(0, 0, 0, 0.6);
+}
+
+/* Team Bays (Left: 1 / Red, Right: 2 / Blue) */
+.capsule-team-bay {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 4;
+}
+
+.bay-left {
+  flex-direction: row;
+}
+
+.bay-right {
+  flex-direction: row;
+}
+
+/* Outer Scalloped Gear Flanges */
+.capsule-gear-flange {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  width: 44px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.flange-left {
+  margin-left: -24px;
+}
+
+.flange-right {
+  margin-right: -24px;
+}
+
+.capsule-gear-flange:hover {
+  transform: scale(1.08);
+}
+
+.capsule-gear-flange:active {
+  transform: scale(0.94);
+}
+
+.gear-teeth-stack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  pointer-events: none;
+}
+
+.tooth-nub {
+  width: 13px;
+  height: 14px;
+  background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 50%, #64748b 100%);
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 3px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.7);
+  border-radius: 4px;
+}
+
+.flange-left .tooth-nub {
+  margin-left: 2px;
+  border-radius: 6px 2px 2px 6px;
+}
+
+.flange-right .tooth-nub {
+  align-self: flex-end;
+  margin-right: 2px;
+  border-radius: 2px 6px 6px 2px;
+}
+
+.flange-btn-icon {
+  position: relative;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.25);
+  border: 2px solid rgba(239, 68, 68, 0.65);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: all 0.15s ease;
+}
+
+.capsule-gear-flange:hover .flange-btn-icon {
+  background: var(--primary-amber);
+  color: #000;
+}
+
+/* Curved Directional Rotation Arcs */
+.capsule-rotation-arc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+
+/* Deeply Engraved Numerals "1" & "2" (matching Picture 4) */
+.capsule-engraved-num {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  min-width: 44px;
+}
+
+.engraved-digit {
+  font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+  font-size: 3.4rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #2b323c;
+  text-shadow: 
+    -1px -1px 2px rgba(0, 0, 0, 0.9),
+    1px 1px 2px rgba(255, 255, 255, 0.28),
+    0 2px 4px rgba(0, 0, 0, 0.8);
+  letter-spacing: -2px;
+}
+
+.capsule-team-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+}
+
+.label-red {
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.label-blue {
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.team-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dot-red {
+  background: #ef4444;
+}
+
+.dot-blue {
+  background: #3b82f6;
+}
+
+/* Recessed Square Number Display Windows (Picture 4) */
+.capsule-display-window {
+  width: 68px;
+  height: 68px;
+  background: #181e26;
+  border-radius: 10px;
+  border: 2px solid #222933;
+  box-shadow: 
+    inset 4px 4px 9px rgba(0, 0, 0, 0.95),
+    inset -3px -3px 5px rgba(255, 255, 255, 0.16),
+    0 1px 2px rgba(255, 255, 255, 0.2),
+    0 3px 8px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  z-index: 5;
+  transition: transform 0.15s ease, border-color 0.2s ease;
+}
+
+.capsule-display-window:hover {
+  border-color: var(--primary-amber);
+  transform: scale(1.03);
+}
+
+.capsule-display-window:active {
+  transform: scale(0.96);
+}
+
+.capsule-window-frame {
+  width: 54px;
+  height: 54px;
+  background: #13171e;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.98);
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+.capsule-digit-display {
+  font-family: 'Outfit', 'Inter', monospace;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #f8fafc;
+  letter-spacing: -1px;
+  text-shadow: 0 -1px 2px #000, 0 2px 2px rgba(255,255,255,0.1);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease;
+}
+
+.capsule-digit-display.is-thirteen {
+  color: var(--primary-amber) !important;
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.8), 0 0 20px rgba(245, 158, 11, 0.5);
+  animation: pulse-thirteen 1.2s infinite alternate ease-in-out;
+}
+
+/* Center Step Plus Chips */
+.capsule-step-chip {
+  background: rgba(16, 185, 129, 0.25);
+  border: 2px solid rgba(16, 185, 129, 0.7);
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: all 0.15s ease;
+}
+
+.capsule-step-chip:hover {
+  background: var(--primary-amber);
+  color: #000;
+  border-color: var(--primary-amber);
+  transform: scale(1.1);
+}
+
+/* Center Dividing Seam with mini fastener */
+.capsule-center-seam {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 80px;
+}
+
+.seam-line {
+  width: 2px;
+  flex: 1;
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: 1px 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.seam-screw {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #94a3b8 0%, #64748b 70%, #334155 100%);
+  border: 1px solid rgba(0,0,0,0.6);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 1px 2px rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-groove {
+  width: 7px;
+  height: 1.5px;
+  background: #1e293b;
+}
+
+/* Exposed Bottom Perimeter Gear Teeth Bar */
+.capsule-bottom-gear-strip {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 82%;
+  display: flex;
+  justify-content: space-around;
+  pointer-events: none;
+}
+
+.bottom-tooth {
+  width: 14px;
+  height: 7px;
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+  border: 1px solid rgba(0,0,0,0.4);
+  border-top: none;
+  border-radius: 0 0 3px 3px;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.4);
+}
+
+/* Controls Tray under Counter */
+.classic-controls-tray {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.classic-hint-text {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Sunlight mode adaptation for Classic capsule counter */
+body.sunlight-mode .classic-capsule-device {
+  background: #f1f5f9 !important;
+  border-color: #000 !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+}
+
+body.sunlight-mode .capsule-display-window {
+  background: #fff !important;
+  border-color: #000 !important;
+}
+
+body.sunlight-mode .capsule-window-frame {
+  background: #f8fafc !important;
+}
+
+body.sunlight-mode .capsule-digit-display {
+  color: #000 !important;
+  text-shadow: none !important;
+}
+
+body.sunlight-mode .engraved-digit {
+  color: #cbd5e1 !important;
+}
+
+@media (max-width: 480px) {
+  .classic-counter-wrapper {
+    width: 100%;
+    padding: 0 4px;
+    box-sizing: border-box;
+  }
+  .classic-capsule-device {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 14px 6px 18px !important;
+    border-radius: 44px !important;
+    margin-top: 16px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+  .capsule-gear-flange.flange-left {
+    margin-left: 0 !important;
+  }
+  .capsule-gear-flange.flange-right {
+    margin-right: 0 !important;
+  }
+  .capsule-gear-flange {
+    width: 44px !important;
+    height: 56px !important;
+  }
+  .flange-btn-icon {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 1.25rem !important;
+    background: rgba(239, 68, 68, 0.28) !important;
+    border: 2px solid rgba(239, 68, 68, 0.6) !important;
+    color: #fff !important;
+  }
+  .capsule-step-chip {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 1.25rem !important;
+    background: rgba(16, 185, 129, 0.28) !important;
+    border: 2px solid rgba(16, 185, 129, 0.7) !important;
+    color: #fff !important;
+  }
+  .capsule-team-bay {
+    gap: 4px !important;
+  }
+  .engraved-digit {
+    font-size: 2.2rem !important;
+  }
+  .capsule-display-window {
+    width: 52px !important;
+    height: 52px !important;
+  }
+  .capsule-window-frame {
+    width: 42px !important;
+    height: 42px !important;
+  }
+  .capsule-digit-display {
+    font-size: 1.6rem !important;
+  }
+}

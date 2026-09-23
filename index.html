@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-title" content="Pétanque">
 
   <!-- Styles & Fonts -->
-  <link rel="stylesheet" href="styles.css?v=3.9.0">
+  <link rel="stylesheet" href="styles.css?v=3.9.3">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -332,29 +332,156 @@
 
         <div class="scoreboard-header" style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
           <div>
-            <h3 style="font-size: 1.35rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            <h3 id="scoreboard-title" style="font-size: 1.35rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
               <i class="fa-solid fa-bullseye" style="color:var(--primary-amber);"></i> Target: 13 Points (Win by 2)
             </h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Tap circle to throw (/), tap slash to mark point holder (★).</p>
+            <p id="scoreboard-subtitle" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Classic 3D-printed rotary capsule counter (0–13). Standalone casual scorekeeper.</p>
           </div>
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <button class="sync-status-pill" id="sync-status-pill" onclick="openMatchSyncModal()" title="View Match PIN / Cloud Sync">
-              <span class="sync-dot"></span> <span id="sync-label">Local Match</span>
-            </button>
-            <button class="action-btn" id="sunlight-toggle-btn" onclick="toggleSunlightMode()" title="Toggle Sunlight High-Contrast Mode">
-              <i class="fa-solid fa-sun"></i>
-            </button>
-            <button class="action-btn" id="wakelock-toggle-btn" onclick="toggleWakeLock()" title="Keep Screen Awake (Wake Lock)">
-              <i class="fa-solid fa-lightbulb"></i>
-            </button>
-            <button class="btn-secondary" onclick="resetScore()" title="Reset Match"><i class="fa-solid fa-rotate-right"></i> Reset Match</button>
+          <div class="scoreboard-header-actions">
+            <!-- Mode Switcher Pill directly above Reset Match -->
+            <div class="mode-tab-group" style="display: inline-flex; background: rgba(255, 255, 255, 0.08); padding: 3px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);">
+              <button type="button" class="mode-tab-btn active" id="mode-btn-classic" onclick="switchScoreboardMode('classic')" title="Classic 3D-Printed Handheld Points Counter (Picture 4)">
+                <i class="fa-solid fa-calculator"></i> Classic Mode
+              </button>
+              <button type="button" class="mode-tab-btn" id="mode-btn-modern" onclick="switchScoreboardMode('modern')" title="Throw Animations Interactive Match Board">
+                <i class="fa-solid fa-bowling-ball"></i> Pro Match (OG)
+              </button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <button class="sync-status-pill" id="sync-status-pill" onclick="openMatchSyncModal()" title="View Match PIN / Cloud Sync">
+                <span class="sync-dot"></span> <span id="sync-label">Local Match</span>
+              </button>
+              <button class="action-btn" id="sunlight-toggle-btn" onclick="toggleSunlightMode()" title="Toggle Sunlight High-Contrast Mode">
+                <i class="fa-solid fa-sun"></i>
+              </button>
+              <button class="action-btn" id="wakelock-toggle-btn" onclick="toggleWakeLock()" title="Keep Screen Awake (Wake Lock)">
+                <i class="fa-solid fa-lightbulb"></i>
+              </button>
+              <button class="btn-secondary" id="reset-match-btn" onclick="resetScore()" title="Reset Match" style="display: none;"><i class="fa-solid fa-rotate-right"></i> Reset Match</button>
+            </div>
           </div>
         </div>
 
         <!-- Lead banner -->
         <div id="lead-banner" class="lead-banner" style="display:none;"></div>
 
-        <div class="scoreboard-body" id="scoreboard-body">
+        <!-- Classic Handheld Points Counter View (Picture 4: Horizontal 3D-Printed Capsule Points Counter) -->
+        <div id="classic-scoreboard-view" style="display: block; padding: 20px 0 14px;">
+          <div class="classic-counter-wrapper">
+            
+            <!-- Handheld Capsule Chassis matching Picture 4 -->
+            <div class="classic-capsule-device" id="classic-device">
+              
+              <!-- Top Triangular Lanyard / Carabiner Eyelet Loop -->
+              <div class="classic-lanyard-eyelet" title="Lanyard / Keyring Eyelet">
+                <div class="eyelet-hole"></div>
+              </div>
+
+              <!-- Left Section: Team 1 (Red / Pointeurs) -->
+              <div class="capsule-team-bay bay-left" id="classic-bay-a">
+                <!-- Left Outer Scalloped Gear Rim (Minus) -->
+                <button type="button" class="capsule-gear-flange flange-left" onclick="adjustClassicScore('A', -1)" title="Rotate Team 1 Down (-1)">
+                  <div class="gear-teeth-stack">
+                    <span class="tooth-nub"></span><span class="tooth-nub"></span><span class="tooth-nub"></span><span class="tooth-nub"></span>
+                  </div>
+                  <span class="flange-btn-icon"><i class="fa-solid fa-minus"></i></span>
+                </button>
+
+                <!-- Curved Rotation Guide Arc Indicator -->
+                <div class="capsule-rotation-arc arc-left">
+                  <svg viewBox="0 0 40 80" width="18" height="36" fill="none">
+                    <path d="M 30 10 A 35 35 0 0 0 10 50" stroke="rgba(255,255,255,0.22)" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M 6 42 L 10 52 L 20 48" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+
+                <!-- Deep Engraved Numeral "1" -->
+                <div class="capsule-engraved-num num-1" title="Player 1 / Team Red">
+                  <span class="engraved-digit">1</span>
+                  <span class="capsule-team-label label-red"><span class="team-dot dot-red"></span> Red</span>
+                </div>
+
+                <!-- Recessed Square Number Display Window 1 -->
+                <div class="capsule-display-window" id="classic-window-a" onclick="adjustClassicScore('A', 1)" title="Tap to increment (+1)">
+                  <div class="capsule-window-frame">
+                    <div class="capsule-digit-display" id="classic-digit-a">0</div>
+                  </div>
+                </div>
+
+                <!-- Center Step Plus Button for Dial 1 -->
+                <button type="button" class="capsule-step-chip chip-left" onclick="adjustClassicScore('A', 1)" title="Rotate Team 1 Up (+1)">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+
+              <!-- Center Capsule Dividing Seam -->
+              <div class="capsule-center-seam">
+                <div class="seam-line"></div>
+                <div class="seam-screw"><div class="mini-groove"></div></div>
+                <div class="seam-line"></div>
+              </div>
+
+              <!-- Right Section: Team 2 (Blue / Tireurs) -->
+              <div class="capsule-team-bay bay-right" id="classic-bay-b">
+                <!-- Center Step Plus Button for Dial 2 -->
+                <button type="button" class="capsule-step-chip chip-right" onclick="adjustClassicScore('B', 1)" title="Rotate Team 2 Up (+1)">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+
+                <!-- Recessed Square Number Display Window 2 -->
+                <div class="capsule-display-window" id="classic-window-b" onclick="adjustClassicScore('B', 1)" title="Tap to increment (+1)">
+                  <div class="capsule-window-frame">
+                    <div class="capsule-digit-display" id="classic-digit-b">0</div>
+                  </div>
+                </div>
+
+                <!-- Deep Engraved Numeral "2" -->
+                <div class="capsule-engraved-num num-2" title="Player 2 / Team Blue">
+                  <span class="engraved-digit">2</span>
+                  <span class="capsule-team-label label-blue"><span class="team-dot dot-blue"></span> Blue</span>
+                </div>
+
+                <!-- Curved Rotation Guide Arc Indicator -->
+                <div class="capsule-rotation-arc arc-right">
+                  <svg viewBox="0 0 40 80" width="18" height="36" fill="none">
+                    <path d="M 10 10 A 35 35 0 0 1 30 50" stroke="rgba(255,255,255,0.22)" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M 34 42 L 30 52 L 20 48" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+
+                <!-- Right Outer Scalloped Gear Rim (Minus) -->
+                <button type="button" class="capsule-gear-flange flange-right" onclick="adjustClassicScore('B', -1)" title="Rotate Team 2 Down (-1)">
+                  <div class="gear-teeth-stack">
+                    <span class="tooth-nub"></span><span class="tooth-nub"></span><span class="tooth-nub"></span><span class="tooth-nub"></span>
+                  </div>
+                  <span class="flange-btn-icon"><i class="fa-solid fa-minus"></i></span>
+                </button>
+              </div>
+
+              <!-- Exposed Bottom Perimeter Gear Teeth Bar -->
+              <div class="capsule-bottom-gear-strip">
+                <span class="bottom-tooth"></span><span class="bottom-tooth"></span><span class="bottom-tooth"></span>
+                <span class="bottom-tooth"></span><span class="bottom-tooth"></span><span class="bottom-tooth"></span>
+                <span class="bottom-tooth"></span><span class="bottom-tooth"></span><span class="bottom-tooth"></span>
+              </div>
+
+            </div>
+
+            <!-- Classic Counter Quick Utilities -->
+            <div class="classic-controls-tray">
+              <button type="button" class="btn-secondary" onclick="resetClassicCounter()" style="border-radius: 999px; padding: 7px 20px; font-size: 0.85rem;">
+                <i class="fa-solid fa-rotate-left"></i> Zero Both Dials
+              </button>
+              <div class="classic-hint-text">
+                <i class="fa-solid fa-arrows-rotate"></i> Rotate side gear rims or tap windows to step 0–13
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="scoreboard-body" id="scoreboard-body" style="display: none;">
 
           <!-- Team Red -->
           <div class="team-box" id="team-box-a">
@@ -367,8 +494,8 @@
             </div>
 
             <div class="score-controls">
-              <button class="btn-circle" onclick="updateScore('A', -1)" title="Remove point"><i class="fa-solid fa-minus"></i></button>
-              <button class="btn-circle" onclick="updateScore('A', 1)" title="Add point"><i class="fa-solid fa-plus"></i></button>
+              <button class="btn-circle btn-minus" onclick="updateScore('A', -1)" title="Remove point (−1)"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle btn-plus" onclick="updateScore('A', 1)" title="Add point (+1)"><i class="fa-solid fa-plus"></i></button>
             </div>
             <button class="has-point-btn red" id="point-btn-a" onclick="setPointHolder('A')">
               <span class="point-pulse"></span>
@@ -396,8 +523,8 @@
             </div>
 
             <div class="score-controls">
-              <button class="btn-circle" onclick="updateScore('B', -1)" title="Remove point"><i class="fa-solid fa-minus"></i></button>
-              <button class="btn-circle" onclick="updateScore('B', 1)" title="Add point"><i class="fa-solid fa-plus"></i></button>
+              <button class="btn-circle btn-minus" onclick="updateScore('B', -1)" title="Remove point (−1)"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle btn-plus" onclick="updateScore('B', 1)" title="Add point (+1)"><i class="fa-solid fa-plus"></i></button>
             </div>
             <button class="has-point-btn blue" id="point-btn-b" onclick="setPointHolder('B')">
               <span class="point-pulse"></span>
@@ -408,7 +535,7 @@
         </div>
 
         <!-- Visual Mène Timeline Strip -->
-        <div class="mene-timeline-container">
+        <div class="mene-timeline-container" style="display: none;">
           <div class="mene-timeline-header">
             <span><i class="fa-solid fa-timeline"></i> Mène Progression</span>
             <button class="undo-mene-btn" id="undo-mene-btn" onclick="undoLastMene()" style="display:none;">
@@ -1081,6 +1208,6 @@
       });
     }
   </script>
-  <script type="module" src="app.js?v=3.9.0"></script>
+  <script type="module" src="app.js?v=3.9.3"></script>
 </body>
 </html>
