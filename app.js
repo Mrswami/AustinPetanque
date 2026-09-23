@@ -22,7 +22,7 @@ import {
   limit,
   serverTimestamp,
   onSnapshot
-} from './firebase-config.js';
+} from './firebase-config.js?v=3.9.4';
 
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
@@ -2709,17 +2709,6 @@ function initAuth() {
     updateAuthUI(user);
     if (user) {
       syncUserProfileToFirestore(user, user.providerData?.[0]?.providerId || 'email');
-    } else {
-      // Auto-show login popup for unauthenticated guests on initial visit
-      const alreadyPrompted = sessionStorage.getItem('ap_guest_auth_prompted');
-      if (!alreadyPrompted) {
-        sessionStorage.setItem('ap_guest_auth_prompted', 'true');
-        setTimeout(() => {
-          if (!currentUser) {
-            window.openAuthModal();
-          }
-        }, 1200);
-      }
     }
   });
 }
