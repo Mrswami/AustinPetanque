@@ -3242,62 +3242,206 @@ body.sunlight-mode .engraved-digit {
   color: #cbd5e1 !important;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
+  .score-standalone-view {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  .score-court-container {
+    width: 100% !important;
+  }
+  .scoreboard-wrapper {
+    padding: 14px 8px !important;
+  }
   .classic-counter-wrapper {
     width: 100%;
-    padding: 0 4px;
+    padding: 0;
     box-sizing: border-box;
   }
   .classic-capsule-device {
     width: 100% !important;
     max-width: 100% !important;
-    padding: 14px 6px 18px !important;
-    border-radius: 44px !important;
-    margin-top: 16px !important;
+    padding: 12px 6px 16px !important;
+    border-radius: 36px !important;
+    margin-top: 14px !important;
     box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     overflow: visible !important;
   }
-  .capsule-gear-flange.flange-left {
-    margin-left: 0 !important;
+  .capsule-team-bay {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
   }
+  .bay-left {
+    justify-content: flex-start !important;
+  }
+  .bay-right {
+    justify-content: flex-end !important;
+  }
+  .capsule-rotation-arc {
+    display: none !important;
+  }
+  .gear-teeth-stack {
+    display: none !important;
+  }
+  .capsule-gear-flange.flange-left,
   .capsule-gear-flange.flange-right {
+    margin-left: 0 !important;
     margin-right: 0 !important;
   }
   .capsule-gear-flange {
-    width: 44px !important;
-    height: 56px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 48px !important;
+    flex-shrink: 0 !important;
   }
   .flange-btn-icon {
-    width: 42px !important;
-    height: 42px !important;
-    font-size: 1.25rem !important;
-    background: rgba(239, 68, 68, 0.28) !important;
-    border: 2px solid rgba(239, 68, 68, 0.6) !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    font-size: 1.15rem !important;
+    background: rgba(239, 68, 68, 0.4) !important;
+    border: 2px solid rgba(239, 68, 68, 0.85) !important;
     color: #fff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+    flex-shrink: 0 !important;
   }
   .capsule-step-chip {
-    width: 42px !important;
-    height: 42px !important;
-    font-size: 1.25rem !important;
-    background: rgba(16, 185, 129, 0.28) !important;
-    border: 2px solid rgba(16, 185, 129, 0.7) !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    font-size: 1.15rem !important;
+    background: rgba(16, 185, 129, 0.4) !important;
+    border: 2px solid rgba(16, 185, 129, 0.85) !important;
     color: #fff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+    flex-shrink: 0 !important;
   }
-  .capsule-team-bay {
-    gap: 4px !important;
+  .capsule-engraved-num {
+    min-width: 24px !important;
+    flex-shrink: 0 !important;
   }
   .engraved-digit {
-    font-size: 2.2rem !important;
+    font-size: 1.7rem !important;
+    line-height: 1 !important;
+  }
+  .capsule-team-label {
+    font-size: 0.58rem !important;
+    padding: 1px 4px !important;
+    letter-spacing: 0 !important;
   }
   .capsule-display-window {
-    width: 52px !important;
-    height: 52px !important;
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    flex-shrink: 0 !important;
   }
   .capsule-window-frame {
-    width: 42px !important;
-    height: 42px !important;
+    width: 38px !important;
+    height: 38px !important;
   }
   .capsule-digit-display {
-    font-size: 1.6rem !important;
+    font-size: 1.5rem !important;
+  }
+  .capsule-center-seam {
+    width: 6px !important;
+    height: 60px !important;
+    margin: 0 4px !important;
+    flex-shrink: 0 !important;
+  }
+  .seam-screw {
+    width: 10px !important;
+    height: 10px !important;
+  }
+  .mini-groove {
+    width: 6px !important;
+  }
+  .capsule-bottom-gear-strip {
+    width: 88% !important;
+  }
+  .bottom-tooth {
+    width: 10px !important;
+    height: 5px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .score-standalone-view {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+  .scoreboard-wrapper {
+    padding: 10px 4px !important;
+  }
+  .classic-capsule-device {
+    padding: 10px 4px 14px !important;
+    border-radius: 30px !important;
+  }
+  .capsule-team-bay {
+    gap: 2px !important;
+  }
+  .capsule-gear-flange,
+  .flange-btn-icon,
+  .capsule-step-chip {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    font-size: 1.05rem !important;
+  }
+  .capsule-display-window {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+  }
+  .capsule-window-frame {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .capsule-digit-display {
+    font-size: 1.35rem !important;
+  }
+  .engraved-digit {
+    font-size: 1.45rem !important;
+  }
+  .capsule-engraved-num {
+    min-width: 20px !important;
+  }
+  .capsule-team-label {
+    font-size: 0.52rem !important;
+    padding: 0 2px !important;
+  }
+  .capsule-center-seam {
+    margin: 0 2px !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .capsule-gear-flange,
+  .flange-btn-icon,
+  .capsule-step-chip {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    font-size: 0.95rem !important;
+  }
+  .capsule-display-window {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+  }
+  .capsule-window-frame {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  .capsule-digit-display {
+    font-size: 1.2rem !important;
+  }
+  .engraved-digit {
+    font-size: 1.3rem !important;
   }
 }
