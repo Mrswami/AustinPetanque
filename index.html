@@ -1452,5 +1452,31 @@
     </div>
   </div>
 
+
+  <!-- Forgot Password Reset Modal -->
+  <div class="modal-overlay" id="forgot-password-modal">
+    <div class="modal-content glass-panel" style="max-width: 420px; text-align: left;">
+      <button class="modal-close" onclick="closeForgotPasswordModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div style="text-align: center; margin-bottom: 16px;">
+        <div class="auth-icon-circle"><i class="fa-solid fa-key"></i></div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; margin-top: 8px;">Reset Your Password</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Enter your account email below. We'll send you a secure reset link that takes you directly back to the webapp.</p>
+      </div>
+      
+      <form id="forgot-password-form" onsubmit="submitForgotPassword(event)">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Account Email Address</label>
+          <input type="email" id="reset-email-input" class="form-input" placeholder="player@example.com" required style="padding: 10px 14px;">
+        </div>
+
+        <div id="reset-status-msg" style="font-size: 0.85rem; margin-bottom: 12px; display: none; padding: 8px 12px; border-radius: 8px; background: rgba(0,0,0,0.3);"></div>
+
+        <button type="submit" class="btn-primary" id="send-reset-btn" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.95rem;">
+          <i class="fa-solid fa-paper-plane"></i> Send Reset Link to Email
+        </button>
+      </form>
+    </div>
+  </div>
+
 </body>
 </html>

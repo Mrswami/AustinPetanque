@@ -2557,39 +2557,97 @@ function initAuth() {
   };
 
   // Password Reset Handler
-  window.handleForgotPassword = async (e) => {
-    e.preventDefault();
-    const emailInput = document.getElementById('login-email-input');
-    const statusMsg = document.getElementById('auth-status-msg');
+  window.openForgotPasswordModal = function(initialEmail = '') {
+  const modal = document.getElementById('forgot-password-modal');
+  const input = document.getElementById('reset-email-input');
+  const statusMsg = document.getElementById('reset-status-msg');
+  if (statusMsg) {
+    statusMsg.style.display = 'none';
+    statusMsg.textContent = '';
+  }
+  if (input) {
+    input.value = initialEmail || document.getElementById('login-email-input')?.value.trim() || '';
+  }
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  }
+};
 
-    const email = emailInput?.value.trim();
-    if (!email) {
-      if (statusMsg) {
-        statusMsg.style.color = '#ef4444';
-        statusMsg.textContent = 'Please enter your email address in the field above first.';
-      }
-      return;
+window.closeForgotPasswordModal = function() {
+  const modal = document.getElementById('forgot-password-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+};
+
+window.handleForgotPassword = function(e) {
+  if (e) e.preventDefault();
+  const emailVal = document.getElementById('login-email-input')?.value.trim() || '';
+  window.openForgotPasswordModal(emailVal);
+};
+
+window.submitForgotPassword = async function(e) {
+  if (e) e.preventDefault();
+  const emailInput = document.getElementById('reset-email-input');
+  const statusMsg = document.getElementById('reset-status-msg');
+  const sendBtn = document.getElementById('send-reset-btn');
+
+  const email = emailInput?.value.trim();
+  if (!email) {
+    if (statusMsg) {
+      statusMsg.style.display = 'block';
+      statusMsg.style.color = '#ef4444';
+      statusMsg.textContent = 'Please enter a valid email address.';
+    }
+    return;
+  }
+
+  try {
+    if (sendBtn) sendBtn.disabled = true;
+    if (statusMsg) {
+      statusMsg.style.display = 'block';
+      statusMsg.style.color = 'var(--primary-amber)';
+      statusMsg.textContent = `Sending reset link to ${email}...`;
     }
 
-    try {
-      if (statusMsg) {
-        statusMsg.style.color = 'var(--primary-amber)';
-        statusMsg.textContent = `Sending password reset email to ${email}...`;
-      }
-      await sendPasswordResetEmail(auth, email);
-      if (statusMsg) {
-        statusMsg.style.color = '#10b981';
-        statusMsg.textContent = `Password reset email sent to ${email}! Please check your inbox.`;
-      }
-    } catch (err) {
-      if (statusMsg) {
-        statusMsg.style.color = '#ef4444';
-        statusMsg.textContent = `Password reset notice: ${err.message || 'Could not send reset email.'}`;
-      }
-    }
-  };
+    // Configure ActionCodeSettings to redirect user directly back to the webapp URL!
+    const redirectUrl = window.location.origin + window.location.pathname;
+    const actionCodeSettings = {
+      url: redirectUrl,
+      handleCodeInApp: true
+    };
 
-  window.loginWithGoogle = async () => {
+    await sendPasswordResetEmail(auth, email, actionCodeSettings);
+
+    if (statusMsg) {
+      statusMsg.style.display = 'block';
+      statusMsg.style.color = '#10b981';
+      statusMsg.innerHTML = `<i class="fa-solid fa-circle-check"></i> Reset link sent to <strong>${email}</strong>!<br><span style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;display:block;">Click the link in your email to reset your password and return directly back to Austin Pétanque.</span>`;
+    }
+    if (typeof showToast === 'function') {
+      showToast(`Password reset link sent to ${email}! Check your inbox.`, 'success');
+    }
+  } catch (err) {
+    console.error('Password reset error:', err);
+    let errorText = err.message || 'Could not send reset email.';
+    if (err.code === 'auth/user-not-found') {
+      errorText = 'No account found with this email address.';
+    } else if (err.code === 'auth/invalid-email') {
+      errorText = 'Invalid email address format.';
+    }
+    if (statusMsg) {
+      statusMsg.style.display = 'block';
+      statusMsg.style.color = '#ef4444';
+      statusMsg.textContent = errorText;
+    }
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
+  }
+};
+
+window.loginWithGoogle = async () => {
     const statusMsg = document.getElementById('auth-status-msg');
     const googleBtn = document.getElementById('google-signin-btn');
     try {
