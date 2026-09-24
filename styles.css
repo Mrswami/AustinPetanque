@@ -3554,8 +3554,8 @@ body.sunlight-mode .engraved-digit {
    ========================================================================== */
 
 /* Show/hide logic via body.user-logged-in */
-.live-dashboard-section { display: none !important; }
-body.user-logged-in .live-dashboard-section { display: block !important; }
+.live-dashboard-section { display: block !important; }
+/* live dashboard section always visible */
 
 /* Live pill badge */
 .live-pill {

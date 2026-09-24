@@ -124,7 +124,7 @@
 
     <!-- ===== POST-LOGIN LIVE MATCH DASHBOARD ===== -->
     <!-- Shown only when user is signed in (body.user-logged-in) -->
-    <section class="section live-dashboard-section" id="live-dashboard" style="display:none;">
+    <section class="section live-dashboard-section" id="live-dashboard">
       <div class="section-header" style="display: flex; flex-direction: column; align-items: center; position: relative;">
         <div class="glass-pill live-pill"><span class="pulse-dot"></span> Live Courts &amp; Today's Matches</div>
         <h2 class="section-title">What's Happening Now</h2>
@@ -1567,6 +1567,41 @@
           Close Pitch View
         </button>
       </div>
+    </div>
+  </div>
+
+
+  <!-- RSVP & Email Reminder Confirmation Modal (Appears when joining a created match) -->
+  <div class="modal-backdrop modal-overlay" id="rsvp-confirm-modal">
+    <div class="modal-content glass-panel" style="max-width: 440px; text-align: left; padding: 24px;">
+      <button class="modal-close" onclick="closeRsvpConfirmModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div style="text-align: center; margin-bottom: 16px;">
+        <div class="auth-icon-circle"><i class="fa-solid fa-calendar-check"></i></div>
+        <h3 id="rsvp-confirm-title" style="font-size: 1.4rem; font-weight: 800; margin-top: 8px; color: #fff;">Join P&eacute;tanque Match</h3>
+        <p id="rsvp-confirm-subtitle" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Confirm your attendance for this scheduled match.</p>
+      </div>
+
+      <!-- 4-Hour Pre-Match Email Reminder Box -->
+      <div style="background: rgba(255,170,0,0.08); border: 1px dashed var(--primary-amber); border-radius: 12px; padding: 14px; margin-bottom: 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+          <div>
+            <div style="font-weight: 700; font-size: 0.92rem; color: #fff; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-envelope-open-text" style="color: var(--primary-amber);"></i> 4-Hour Pre-Match Email Reminder
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; line-height: 1.35;">
+              Receive an automated email reminder ~4 hours before this match starts at the court.
+            </div>
+          </div>
+          <label class="switch" style="position: relative; inline-size: 46px; block-size: 24px; display: inline-block; flex-shrink: 0; margin-top: 2px;">
+            <input type="checkbox" id="rsvp-email-reminder-toggle" checked style="opacity: 0; inline-size: 0; block-size: 0;">
+            <span class="slider" style="position: absolute; cursor: pointer; inset: 0; background-color: rgba(255,255,255,0.2); transition: .3s; border-radius: 24px;"></span>
+          </label>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="rsvp-confirm-submit-btn" onclick="confirmMatchRSVPWithReminder()" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem; box-shadow: var(--neon-glow);">
+        <i class="fa-solid fa-check-circle"></i> Confirm RSVP &amp; Join Match
+      </button>
     </div>
   </div>
 

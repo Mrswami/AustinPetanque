@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initHashRouting();
   initSunlightPreference();
   initCourtCheckIns();
+  renderLiveDashboard();
   renderBoules('A');
   renderBoules('B');
   renderMeneTimeline();
@@ -3924,3 +3925,160 @@ function renderPitchAvatars(allPlayers) {
       </div>`;
   }).join('');
 }
+
+
+// =========================================================================
+// JOIN MATCH RSVP & 4-HOUR EMAIL REMINDER PROMPT
+// =========================================================================
+
+let pendingRsvpMatchId = null;
+
+window.openRsvpConfirmModal = function(matchId, matchName, matchCourt) {
+  pendingRsvpMatchId = matchId;
+  const modal = document.getElementById('rsvp-confirm-modal');
+  const titleEl = document.getElementById('rsvp-confirm-title');
+  const subEl = document.getElementById('rsvp-confirm-subtitle');
+  const toggle = document.getElementById('rsvp-email-reminder-toggle');
+
+  if (titleEl) titleEl.textContent = `Join "${matchName}"`;
+  if (subEl) subEl.textContent = `Scheduled at ${matchCourt}. Confirm your player RSVP.`;
+  
+  // Set toggle state based on user's saved preference
+  if (toggle) {
+    toggle.checked = localStorage.getItem('user_email_reminders_enabled') !== 'false';
+  }
+
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  }
+};
+
+window.closeRsvpConfirmModal = function() {
+  pendingRsvpMatchId = null;
+  const modal = document.getElementById('rsvp-confirm-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+};
+
+window.confirmMatchRSVPWithReminder = async function() {
+  if (!pendingRsvpMatchId) return;
+  const matchId = pendingRsvpMatchId;
+  const toggle = document.getElementById('rsvp-email-reminder-toggle');
+  const sendEmailReminder = toggle ? toggle.checked : true;
+
+  // Save preference locally
+  localStorage.setItem('user_email_reminders_enabled', sendEmailReminder ? 'true' : 'false');
+
+  window.closeRsvpConfirmModal();
+
+  // Execute RSVP addition
+  await executeRsvpJoin(matchId, sendEmailReminder);
+};
+
+async function executeRsvpJoin(matchId, emailRemindersEnabled) {
+  if (!currentUser) return;
+
+  let localMatches = JSON.parse(localStorage.getItem('austin_scheduled_matches') || '[]');
+  let targetMatch = localMatches.find(m => m.id === matchId);
+  let firestoreDocId = null;
+
+  try {
+    if (typeof query === 'function' && typeof collection === 'function') {
+      const q = query(collection(db, 'scheduledMatches'), where('id', '==', matchId));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const d = snap.docs[0];
+        firestoreDocId = d.id;
+        targetMatch = d.data();
+      }
+    }
+  } catch(e) { console.warn('Fetch match for RSVP error:', e); }
+
+  if (!targetMatch && typeof SEEDED_MATCHES !== 'undefined') {
+    targetMatch = SEEDED_MATCHES.find(m => m.id === matchId || m.name === matchId);
+  }
+
+  if (!targetMatch) {
+    if (typeof showToast === 'function') showToast('Match details not found.', 'warning');
+    return;
+  }
+
+  let rsvps = Array.isArray(targetMatch.rsvps) ? [...targetMatch.rsvps] : [];
+  const existingIdx = rsvps.findIndex(r => r.uid === currentUser.uid);
+
+  if (existingIdx >= 0) {
+    rsvps[existingIdx].emailRemindersEnabled = emailRemindersEnabled;
+  } else {
+    rsvps.push({
+      uid: currentUser.uid,
+      name: currentUser.displayName || currentUser.email?.split('@')[0] || 'Player',
+      email: currentUser.email || '',
+      emailRemindersEnabled: emailRemindersEnabled,
+      timestamp: Date.now()
+    });
+  }
+
+  targetMatch.rsvps = rsvps;
+
+  // Sync to Firestore permanently
+  if (firestoreDocId && typeof doc === 'function' && typeof updateDoc === 'function') {
+    try {
+      await updateDoc(doc(db, 'scheduledMatches', firestoreDocId), { rsvps: rsvps });
+    } catch(e) { console.warn('Error updating Firestore RSVP:', e); }
+  }
+
+  localMatches = localMatches.map(m => m.id === matchId ? targetMatch : m);
+  localStorage.setItem('austin_scheduled_matches', JSON.stringify(localMatches));
+
+  const msg = emailRemindersEnabled
+    ? `✅ Joined "${targetMatch.name || 'match'}"! You will receive a 4-hour pre-match email reminder.`
+    : `✅ Joined "${targetMatch.name || 'match'}"! (Email reminder turned off for this match).`;
+
+  if (typeof showToast === 'function') showToast(msg, 'success');
+
+  if (typeof renderLiveDashboard === 'function') {
+    renderLiveDashboard();
+  }
+}
+
+// Override toggleMatchRSVP to trigger openRsvpConfirmModal when joining an existing match
+const originalToggleRSVP = window.toggleMatchRSVP;
+window.toggleMatchRSVP = async function(matchId) {
+  if (!currentUser) {
+    if (typeof openAuthModal === 'function') openAuthModal();
+    if (typeof showToast === 'function') showToast('Please sign in to join matches!', 'warning');
+    return;
+  }
+
+  // Find match
+  let localMatches = JSON.parse(localStorage.getItem('austin_scheduled_matches') || '[]');
+  let targetMatch = localMatches.find(m => m.id === matchId);
+  try {
+    if (typeof query === 'function' && typeof collection === 'function') {
+      const q = query(collection(db, 'scheduledMatches'), where('id', '==', matchId));
+      const snap = await getDocs(q);
+      if (!snap.empty) targetMatch = snap.docs[0].data();
+    }
+  } catch(e) {}
+
+  if (!targetMatch && typeof SEEDED_MATCHES !== 'undefined') {
+    targetMatch = SEEDED_MATCHES.find(m => m.id === matchId || m.name === matchId);
+  }
+
+  const rsvps = Array.isArray(targetMatch?.rsvps) ? targetMatch.rsvps : [];
+  const isAlreadyAttending = currentUser && rsvps.some(r => r.uid === currentUser.uid);
+
+  if (isAlreadyAttending) {
+    // If already attending, user can leave RSVP directly
+    await executeRsvpJoin(matchId, false); // leave
+  } else {
+    // Joining a created match -> Show the 4-Hour Email Reminder modal prompt!
+    const mName = targetMatch?.name || targetMatch?.title || 'Pétanque Match';
+    const mCourt = targetMatch?.court || targetMatch?.location || 'Austin Terrain';
+    window.openRsvpConfirmModal(matchId, mName, mCourt);
+  }
+};
+
