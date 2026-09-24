@@ -5539,26 +5539,20 @@ window.loginWithGoogle = async () => {
 
 
   window.handleSignOut = async () => {
-
     try {
-
-      await signOut(auth);
-
-      currentUser = null;
-
-      closeAuthModal();
-
+      if (typeof signOut === 'function' && auth) {
+        await signOut(auth);
+      }
     } catch (err) {
-
-      console.warn('Sign-out error:', err);
-
+      console.warn('Firebase sign-out error:', err);
+    } finally {
+      currentUser = null;
+      document.body.classList.remove('user-logged-in');
+      if (typeof closeAuthModal === 'function') closeAuthModal();
+      if (typeof updateAuthUI === 'function') updateAuthUI(null);
+      if (typeof showToast === 'function') showToast('Signed out successfully.', 'info');
     }
-
   };
-
-
-
-  // Auth State Listener
 
   onAuthStateChanged(auth, (user) => {
 

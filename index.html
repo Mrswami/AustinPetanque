@@ -755,9 +755,9 @@
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;"><i class="fa-solid fa-arrow-down-a-z"></i> Sort Email / Profile:</label>
             <select id="player-sort-select" onchange="filterAndSortPlayerBase()" class="form-input" style="width: auto; min-width: 180px; padding: 10px 14px;">
-              <option value="email-asc" selected>Email (A ??????????????????? Z)</option>
-              <option value="email-desc">Email (Z ??????????????????? A)</option>
-              <option value="name-asc">Player Name (A ??????????????????? Z)</option>
+              <option value="email-asc" selected>Email (A to Z)</option>
+              <option value="email-desc">Email (Z to A)</option>
+              <option value="name-asc">Player Name (A to Z)</option>
               <option value="recent">Newest Signups First</option>
               <option value="role">Admins & Founders First</option>
             </select>
@@ -958,20 +958,23 @@
         <div class="form-group">
           <label for="checkin-court">Pitch Location</label>
           <select id="checkin-court" class="form-input" style="background: #0d121f;" required>
-            <option value="Pease Park Pitches">Pease District Park (Live Oaks)</option>
-            <option value="French Legation Lawn">French Legation State Historic Site</option>
-            <option value="Mueller Lake Park">Mueller Lake Park</option>
-            <option value="South Congress Clubhouse">South Congress Terrain</option>
+            <option value="Browning Hangar at Mueller" selected>Browning Hangar at Mueller</option>
+            <option value="French Legation Museum">French Legation Museum</option>
+            <option value="Nelson Ranch Park">Nelson Ranch Park</option>
+            <option value="Paggi Square Park">Paggi Square Park</option>
+            <option value="Pease District Park">Pease District Park</option>
+            <option value="Brushy Creek Regional Park">Brushy Creek Regional Park</option>
+            <option value="Barton Springs Greenbelt">Barton Springs Greenbelt</option>
           </select>
         </div>
 
         <div class="form-group">
           <label for="checkin-status">Activity Status</label>
           <select id="checkin-status" class="form-input" style="background: #0d121f;" required>
-            <option value="Playing Now ????????????????">Playing Now ????????????????</option>
-            <option value="Heading there in 30 min ????????????????????">Heading there in 30 min ????????????????????</option>
-            <option value="Looking for +1 for Triplette ???????????????????">Looking for +1 for Triplette ???????????????????</option>
-            <option value="Casual Practice & Wine ????????????????">Casual Practice & Wine ????????????????</option>
+            <option value="Playing Now" selected>Playing Now</option>
+            <option value="Heading there in 30 min">Heading there in 30 min</option>
+            <option value="Looking for +1 for Triplette">Looking for +1 for Triplette</option>
+            <option value="Casual Practice &amp; Wine">Casual Practice &amp; Wine</option>
           </select>
         </div>
 
@@ -1321,7 +1324,7 @@
           <div class="form-group" style="margin-bottom: 0;">
             <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Game Type</label>
             <select id="match-type-select" class="form-input" style="padding: 8px 10px;">
-              <option value="T????????te-????????-t????????te (1v1)">Singles 1v1</option>
+              <option value="T&ecirc;te-&agrave;-t&ecirc;te (1v1)">Singles 1v1</option>
               <option value="Doublette (2v2)">Doubles 2v2</option>
               <option value="Triplette (3v3)">Triples 3v3</option>
             </select>
