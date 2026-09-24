@@ -1959,7 +1959,23 @@ function initFormSubmission() {
     form.reset();
 
     setTimeout(() => {
-      closeModal();
+      // Extract court name if RSVPing
+    const modalTitle = document.getElementById('membership-modal-title')?.textContent || '';
+    let targetCourt = 'Pease District Park';
+    if (modalTitle.includes('RSVP:')) {
+      targetCourt = modalTitle.replace('RSVP:', '').trim();
+    }
+
+    if (typeof showToast === 'function') {
+      showToast(`RSVP application submitted for ${targetCourt}! Opening court view...`, 'success');
+    }
+
+    closeModal();
+    if (typeof openViewCourtModal === 'function') {
+      openViewCourtModal(targetCourt);
+    }
+    return;
+    closeModal();
       statusEl.textContent = '';
     }, 3000);
   });
@@ -3697,3 +3713,214 @@ setInterval(() => {
   if (typeof checkUpcoming4HourReminders === 'function') checkUpcoming4HourReminders();
 }, 3 * 60 * 1000);
 
+
+
+// =========================================================================
+// VIEW COURT & LIVE PITCH ROSTER VISUALIZATION (Avatars Populating Terrain)
+// =========================================================================
+
+window.openViewCourtModal = async function(courtName) {
+  const modal = document.getElementById('view-court-modal');
+  const titleEl = document.getElementById('view-court-title');
+  const addrEl = document.getElementById('view-court-address');
+  const checkinBtn = document.getElementById('view-court-checkin-btn');
+
+  const courtConfig = (typeof COURTS_CONFIG !== 'undefined' ? COURTS_CONFIG : []).find(
+    c => c.name.toLowerCase().includes(courtName.toLowerCase()) || courtName.toLowerCase().includes(c.name.toLowerCase())
+  ) || { name: courtName, address: 'Austin Pitch Location' };
+
+  if (titleEl) titleEl.textContent = courtConfig.name;
+  if (addrEl) addrEl.textContent = courtConfig.address || 'Austin, TX';
+
+  if (checkinBtn) {
+    checkinBtn.onclick = () => {
+      window.closeViewCourtModal();
+      if (typeof window.quickCheckIn === 'function') {
+        window.quickCheckIn(courtConfig.name);
+      }
+    };
+  }
+
+  let playingNow = [];
+  let rsvpAccepted = [];
+  let rsvpPending = [];
+
+  // 1. Check-ins today
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
+
+  try {
+    if (typeof collection === 'function' && typeof getDocs === 'function') {
+      const q = query(collection(db, 'checkIns'), where('timestamp', '>=', todayStart), where('timestamp', '<=', todayEnd));
+      const snap = await getDocs(q);
+      snap.forEach(d => {
+        const data = d.data();
+        const cName = data.court || data.location || '';
+        if (cName.toLowerCase().includes(courtConfig.name.toLowerCase()) || courtConfig.name.toLowerCase().includes(cName.toLowerCase())) {
+          playingNow.push({
+            id: d.id,
+            name: data.name || data.userName || 'Pétanque Player',
+            avatar: data.avatar || 'fa-person-running',
+            status: 'playing_now'
+          });
+        }
+      });
+    }
+  } catch(e) {}
+
+  // Local check-ins fallback
+  const localCheckIns = JSON.parse(localStorage.getItem('austin_petanque_court_checkins') || '[]');
+  localCheckIns.forEach(ci => {
+    const cName = ci.court || ci.location || '';
+    if (cName.toLowerCase().includes(courtConfig.name.toLowerCase()) || courtConfig.name.toLowerCase().includes(cName.toLowerCase())) {
+      if (!playingNow.some(p => p.name === ci.name)) {
+        playingNow.push({
+          id: ci.id || 'ci_' + Date.now(),
+          name: ci.name || 'Player',
+          avatar: ci.avatar || 'fa-person-running',
+          status: 'playing_now'
+        });
+      }
+    }
+  });
+
+  // 2. Scheduled Matches RSVPs
+  let localMatches = JSON.parse(localStorage.getItem('austin_scheduled_matches') || '[]');
+  localMatches.forEach(sm => {
+    const cName = sm.court || sm.location || '';
+    if (cName.toLowerCase().includes(courtConfig.name.toLowerCase()) || courtConfig.name.toLowerCase().includes(cName.toLowerCase())) {
+      (sm.rsvps || []).forEach(r => {
+        if (!playingNow.some(p => p.name === r.name) && !rsvpAccepted.some(p => p.name === r.name)) {
+          rsvpAccepted.push({
+            id: r.uid || 'r_' + Date.now(),
+            name: r.name,
+            avatar: r.avatar || 'fa-user-check',
+            status: 'accepted'
+          });
+        }
+      });
+    }
+  });
+
+  // 3. Pending Applications / RSVPs
+  let pendingApps = JSON.parse(localStorage.getItem('austin_petanque_pending_apps') || '[]');
+  pendingApps.forEach(app => {
+    const appText = (app.court || app.message || app.name || '').toLowerCase();
+    if (appText.includes(courtConfig.name.toLowerCase()) || courtConfig.name.toLowerCase().includes(appText)) {
+      if (!playingNow.some(p => p.name === app.name) && !rsvpAccepted.some(p => p.name === app.name) && !rsvpPending.some(p => p.name === app.name)) {
+        if (app.status === 'approved' || app.status === 'accepted') {
+          rsvpAccepted.push({ id: app.id, name: app.name, avatar: 'fa-user-check', status: 'accepted' });
+        } else {
+          rsvpPending.push({ id: app.id, name: app.name, avatar: 'fa-clock', status: 'pending' });
+        }
+      }
+    }
+  });
+
+  // Rich initial demo seed if court is empty
+  if (playingNow.length === 0 && rsvpAccepted.length === 0 && rsvpPending.length === 0) {
+    playingNow.push({ id: 'p1', name: 'Jean-Luc P.', avatar: 'fa-bowling-ball', status: 'playing_now' });
+    rsvpAccepted.push({ id: 's1', name: 'Pierre Dubois', avatar: 'fa-crown', status: 'accepted' });
+    rsvpAccepted.push({ id: 's2', name: 'Claire Moreau', avatar: 'fa-trophy', status: 'accepted' });
+    rsvpPending.push({ id: 's3', name: 'Austin Boules Applicant', avatar: 'fa-clock', status: 'pending' });
+  }
+
+  // If current logged-in user has RSVP'd or is viewing, show them in roster & pitch!
+  if (currentUser) {
+    const userName = currentUser.displayName || currentUser.email?.split('@')[0] || 'Jacob (You)';
+    if (!playingNow.some(p => p.name.includes(userName)) && !rsvpAccepted.some(p => p.name.includes(userName)) && !rsvpPending.some(p => p.name.includes(userName))) {
+      rsvpAccepted.push({ id: currentUser.uid, name: `${userName} (You)`, avatar: 'fa-user-check', status: 'accepted' });
+    }
+  }
+
+  // Update Roster Counts
+  const cPN = document.getElementById('count-playing-now');
+  const cRA = document.getElementById('count-rsvp-accepted');
+  const cRP = document.getElementById('count-rsvp-pending');
+  if (cPN) cPN.textContent = playingNow.length;
+  if (cRA) cRA.textContent = rsvpAccepted.length;
+  if (cRP) cRP.textContent = rsvpPending.length;
+
+  // Render Roster Lists
+  renderRosterList('roster-playing-now', playingNow, 'playing_now');
+  renderRosterList('roster-rsvp-accepted', rsvpAccepted, 'accepted');
+  renderRosterList('roster-rsvp-pending', rsvpPending, 'pending');
+
+  // Render Pitch Top-Down Avatars
+  renderPitchAvatars([...playingNow, ...rsvpAccepted, ...rsvpPending]);
+
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  }
+};
+
+window.closeViewCourtModal = function() {
+  const modal = document.getElementById('view-court-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+};
+
+function renderRosterList(containerId, list, type) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (list.length === 0) {
+    container.innerHTML = `<div style="font-size: 0.76rem; color: var(--text-muted); font-style: italic;">No players yet</div>`;
+    return;
+  }
+  const statusColor = type === 'playing_now' ? '#4ade80' : type === 'accepted' ? 'var(--primary-amber)' : '#60a5fa';
+  container.innerHTML = list.map(p => `
+    <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.25); padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.05);">
+      <div style="width: 26px; height: 26px; border-radius: 50%; background: ${statusColor}; color: #000; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; flex-shrink: 0;">
+        <i class="fa-solid ${p.avatar || 'fa-user'}"></i>
+      </div>
+      <span style="font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 120px; color: #fff;">${p.name}</span>
+    </div>
+  `).join('');
+}
+
+function renderPitchAvatars(allPlayers) {
+  const overlay = document.getElementById('pitch-avatars-overlay');
+  if (!overlay) return;
+
+  if (allPlayers.length === 0) {
+    overlay.innerHTML = '';
+    return;
+  }
+
+  // Coordinates for top-down terrain layout
+  const positions = [
+    { top: '25%', left: '22%' },
+    { top: '35%', left: '78%' },
+    { top: '65%', left: '32%' },
+    { top: '70%', left: '68%' },
+    { top: '22%', left: '52%' },
+    { top: '80%', left: '48%' },
+    { top: '45%', left: '18%' },
+    { top: '50%', left: '84%' }
+  ];
+
+  overlay.innerHTML = allPlayers.slice(0, 8).map((p, idx) => {
+    const pos = positions[idx % positions.length];
+    const isPlaying = p.status === 'playing_now';
+    const isAccepted = p.status === 'accepted';
+    const glowColor = isPlaying ? '#16a34a' : isAccepted ? '#f59e0b' : '#3b82f6';
+    const statusLabel = isPlaying ? 'Playing Now' : isAccepted ? 'RSVP Accepted' : 'RSVP Pending';
+
+    return `
+      <div class="pitch-player-avatar" style="position: absolute; top: ${pos.top}; left: ${pos.left}; transform: translate(-50%, -50%); cursor: pointer; transition: transform 0.25s;" 
+           title="${p.name} (${statusLabel})"
+           onclick="if(typeof showToast === 'function') showToast('${p.name}: ${statusLabel}', 'info')">
+        <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: ${glowColor}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; box-shadow: 0 0 16px ${glowColor}; border: 2.5px solid #fff;">
+            <i class="fa-solid ${p.avatar || 'fa-user'}"></i>
+          </div>
+          <span style="margin-top: 4px; background: rgba(0,0,0,0.85); color: #fff; padding: 2px 7px; border-radius: 8px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 2px 6px rgba(0,0,0,0.5);">
+            ${p.name.split(' ')[0]}
+          </span>
+        </div>
+      </div>`;
+  }).join('');
+}
