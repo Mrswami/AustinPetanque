@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Austin P????????tanque | Premier Boules Club in Austin, TX</title>
-  <meta name="description" content="Welcome to Austin P????????tanque Club. Join casual games, weekend tournaments, and friendly boules matches across park courts in Austin, Texas.">
+  <title>Austin PÃƒÂ©tanque | Premier Boules Club in Austin, TX</title>
+  <meta name="description" content="Welcome to Austin PÃƒÂ©tanque Club. Join casual games, weekend tournaments, and friendly boules matches across park courts in Austin, Texas.">
   <meta name="keywords" content="Austin Petanque, Petanque Texas, Petanque Austin, Boules Club, French Petanque, Austin Parks">
   
   <!-- PWA & Mobile Optimization -->
@@ -12,10 +12,10 @@
   <meta name="theme-color" content="#f59e0b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="P????????tanque">
+  <meta name="apple-mobile-web-app-title" content="PÃƒÂ©tanque">
 
   <!-- Styles & Fonts -->
-  <link rel="stylesheet" href="styles.css?v=3.9.7">
+  <link rel="stylesheet" href="styles.css?v=3.9.6">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -51,7 +51,7 @@
     <div class="nav-container">
       <a href="#" class="logo" onclick="handleLogoClick(event)">
         <div class="logo-icon"></div>
-        Austin P????????tanque
+        Austin PÃƒÂ©tanque
       </a>
       <ul class="nav-links">
         <li><a href="#about">About</a></li>
@@ -86,14 +86,14 @@
     <!-- Hero Section -->
     <section class="hero" id="about">
       <div class="hero-bg">
-        <img src="hero.jpg?v=3.5.0" alt="Austin P????????tanque Game under Live Oaks">
+        <img src="hero.jpg?v=3.5.0" alt="Austin PÃƒÂ©tanque Game under Live Oaks">
       </div>
       <div class="hero-gradient-overlay"></div>
       <div class="hero-content">
-        <div class="glass-pill"><i class="fa-solid fa-location-dot"></i> Austin, Texas ??????????????? Founded 2026</div>
+        <div class="glass-pill"><i class="fa-solid fa-location-dot"></i> Austin, Texas Ã¢â‚¬Â¢ Founded 2026</div>
         <h1 class="hero-title">ATX <span class="gradient-text">PETANQUE</span></h1>
         <p class="hero-subtitle">
-          Whether you're a seasoned <em>tireur</em> or trying your first throw, join Austin's premier p????????tanque community under the oak trees.
+          Whether you're a seasoned <em>tireur</em> or trying your first throw, join Austin's premier pÃƒÂ©tanque community under the oak trees.
         </p>
         <div class="hero-cta">
           <button class="btn-primary" id="hero-auth-cta" onclick="openAuthModal()"><i class="fa-solid fa-bolt"></i> Fast Sign In / Sign Up</button>
@@ -121,68 +121,17 @@
       </div>
     </section>
 
-
-    <!-- ===== POST-LOGIN LIVE MATCH DASHBOARD ===== -->
-    <!-- Shown only when user is signed in (body.user-logged-in) -->
-    <section class="section live-dashboard-section" id="live-dashboard" style="display:none;">
-      <div class="section-header">
-        <div class="glass-pill live-pill"><span class="pulse-dot"></span> Live Courts &amp; Today's Matches</div>
-        <h2 class="section-title">What's Happening Now</h2>
-        <p class="section-desc">Live check-ins, today's scheduled matches, and upcoming court bookings across Austin terrains.</p>
-      </div>
-
-      <!-- Today's Court Activity Cards - 4 up grid -->
-      <div class="court-activity-grid" id="court-activity-grid">
-        <!-- Dynamically rendered by renderLiveDashboard() -->
-        <div class="court-activity-loading">
-          <i class="fa-solid fa-spinner fa-spin"></i> Loading today&apos;s activity&hellip;
-        </div>
-      </div>
-
-      <!-- Upcoming Scheduled Matches -->
-      <div class="upcoming-matches-panel glass-panel" style="margin-top:28px; padding:24px;">
-        <div class="upcoming-header">
-          <div>
-            <div class="upcoming-title"><i class="fa-solid fa-calendar-days"></i> Scheduled Matches &amp; Events</div>
-            <div class="upcoming-sub">Next 7 days across all Austin terrains</div>
-          </div>
-          <button class="btn-secondary" style="font-size:0.82rem;padding:8px 16px;" onclick="openModal('rsvp','Schedule a Match','Propose a new match at any Austin terrain. Organizer will confirm via the community Signal group.')">
-            <i class="fa-solid fa-plus"></i> Propose Match
-          </button>
-        </div>
-        <div class="upcoming-list" id="upcoming-matches-list">
-          <div style="color:var(--text-muted);text-align:center;padding:20px;">
-            <i class="fa-solid fa-spinner fa-spin"></i> Loading scheduled matches&hellip;
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Check-In Strip -->
-      <div class="quick-checkin-strip glass-panel" style="margin-top:20px;">
-        <div class="checkin-strip-label"><i class="fa-solid fa-location-crosshairs"></i> I&apos;m heading to the courts right now:</div>
-        <div class="checkin-strip-courts" id="quick-checkin-courts">
-          <button class="checkin-court-chip" onclick="quickCheckIn('Browning Hangar at Mueller')"><i class="fa-solid fa-star"></i> Mueller</button>
-          <button class="checkin-court-chip" onclick="quickCheckIn('French Legation Museum')"><i class="fa-solid fa-landmark"></i> Legation</button>
-          <button class="checkin-court-chip" onclick="quickCheckIn('Nelson Ranch Park')"><i class="fa-solid fa-users"></i> Nelson Ranch</button>
-          <button class="checkin-court-chip" onclick="quickCheckIn('Paggi Square Park')"><i class="fa-solid fa-people-group"></i> Paggi Sq.</button>
-          <button class="checkin-court-chip" onclick="quickCheckIn('Pease District Park')"><i class="fa-solid fa-tree"></i> Pease Park</button>
-          <button class="checkin-court-chip" onclick="quickCheckIn('Brushy Creek Regional Park')"><i class="fa-solid fa-water"></i> Brushy Creek</button>
-          <button class="checkin-court-chip" onclick="quickCheckIn('Barton Springs Greenbelt')"><i class="fa-solid fa-droplet"></i> Barton Spgs</button>
-        </div>
-      </div>
-    </section>
-
     <!-- Court Locations Section -->
     <section class="section" id="courts">
       <div class="section-header">
         <div class="glass-pill"><i class="fa-solid fa-map"></i> Terrains &amp; Pitch Locations</div>
         <h2 class="section-title">Where We Play in Austin</h2>
-        <p class="section-desc">7 documented p&eacute;tanque pitches across Austin &amp; the metro &mdash; gravel terrains, shade trees, and friendly games every week.</p>
+        <p class="section-desc">7 documented pÃ©tanque pitches across Austin &amp; the metro â€” gravel terrains, shade trees, and friendly games every week.</p>
       </div>
 
       <div class="locations-grid">
 
-        <!-- 1: Mueller Browning Hangar - Main Hub -->
+        <!-- 1: Mueller Browning Hangar â€” Main Hub -->
         <div class="location-card glass-panel">
           <div class="location-banner" style="background-image: url('images/courts/mueller-browning.jpg');">
             <span class="location-badge badge-primary"><i class="fa-solid fa-star"></i> #1 Main Terrain</span>
@@ -194,7 +143,7 @@
               <p><i class="fa-solid fa-clock"></i> Fri evenings &amp; Sun afternoons &bull; Year-round</p>
               <p><i class="fa-solid fa-shield-halved"></i> Covered open-air hangar &mdash; rain &amp; shade protected.</p>
             </div>
-            <button class="btn-secondary location-btn" onclick="openModal('rsvp','RSVP: Browning Hangar Mueller','Join Friday evening or Sunday afternoon games at Austin main covered terrain at Mueller.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
+            <button class="btn-secondary location-btn" onclick="openModal('rsvp', 'RSVP: Browning Hangar Mueller', 'Join Friday evening or Sunday afternoon games at Austin&apos;s main covered pÃ©tanque terrain at Mueller.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
           </div>
         </div>
 
@@ -210,7 +159,7 @@
               <p><i class="fa-solid fa-clock"></i> Wed mornings &bull; 9:00 AM (LBC)</p>
               <p><i class="fa-solid fa-wine-glass"></i> 1840s historic lawn, Legation Boules Club home terrain.</p>
             </div>
-            <button class="btn-secondary location-btn" onclick="openModal('rsvp','RSVP: French Legation Boules Club','Join the Legation Boules Club (LBC) on Wednesday mornings at the historic French Legation Museum.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
+            <button class="btn-secondary location-btn" onclick="openModal('rsvp', 'RSVP: French Legation Boules Club', 'Join the Legation Boules Club (LBC) on Wednesday mornings at the historic French Legation Museum.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
           </div>
         </div>
 
@@ -224,9 +173,9 @@
             <div class="location-details">
               <p><i class="fa-solid fa-location-dot"></i> 905 Nelson Ranch Rd, Cedar Park, TX</p>
               <p><i class="fa-solid fa-clock"></i> Tue &amp; Sun mornings &bull; 9:00 AM</p>
-              <p><i class="fa-solid fa-circle-check"></i> Dedicated terrain &mdash; Nelson Ranch P&eacute;tanque Club.</p>
+              <p><i class="fa-solid fa-circle-check"></i> Dedicated terrain &mdash; Nelson Ranch PÃ©tanque Club.</p>
             </div>
-            <button class="btn-secondary location-btn" onclick="openModal('rsvp','RSVP: Nelson Ranch Park','Join Tuesday and Sunday morning games at the dedicated Nelson Ranch P&eacute;tanque Club terrain in Cedar Park.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
+            <button class="btn-secondary location-btn" onclick="openModal('rsvp', 'RSVP: Nelson Ranch Park', 'Join Tuesday and Sunday morning games at the dedicated Nelson Ranch PÃ©tanque Club terrain in Cedar Park.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
           </div>
         </div>
 
@@ -240,9 +189,9 @@
             <div class="location-details">
               <p><i class="fa-solid fa-location-dot"></i> 2101 Robert Browning St, Austin, TX</p>
               <p><i class="fa-solid fa-clock"></i> Weekends &bull; Open Play</p>
-              <p><i class="fa-solid fa-people-group"></i> Purpose-built p&eacute;tanque courts, community designed.</p>
+              <p><i class="fa-solid fa-people-group"></i> Purpose-built pÃ©tanque courts, community designed.</p>
             </div>
-            <button class="btn-secondary location-btn" onclick="openModal('rsvp','RSVP: Paggi Square Park','Join open weekend play at Paggi Square Park - purpose-built courts in the heart of the neighborhood.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
+            <button class="btn-secondary location-btn" onclick="openModal('rsvp', 'RSVP: Paggi Square Park', 'Join open weekend play at Paggi Square Park â€” purpose-built courts in the heart of the neighborhood.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
           </div>
         </div>
 
@@ -258,7 +207,7 @@
               <p><i class="fa-solid fa-clock"></i> Saturdays &amp; Sundays &bull; 10:00 AM</p>
               <p><i class="fa-solid fa-tree"></i> Crushed limestone terrain under ancient live oaks.</p>
             </div>
-            <button class="btn-secondary location-btn" onclick="openModal('rsvp','RSVP: Pease District Park','Confirm attendance for Saturday &amp; Sunday morning games under the live oaks at Pease Park.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
+            <button class="btn-secondary location-btn" onclick="openModal('rsvp', 'RSVP: Pease District Park', 'Confirm attendance for Saturday &amp; Sunday morning games under the live oaks at Pease Park.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
           </div>
         </div>
 
@@ -274,7 +223,7 @@
               <p><i class="fa-solid fa-clock"></i> Casual drop-in &bull; Weekday mornings</p>
               <p><i class="fa-solid fa-water"></i> Scenic limestone creek setting, hike &amp; bike access.</p>
             </div>
-            <button class="btn-secondary location-btn" onclick="openModal('rsvp','RSVP: Brushy Creek Regional Park','Join casual weekday morning games at Brushy Creek - scenic limestone creek terrain in Cedar Park.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
+            <button class="btn-secondary location-btn" onclick="openModal('rsvp', 'RSVP: Brushy Creek Regional Park', 'Join casual weekday morning games at Brushy Creek â€” scenic limestone creek terrain in Cedar Park.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
           </div>
         </div>
 
@@ -290,7 +239,7 @@
               <p><i class="fa-solid fa-clock"></i> Sunday afternoons &bull; Seasonal</p>
               <p><i class="fa-solid fa-hill-rockslide"></i> Cypress-shaded gravel under limestone bluffs.</p>
             </div>
-            <button class="btn-secondary location-btn" onclick="openModal('rsvp','RSVP: Barton Springs Greenbelt','Join seasonal Sunday afternoon games at the Barton Springs Greenbelt.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
+            <button class="btn-secondary location-btn" onclick="openModal('rsvp', 'RSVP: Barton Springs Greenbelt', 'Join seasonal Sunday afternoon games at the Barton Springs Greenbelt.')"><i class="fa-solid fa-calendar-check"></i> RSVP For Match</button>
           </div>
         </div>
 
@@ -333,7 +282,7 @@
       <div class="section-header">
         <div class="glass-pill"><i class="fa-solid fa-calculator"></i> Live Match Assistant</div>
         <h2 class="section-title">Dedicated Courtside Scorekeeper</h2>
-        <p class="section-desc">Full-screen, sunlight-optimized score tracking, two-zone boule tracker, m????????ne history, and live spectator broadcast.</p>
+        <p class="section-desc">Full-screen, sunlight-optimized score tracking, two-zone boule tracker, mÃƒÂ¨ne history, and live spectator broadcast.</p>
       </div>
 
       <div class="glass-panel" style="padding: 36px 24px; text-align: center; max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 18px;">
@@ -342,7 +291,7 @@
         </div>
         <h3 style="font-size: 1.7rem; font-weight: 800;">Ready for Weekend Boules?</h3>
         <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 480px;">
-          Launch our standalone court app with permanent boule placement, screen wake-lock, sunlight high-contrast mode, m????????ne timeline with undo, and 4-digit live cloud sync.
+          Launch our standalone court app with permanent boule placement, screen wake-lock, sunlight high-contrast mode, mÃƒÂ¨ne timeline with undo, and 4-digit live cloud sync.
         </p>
         <div style="display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px;">
           <a href="#score" class="btn-primary" style="padding: 14px 28px; font-size: 1.05rem;">
@@ -360,7 +309,7 @@
       <div class="section-header">
         <div class="glass-pill"><i class="fa-solid fa-calendar-days"></i> Schedule</div>
         <h2 class="section-title">Upcoming Tournaments & Socials</h2>
-        <p class="section-desc">Mark your calendar for upcoming Austin P????????tanque gatherings.</p>
+        <p class="section-desc">Mark your calendar for upcoming Austin PÃƒÂ©tanque gatherings.</p>
       </div>
 
       <div class="events-grid">
@@ -388,23 +337,23 @@
               <div class="event-month">OCT</div>
             </div>
             <div class="event-info">
-              <h3>P????????tanque & Pinot Social Evening</h3>
+              <h3>PÃƒÂ©tanque & Pinot Social Evening</h3>
               <div class="event-meta">
                 <span><i class="fa-solid fa-location-dot"></i> French Legation Lawn</span>
                 <span><i class="fa-solid fa-clock"></i> 5:00 PM - 8:00 PM</span>
               </div>
             </div>
           </div>
-          <button class="btn-secondary" onclick="openModal('rsvp', 'RSVP: P????????tanque & Pinot Social Evening', 'Reserve your spot for Oct 4 social boules and wine at French Legation.')"><i class="fa-solid fa-wine-glass"></i> RSVP Social</button>
+          <button class="btn-secondary" onclick="openModal('rsvp', 'RSVP: PÃƒÂ©tanque & Pinot Social Evening', 'Reserve your spot for Oct 4 social boules and wine at French Legation.')"><i class="fa-solid fa-wine-glass"></i> RSVP Social</button>
         </div>
       </div>
     </section>
 
-    <!-- P????????tanque Rules Guide -->
+    <!-- PÃƒÂ©tanque Rules Guide -->
     <section class="section" id="rules">
       <div class="section-header">
         <div class="glass-pill"><i class="fa-solid fa-book-open"></i> How To Play</div>
-        <h2 class="section-title">Essential P????????tanque Rules</h2>
+        <h2 class="section-title">Essential PÃƒÂ©tanque Rules</h2>
         <p class="section-desc">Learn the fundamentals of the game in 4 quick steps.</p>
       </div>
 
@@ -418,7 +367,7 @@
         <div class="rule-card glass-panel">
           <div class="rule-icon"><i class="fa-solid fa-shoe-prints"></i></div>
           <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">2. Feet Anchored</h3>
-          <p style="color: var(--text-muted); font-size: 0.95rem;">P????????tanque comes from *p????????s tancats* (feet planted on the ground). Stand inside the circle with both feet flat when throwing.</p>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">PÃƒÂ©tanque comes from *pÃƒÂ¨s tancats* (feet planted on the ground). Stand inside the circle with both feet flat when throwing.</p>
         </div>
 
         <div class="rule-card glass-panel">
@@ -446,7 +395,7 @@
         <div id="victory-overlay" class="victory-overlay" style="display: none;">
           <canvas id="victory-canvas" class="victory-canvas"></canvas>
           <div class="victory-content">
-            <div class="victory-trophy">???????????????????</div>
+            <div class="victory-trophy">Ã°Å¸Ââ€ </div>
             <h3 id="victory-title" class="victory-title">Team Red Wins!</h3>
             <p id="victory-subtitle" class="victory-subtitle">Final Match Score: 13 &ndash; 10</p>
             <div class="victory-actions">
@@ -461,7 +410,7 @@
             <h3 id="scoreboard-title" style="font-size: 1.35rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
               <i class="fa-solid fa-bullseye" style="color:var(--primary-amber);"></i> Target: 13 Points (Win by 2)
             </h3>
-            <p id="scoreboard-subtitle" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Classic 3D-printed rotary capsule counter (0??????????????????13). Standalone casual scorekeeper.</p>
+            <p id="scoreboard-subtitle" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Classic 3D-printed rotary capsule counter (0Ã¢â‚¬â€œ13). Standalone casual scorekeeper.</p>
           </div>
           <div class="scoreboard-header-actions">
             <!-- Mode Switcher Pill directly above Reset Match -->
@@ -600,7 +549,7 @@
                 <i class="fa-solid fa-rotate-left"></i> Zero Both Dials
               </button>
               <div class="classic-hint-text">
-                <i class="fa-solid fa-arrows-rotate"></i> Rotate side gear rims or tap windows to step 0??????????????????13
+                <i class="fa-solid fa-arrows-rotate"></i> Rotate side gear rims or tap windows to step 0Ã¢â‚¬â€œ13
               </div>
             </div>
 
@@ -620,7 +569,7 @@
             </div>
 
             <div class="score-controls">
-              <button class="btn-circle btn-minus" onclick="updateScore('A', -1)" title="Remove point (?????????????????1)"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle btn-minus" onclick="updateScore('A', -1)" title="Remove point (Ã¢Ë†â€™1)"><i class="fa-solid fa-minus"></i></button>
               <button class="btn-circle btn-plus" onclick="updateScore('A', 1)" title="Add point (+1)"><i class="fa-solid fa-plus"></i></button>
             </div>
             <button class="has-point-btn red" id="point-btn-a" onclick="setPointHolder('A')">
@@ -634,7 +583,7 @@
             <div class="vs-divider">VS</div>
             <div id="lead-diff" class="lead-diff"></div>
             <button id="new-mene-btn" class="new-mene-btn" onclick="recordAndResetMene()" style="display:none;">
-              <i class="fa-solid fa-rotate-right"></i> Record M????????ne
+              <i class="fa-solid fa-rotate-right"></i> Record MÃƒÂ¨ne
             </button>
           </div>
 
@@ -649,7 +598,7 @@
             </div>
 
             <div class="score-controls">
-              <button class="btn-circle btn-minus" onclick="updateScore('B', -1)" title="Remove point (?????????????????1)"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle btn-minus" onclick="updateScore('B', -1)" title="Remove point (Ã¢Ë†â€™1)"><i class="fa-solid fa-minus"></i></button>
               <button class="btn-circle btn-plus" onclick="updateScore('B', 1)" title="Add point (+1)"><i class="fa-solid fa-plus"></i></button>
             </div>
             <button class="has-point-btn blue" id="point-btn-b" onclick="setPointHolder('B')">
@@ -660,16 +609,16 @@
 
         </div>
 
-        <!-- Visual M????????ne Timeline Strip -->
+        <!-- Visual MÃƒÂ¨ne Timeline Strip -->
         <div class="mene-timeline-container" style="display: none;">
           <div class="mene-timeline-header">
-            <span><i class="fa-solid fa-timeline"></i> M????????ne Progression</span>
+            <span><i class="fa-solid fa-timeline"></i> MÃƒÂ¨ne Progression</span>
             <button class="undo-mene-btn" id="undo-mene-btn" onclick="undoLastMene()" style="display:none;">
-              <i class="fa-solid fa-arrow-rotate-left"></i> Undo Last M????????ne
+              <i class="fa-solid fa-arrow-rotate-left"></i> Undo Last MÃƒÂ¨ne
             </button>
           </div>
           <div class="mene-timeline-strip" id="mene-timeline-strip">
-            <span class="mene-empty-hint">Completed m????????nes will appear here</span>
+            <span class="mene-empty-hint">Completed mÃƒÂ¨nes will appear here</span>
           </div>
         </div>
 
@@ -748,9 +697,9 @@
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;"><i class="fa-solid fa-arrow-down-a-z"></i> Sort Email / Profile:</label>
             <select id="player-sort-select" onchange="filterAndSortPlayerBase()" class="form-input" style="width: auto; min-width: 180px; padding: 10px 14px;">
-              <option value="email-asc" selected>Email (A ??????????????????? Z)</option>
-              <option value="email-desc">Email (Z ??????????????????? A)</option>
-              <option value="name-asc">Player Name (A ??????????????????? Z)</option>
+              <option value="email-asc" selected>Email (A Ã¢â€ â€™ Z)</option>
+              <option value="email-desc">Email (Z Ã¢â€ â€™ A)</option>
+              <option value="name-asc">Player Name (A Ã¢â€ â€™ Z)</option>
               <option value="recent">Newest Signups First</option>
               <option value="role">Admins & Founders First</option>
             </select>
@@ -813,9 +762,9 @@
       <div class="footer-brand">
         <div class="logo">
           <div class="logo-icon"><img src="logo.jpg" alt="Austin Petanque Monkey Logo"></div>
-          Austin P????????tanque
+          Austin PÃƒÂ©tanque
         </div>
-        <p>Connecting P????????tanque enthusiasts across Austin, Texas. Casual games, tournaments, and good times under the oaks.</p>
+        <p>Connecting PÃƒÂ©tanque enthusiasts across Austin, Texas. Casual games, tournaments, and good times under the oaks.</p>
       </div>
       <div>
         <h4 style="font-size: 1.1rem; margin-bottom: 16px;">Quick Links</h4>
@@ -833,7 +782,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      &copy; 2026 Austin P????????tanque Club. All rights reserved. Powered by Firebase Hosting.
+      &copy; 2026 Austin PÃƒÂ©tanque Club. All rights reserved. Powered by Firebase Hosting.
     </div>
   </footer>
 
@@ -843,7 +792,7 @@
       <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
       <div style="text-align: center; margin-bottom: 24px;">
         <div class="logo-icon" style="margin: 0 auto 12px; width: 50px; height: 50px;"><img src="logo.jpg" alt="Austin Petanque Monkey Logo"></div>
-        <h2 id="membership-modal-title" style="font-size: 1.8rem; font-weight: 800;">Join Austin P????????tanque</h2>
+        <h2 id="membership-modal-title" style="font-size: 1.8rem; font-weight: 800;">Join Austin PÃƒÂ©tanque</h2>
         <p id="membership-modal-subtitle" style="color: var(--text-muted); font-size: 0.9rem;">Applications are sent to <strong>noless42@gmail.com</strong> for founder approval.</p>
       </div>
 
@@ -859,7 +808,7 @@
         </div>
 
         <div class="form-group">
-          <label for="member-skill">P????????tanque Experience Level</label>
+          <label for="member-skill">PÃƒÂ©tanque Experience Level</label>
           <select id="member-skill" class="form-input" style="background: #0d121f;">
             <option value="beginner">Beginner / First Time Player</option>
             <option value="intermediate">Intermediate / Casual Player</option>
@@ -939,7 +888,7 @@
       <div style="text-align: center; margin-bottom: 20px;">
         <div class="checkin-modal-icon"><i class="fa-solid fa-map-location-dot"></i></div>
         <h2 style="font-size: 1.6rem; font-weight: 800; margin-top: 8px;">Check In to a Pitch</h2>
-        <p style="color: var(--text-muted); font-size: 0.88rem;">Let the Austin P????????tanque community know you're playing!</p>
+        <p style="color: var(--text-muted); font-size: 0.88rem;">Let the Austin PÃƒÂ©tanque community know you're playing!</p>
       </div>
 
       <form id="checkin-form">
@@ -961,10 +910,10 @@
         <div class="form-group">
           <label for="checkin-status">Activity Status</label>
           <select id="checkin-status" class="form-input" style="background: #0d121f;" required>
-            <option value="Playing Now ????????????????">Playing Now ????????????????</option>
-            <option value="Heading there in 30 min ????????????????????">Heading there in 30 min ????????????????????</option>
-            <option value="Looking for +1 for Triplette ???????????????????">Looking for +1 for Triplette ???????????????????</option>
-            <option value="Casual Practice & Wine ????????????????">Casual Practice & Wine ????????????????</option>
+            <option value="Playing Now Ã°Å¸Å½Â¯">Playing Now Ã°Å¸Å½Â¯</option>
+            <option value="Heading there in 30 min Ã°Å¸Å¡â€”">Heading there in 30 min Ã°Å¸Å¡â€”</option>
+            <option value="Looking for +1 for Triplette Ã°Å¸â€˜Â¥">Looking for +1 for Triplette Ã°Å¸â€˜Â¥</option>
+            <option value="Casual Practice & Wine Ã°Å¸ÂÂ·">Casual Practice & Wine Ã°Å¸ÂÂ·</option>
           </select>
         </div>
 
@@ -1036,7 +985,7 @@
               <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Password</label>
               <a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.76rem; color: var(--primary-amber); text-decoration: none;">Forgot?</a>
             </div>
-            <input type="password" id="login-password-input" class="form-input" placeholder="????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????" required style="padding: 10px 14px;">
+            <input type="password" id="login-password-input" class="form-input" placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢" required style="padding: 10px 14px;">
           </div>
           <button type="submit" class="btn-primary" id="email-login-btn" style="width: 100%; justify-content: center; margin-top: 4px; padding: 12px;">
             <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In with Email
@@ -1055,7 +1004,7 @@
           </div>
           <div class="form-group" style="margin-bottom: 0;">
             <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Password (min 6 chars)</label>
-            <input type="password" id="signup-password-input" class="form-input" placeholder="????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????" minlength="6" required style="padding: 10px 14px;">
+            <input type="password" id="signup-password-input" class="form-input" placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢" minlength="6" required style="padding: 10px 14px;">
           </div>
           <button type="submit" class="btn-primary" id="email-signup-btn" style="width: 100%; justify-content: center; margin-top: 4px; padding: 12px; background: linear-gradient(135deg, #10b981, #059669);">
             <i class="fa-solid fa-user-check"></i> Create Free Account
@@ -1160,7 +1109,7 @@
 
             <div class="form-group" style="margin-bottom: 0;">
               <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">About Me / Bio</label>
-              <textarea id="profile-bio-input" class="form-input" rows="2" placeholder="Tell the Austin P????????tanque community about yourself..." style="padding: 8px 12px; font-size: 0.85rem; resize: vertical;"></textarea>
+              <textarea id="profile-bio-input" class="form-input" rows="2" placeholder="Tell the Austin PÃƒÂ©tanque community about yourself..." style="padding: 8px 12px; font-size: 0.85rem; resize: vertical;"></textarea>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -1268,7 +1217,7 @@
     </div>
   </div>
 
-  <!-- Log P????????tanque Match Modal -->
+  <!-- Log PÃƒÂ©tanque Match Modal -->
   <div class="modal-backdrop" id="log-match-modal">
     <div class="modal-content glass-panel" style="max-width: 440px; text-align: left;">
       <button class="modal-close" onclick="closeLogMatchModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -1276,7 +1225,7 @@
         <div class="auth-icon-circle" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #34d399;">
           <i class="fa-solid fa-award"></i>
         </div>
-        <h3 style="font-size: 1.35rem; font-weight: 800; margin-top: 8px;">Log P????????tanque Match</h3>
+        <h3 style="font-size: 1.35rem; font-weight: 800; margin-top: 8px;">Log PÃƒÂ©tanque Match</h3>
         <p style="font-size: 0.82rem; color: var(--text-muted);">Record game score to update your stats and match history.</p>
       </div>
 
@@ -1301,7 +1250,7 @@
           <div class="form-group" style="margin-bottom: 0;">
             <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">Game Type</label>
             <select id="match-type-select" class="form-input" style="padding: 8px 10px;">
-              <option value="T????????te-????????-t????????te (1v1)">Singles 1v1</option>
+              <option value="TÃƒÂªte-ÃƒÂ -tÃƒÂªte (1v1)">Singles 1v1</option>
               <option value="Doublette (2v2)">Doubles 2v2</option>
               <option value="Triplette (3v3)">Triples 3v3</option>
             </select>
@@ -1358,6 +1307,6 @@
       });
     }
   </script>
-  <script type="module" src="app.js?v=3.9.6"></script>
+  <script type="module" src="app.js?v=3.9.5"></script>
 </body>
 </html>

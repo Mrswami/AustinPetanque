@@ -2709,6 +2709,8 @@ function initAuth() {
     updateAuthUI(user);
     if (user) {
       syncUserProfileToFirestore(user, user.providerData?.[0]?.providerId || 'email');
+      // Render live dashboard on sign-in or persistent session restore
+      setTimeout(() => { if (typeof renderLiveDashboard === 'function') renderLiveDashboard(); }, 400);
     }
   });
 }
@@ -3154,4 +3156,127 @@ function renderMatchHistoryList(uid) {
   container.innerHTML = html;
 }
 
+// =========================================================================
+// LIVE DASHBOARD: Court Activity & Upcoming Matches
+// =========================================================================
 
+const COURTS_CONFIG = [
+  { id: 'mueller',  name: 'Browning Hangar at Mueller',  img: 'images/courts/mueller-browning.jpg',  address: '4550 Mueller Blvd',       schedule: 'Fri eve & Sun PM',    icon: 'fa-star' },
+  { id: 'legation', name: 'French Legation Museum',      img: 'images/courts/french-legation.jpg',   address: '802 San Marcos St',        schedule: 'Wed 9:00 AM (LBC)',   icon: 'fa-landmark' },
+  { id: 'nelson',   name: 'Nelson Ranch Park',            img: 'images/courts/nelson-ranch.jpg',      address: '905 Nelson Ranch Rd',      schedule: 'Tue & Sun 9:00 AM',   icon: 'fa-users' },
+  { id: 'paggi',    name: 'Paggi Square Park',            img: 'images/courts/paggi-square.jpg',      address: '2101 Robert Browning St',  schedule: 'Weekends open play',  icon: 'fa-people-group' },
+  { id: 'pease',    name: 'Pease District Park',          img: 'images/courts/pease-park.jpg',        address: '1100 Kingsbury St',        schedule: 'Sat & Sun 10:00 AM',  icon: 'fa-tree' },
+  { id: 'brushy',   name: 'Brushy Creek Regional Park',   img: 'images/courts/brushy-creek.jpg',      address: '3300 Brushy Creek Rd',     schedule: 'Weekday mornings',    icon: 'fa-water' },
+  { id: 'barton',   name: 'Barton Springs Greenbelt',     img: 'images/courts/barton-springs.jpg',    address: 'Barton Springs Rd',        schedule: 'Sun afternoons',      icon: 'fa-droplet' },
+];
+
+const SEEDED_MATCHES = [
+  { date: 'Sat Sep 27', name: 'Austin Autumn Doublettes',    court: 'Pease District Park',         time: '10:00 AM', type: 'tournament' },
+  { date: 'Wed Oct 1',  name: 'LBC Wednesday Morning Play',  court: 'French Legation Museum',      time: '9:00 AM',  type: 'casual' },
+  { date: 'Fri Oct 3',  name: 'Friday Evening Triplettes',   court: 'Browning Hangar at Mueller',  time: '6:30 PM',  type: 'casual' },
+  { date: 'Sat Oct 4',  name: 'P\u00e9tanque & Pinot Social', court: 'French Legation Museum',     time: '5:00 PM',  type: 'social' },
+  { date: 'Sun Oct 5',  name: 'Nelson Ranch Open Play',      court: 'Nelson Ranch Park',           time: '9:00 AM',  type: 'casual' },
+  { date: 'Sun Oct 5',  name: 'Mueller Sunday Doubles',      court: 'Browning Hangar at Mueller',  time: '2:00 PM',  type: 'casual' },
+];
+
+async function renderLiveDashboard() {
+  const grid = document.getElementById('court-activity-grid');
+  const upcomingList = document.getElementById('upcoming-matches-list');
+  if (!grid) return;
+
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const todayEnd   = new Date(); todayEnd.setHours(23,59,59,999);
+
+  let checkinsToday = {};
+  try {
+    const q = query(collection(db,'checkIns'), where('timestamp','>=',todayStart), where('timestamp','<=',todayEnd));
+    const snap = await getDocs(q);
+    snap.forEach(d => {
+      const data = d.data();
+      const key = data.court || data.location || '';
+      if (!checkinsToday[key]) checkinsToday[key] = [];
+      checkinsToday[key].push(data);
+    });
+  } catch(e) { console.warn('Check-in load error:', e); }
+
+  const dayOfWeek = new Date().getDay();
+  const isScheduledToday = (id) => ({
+    mueller:[5,0], legation:[3], nelson:[2,0], paggi:[6,0], pease:[6,0], brushy:[1,2,3,4,5], barton:[0]
+  }[id] || []).includes(dayOfWeek);
+
+  grid.innerHTML = COURTS_CONFIG.map(court => {
+    const ci = checkinsToday[court.name] || [];
+    const count = ci.length;
+    const live = count > 0;
+    const scheduled = isScheduledToday(court.id);
+    const statusClass = live ? 'status-live' : scheduled ? 'status-scheduled' : 'status-quiet';
+    const statusLabel = live
+      ? `<i class="fa-solid fa-signal"></i> ${count} checked in`
+      : scheduled ? '<i class="fa-solid fa-clock"></i> Scheduled Today'
+                  : '<i class="fa-regular fa-moon"></i> Quiet Today';
+    return `
+      <div class="court-activity-card">
+        <div class="court-activity-banner" style="background-image:url('${court.img}');">
+          <span class="court-activity-status ${statusClass}">${statusLabel}</span>
+        </div>
+        <div class="court-activity-body">
+          <div class="court-activity-name"><i class="fa-solid ${court.icon}" style="color:var(--primary-amber);margin-right:5px;font-size:0.8em;"></i>${court.name}</div>
+          <div class="court-activity-meta">
+            <span><i class="fa-solid fa-location-dot"></i> ${court.address}</span>
+            <span><i class="fa-solid fa-clock"></i> ${court.schedule}</span>
+          </div>
+          ${count > 0 ? `<span class="court-checkin-count"><i class="fa-solid fa-person-running"></i> ${count} player${count!==1?'s':''} on pitch</span>` : ''}
+          <button class="btn-secondary court-activity-action" onclick="quickCheckIn('${court.name.replace(/'/g,"\\'")}')">
+            <i class="fa-solid fa-location-crosshairs"></i> Check In Here
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  if (!upcomingList) return;
+  let firestoreMatches = [];
+  try {
+    const mq = query(collection(db,'playdates'), orderBy('timestamp','asc'), limit(20));
+    const ms = await getDocs(mq);
+    ms.forEach(d => firestoreMatches.push(d.data()));
+  } catch(e) {}
+
+  const matches = firestoreMatches.length > 0 ? firestoreMatches : SEEDED_MATCHES;
+  upcomingList.innerHTML = matches.slice(0,8).map(m => `
+    <div class="upcoming-match-row">
+      <span class="upcoming-date-badge">${m.date||m.playDate||'TBD'}</span>
+      <div class="upcoming-match-info">
+        <div class="upcoming-match-name">${m.name||m.title||'Open Play'}</div>
+        <div class="upcoming-match-court"><i class="fa-solid fa-location-dot" style="color:var(--primary-amber)"></i> ${m.court||m.location||'Austin Terrain'} &bull; ${m.time||''}</div>
+      </div>
+      <button class="btn-secondary upcoming-rsvp-btn" onclick="openModal('rsvp','RSVP: ${(m.name||'Open Play').replace(/'/g,"\\'")}','Reserve your spot for ${(m.date||'').replace(/'/g,"\\'")} at ${(m.court||'Austin Terrain').replace(/'/g,"\\'")}.')">
+        <i class="fa-solid fa-calendar-check"></i> RSVP
+      </button>
+    </div>`).join('');
+}
+
+window.quickCheckIn = async function(courtName) {
+  if (!currentUser) { showToast('Sign in to check in to a pitch!','warning'); return; }
+  try {
+    await addDoc(collection(db,'checkIns'), {
+      court: courtName,
+      userId: currentUser.uid,
+      displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Player',
+      timestamp: new Date(),
+      type: 'active'
+    });
+    showToast('Checked in at ' + courtName + '! See you on the pitch.','success');
+    setTimeout(renderLiveDashboard, 800);
+  } catch(e) { console.error('Check-in error:',e); showToast('Could not check in. Try again.','error'); }
+};
+
+if (typeof showToast === 'undefined') {
+  window.showToast = function(msg, type='success') {
+    const t = document.createElement('div');
+    const bg = type==='success'?'#10b981':type==='warning'?'#f59e0b':'#ef4444';
+    t.style.cssText = `position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:${bg};color:#fff;padding:10px 22px;border-radius:999px;font-size:0.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);white-space:nowrap;`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  };
+}
