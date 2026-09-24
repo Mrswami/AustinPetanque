@@ -3236,23 +3236,69 @@ async function renderLiveDashboard() {
   if (!upcomingList) return;
   let firestoreMatches = [];
   try {
-    const mq = query(collection(db,'playdates'), orderBy('timestamp','asc'), limit(20));
-    const ms = await getDocs(mq);
-    ms.forEach(d => firestoreMatches.push(d.data()));
-  } catch(e) {}
+    if (typeof collection === 'function' && typeof getDocs === 'function') {
+      const mq = query(collection(db, 'scheduledMatches'), orderBy('timestamp', 'asc'), limit(20));
+      const ms = await getDocs(mq);
+      ms.forEach(d => {
+        const data = d.data();
+        data._id = data.id || d.id;
+        firestoreMatches.push(data);
+      });
+    }
+  } catch(e) { console.warn('scheduledMatches load error:', e); }
 
-  const matches = firestoreMatches.length > 0 ? firestoreMatches : SEEDED_MATCHES;
-  upcomingList.innerHTML = matches.slice(0,8).map(m => `
-    <div class="upcoming-match-row">
-      <span class="upcoming-date-badge">${m.date||m.playDate||'TBD'}</span>
-      <div class="upcoming-match-info">
-        <div class="upcoming-match-name">${m.name||m.title||'Open Play'}</div>
-        <div class="upcoming-match-court"><i class="fa-solid fa-location-dot" style="color:var(--primary-amber)"></i> ${m.court||m.location||'Austin Terrain'} &bull; ${m.time||''}</div>
-      </div>
-      <button class="btn-secondary upcoming-rsvp-btn" onclick="openModal('rsvp','RSVP: ${(m.name||'Open Play').replace(/'/g,"\\'")}','Reserve your spot for ${(m.date||'').replace(/'/g,"\\'")} at ${(m.court||'Austin Terrain').replace(/'/g,"\\'")}.')">
-        <i class="fa-solid fa-calendar-check"></i> RSVP
-      </button>
-    </div>`).join('');
+  const localMatches = JSON.parse(localStorage.getItem('austin_scheduled_matches') || '[]');
+  localMatches.forEach(lm => {
+    if (!firestoreMatches.some(m => (m.id || m._id) === lm.id)) {
+      firestoreMatches.push(lm);
+    }
+  });
+
+  const allMatches = firestoreMatches.length > 0 ? firestoreMatches : (typeof SEEDED_MATCHES !== 'undefined' ? SEEDED_MATCHES : []);
+  
+  if (allMatches.length === 0) {
+    upcomingList.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+        <i class="fa-regular fa-calendar-xmark" style="font-size: 2rem; margin-bottom: 8px;"></i>
+        <div>No games currently scheduled. Be the first to host one!</div>
+        <button class="btn-primary" onclick="openScheduleModal()" style="margin-top: 10px; padding: 8px 16px;">
+          <i class="fa-solid fa-calendar-plus"></i> Schedule First Match
+        </button>
+      </div>`;
+    return;
+  }
+
+  upcomingList.innerHTML = allMatches.slice(0, 10).map(m => {
+    const matchId = m.id || m._id || m.name;
+    const rsvps = Array.isArray(m.rsvps) ? m.rsvps : [];
+    const rsvpCount = rsvps.length;
+    const userIsAttending = currentUser && rsvps.some(r => r.uid === currentUser.uid);
+    const hostName = m.hostName || 'Pétanque Organizer';
+    
+    return `
+      <div class="upcoming-match-row" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; margin-bottom: 8px;">
+        <span class="upcoming-date-badge" style="background: var(--gradient-primary); color: #fff; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; text-align: center; min-width: 80px;">
+          ${m.date || m.playDate || 'TBD'}
+        </span>
+        <div class="upcoming-match-info" style="flex-grow: 1;">
+          <div class="upcoming-match-name" style="font-weight: 700; font-size: 0.98rem;">${m.name || m.title || 'Open Play'}</div>
+          <div class="upcoming-match-court" style="font-size: 0.82rem; color: var(--text-muted); margin-top: 3px;">
+            <i class="fa-solid fa-location-dot" style="color: var(--primary-amber);"></i> ${m.court || m.location || 'Austin Terrain'} &bull; ${m.time || ''}
+            <span style="margin-left: 8px; color: var(--accent-gold);"><i class="fa-solid fa-user"></i> Host: ${hostName}</span>
+          </div>
+          ${m.type ? `<div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px;"><i class="fa-solid fa-tag"></i> ${m.type}</div>` : ''}
+          ${rsvpCount > 0 ? `
+            <div style="font-size: 0.78rem; color: #4ade80; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-users"></i> ${rsvpCount} player${rsvpCount !== 1 ? 's' : ''} attending (${rsvps.slice(0,3).map(r=>r.name).join(', ')}${rsvpCount>3 ? ' +more':''})
+            </div>` : ''}
+        </div>
+        <button class="btn-${userIsAttending ? 'success' : 'secondary'} upcoming-rsvp-btn" 
+                onclick="toggleMatchRSVP('${matchId.replace(/'/g, "\'")}')" 
+                style="flex-shrink: 0; padding: 8px 14px; font-size: 0.85rem; min-width: 110px; ${userIsAttending ? 'background: #16a34a; color: #fff; border: none;' : ''}">
+          <i class="fa-solid ${userIsAttending ? 'fa-circle-check' : 'fa-calendar-check'}"></i> ${userIsAttending ? 'Attending ✓' : 'RSVP / Join'}
+        </button>
+      </div>`;
+  }).join('');
 }
 
 window.quickCheckIn = async function(courtName) {
@@ -3280,3 +3326,316 @@ if (typeof showToast === 'undefined') {
     setTimeout(() => t.remove(), 3500);
   };
 }
+
+
+// =========================================================================
+// MATCH SCHEDULING, PUBLIC VISIBILITY & 4-HOUR PRE-MATCH EMAIL REMINDERS
+// =========================================================================
+
+// Global modal handlers
+window.openScheduleModal = function(prefillCourt = '') {
+  if (!currentUser) {
+    if (typeof openAuthModal === 'function') openAuthModal();
+    if (typeof showToast === 'function') showToast('Please sign in to schedule a pétanque match!', 'warning');
+    return;
+  }
+  const modal = document.getElementById('schedule-game-modal');
+  if (modal) {
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  }
+  if (prefillCourt) {
+    const courtSelect = document.getElementById('schedule-court-select');
+    if (courtSelect) courtSelect.value = prefillCourt;
+  }
+  
+  // Set default date to today or tomorrow
+  const dateInput = document.getElementById('schedule-date-input');
+  if (dateInput && !dateInput.value) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dateInput.value = tomorrow.toISOString().split('T')[0];
+  }
+  const timeInput = document.getElementById('schedule-time-input');
+  if (timeInput && !timeInput.value) {
+    timeInput.value = '10:00';
+  }
+};
+
+window.closeScheduleModal = function() {
+  const modal = document.getElementById('schedule-game-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+};
+
+// Toggle Email Reminders setting in User Profile
+window.toggleEmailRemindersSetting = async function(enabled) {
+  localStorage.setItem('user_email_reminders_enabled', enabled ? 'true' : 'false');
+  if (currentUser && typeof doc === 'function' && typeof updateDoc === 'function') {
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      await updateDoc(userRef, { emailRemindersEnabled: enabled });
+      if (typeof showToast === 'function') {
+        showToast(enabled ? '4-Hour Email Reminders enabled!' : 'Email Reminders disabled.', 'info');
+      }
+    } catch(e) {
+      console.warn('Error updating email reminders setting:', e);
+    }
+  }
+};
+
+// Handle Match Schedule Form Submission
+window.handleScheduleGameSubmit = async function(e) {
+  if (e) e.preventDefault();
+  if (!currentUser) {
+    if (typeof showToast === 'function') showToast('Please sign in to schedule a match.', 'warning');
+    return;
+  }
+
+  const title = document.getElementById('schedule-title-input')?.value.trim();
+  const court = document.getElementById('schedule-court-select')?.value;
+  const dateStr = document.getElementById('schedule-date-input')?.value;
+  const timeStr = document.getElementById('schedule-time-input')?.value;
+  const type = document.getElementById('schedule-type-select')?.value || 'Casual Play';
+  const notes = document.getElementById('schedule-notes-input')?.value.trim() || '';
+
+  if (!title || !court || !dateStr || !timeStr) {
+    if (typeof showToast === 'function') showToast('Please fill out all required fields.', 'warning');
+    return;
+  }
+
+  const matchDateTime = new Date(`${dateStr}T${timeStr}`);
+  const formattedDate = matchDateTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const formattedTime = matchDateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+  const emailRemindersEnabled = localStorage.getItem('user_email_reminders_enabled') !== 'false';
+
+  const newMatch = {
+    id: 'match_' + Date.now(),
+    name: title,
+    title: title,
+    court: court,
+    location: court,
+    dateStr: dateStr,
+    timeStr: timeStr,
+    date: formattedDate,
+    time: formattedTime,
+    timestamp: matchDateTime.getTime(),
+    type: type,
+    notes: notes,
+    hostUid: currentUser.uid,
+    hostName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Petanque Player',
+    hostEmail: currentUser.email || '',
+    rsvps: [
+      {
+        uid: currentUser.uid,
+        name: currentUser.displayName || currentUser.email?.split('@')[0] || 'Host Player',
+        email: currentUser.email || '',
+        emailRemindersEnabled: emailRemindersEnabled,
+        timestamp: Date.now()
+      }
+    ],
+    reminder4hSent: false,
+    createdAt: new Date().toISOString()
+  };
+
+  try {
+    if (typeof addDoc === 'function' && typeof collection === 'function') {
+      await addDoc(collection(db, 'scheduledMatches'), newMatch);
+    }
+  } catch(err) {
+    console.warn('Firestore addDoc scheduledMatches error:', err);
+  }
+
+  // Also store in local state / localStorage fallback
+  let localMatches = JSON.parse(localStorage.getItem('austin_scheduled_matches') || '[]');
+  localMatches.unshift(newMatch);
+  localStorage.setItem('austin_scheduled_matches', JSON.stringify(localMatches));
+
+  window.closeScheduleModal();
+  if (typeof showToast === 'function') {
+    showToast(`🎉 Scheduled "${title}" at ${court}! Broadcasted to all players.`, 'success');
+  }
+
+  // Reset form
+  const form = document.getElementById('schedule-game-form');
+  if (form) form.reset();
+
+  if (typeof renderLiveDashboard === 'function') {
+    renderLiveDashboard();
+  }
+};
+
+// Toggle RSVP for a Scheduled Match
+window.toggleMatchRSVP = async function(matchId) {
+  if (!currentUser) {
+    if (typeof openAuthModal === 'function') openAuthModal();
+    if (typeof showToast === 'function') showToast('Please sign in to RSVP for games!', 'warning');
+    return;
+  }
+
+  const emailRemindersEnabled = localStorage.getItem('user_email_reminders_enabled') !== 'false';
+  let localMatches = JSON.parse(localStorage.getItem('austin_scheduled_matches') || '[]');
+  let targetMatch = localMatches.find(m => m.id === matchId);
+
+  // Try Firestore doc update
+  let firestoreDocId = null;
+  try {
+    if (typeof query === 'function' && typeof collection === 'function') {
+      const q = query(collection(db, 'scheduledMatches'), where('id', '==', matchId));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const d = snap.docs[0];
+        firestoreDocId = d.id;
+        targetMatch = d.data();
+      }
+    }
+  } catch(e) {
+    console.warn('Firestore fetch match for RSVP error:', e);
+  }
+
+  if (!targetMatch) {
+    targetMatch = (typeof SEEDED_MATCHES !== 'undefined' ? SEEDED_MATCHES : []).find(m => m.id === matchId || m.name === matchId);
+  }
+
+  if (!targetMatch) {
+    if (typeof showToast === 'function') showToast('Match details not found.', 'warning');
+    return;
+  }
+
+  let rsvps = Array.isArray(targetMatch.rsvps) ? [...targetMatch.rsvps] : [];
+  const existingIdx = rsvps.findIndex(r => r.uid === currentUser.uid);
+  let isRSVPd = false;
+
+  if (existingIdx >= 0) {
+    // Leave RSVP
+    rsvps.splice(existingIdx, 1);
+    isRSVPd = false;
+  } else {
+    // Join RSVP
+    rsvps.push({
+      uid: currentUser.uid,
+      name: currentUser.displayName || currentUser.email?.split('@')[0] || 'Player',
+      email: currentUser.email || '',
+      emailRemindersEnabled: emailRemindersEnabled,
+      timestamp: Date.now()
+    });
+    isRSVPd = true;
+  }
+
+  targetMatch.rsvps = rsvps;
+
+  // Sync to Firestore
+  if (firestoreDocId && typeof doc === 'function' && typeof updateDoc === 'function') {
+    try {
+      await updateDoc(doc(db, 'scheduledMatches', firestoreDocId), { rsvps: rsvps });
+    } catch(e) { console.warn('Error updating RSVP in Firestore:', e); }
+  }
+
+  // Update localStorage
+  localMatches = localMatches.map(m => m.id === matchId ? targetMatch : m);
+  localStorage.setItem('austin_scheduled_matches', JSON.stringify(localMatches));
+
+  if (isRSVPd) {
+    const msg = emailRemindersEnabled
+      ? `✅ RSVP confirmed for ${targetMatch.name || 'match'}! You will receive a 4-hour pre-match email reminder.`
+      : `✅ RSVP confirmed for ${targetMatch.name || 'match'}! (Email reminders currently disabled in settings).`;
+    if (typeof showToast === 'function') showToast(msg, 'success');
+  } else {
+    if (typeof showToast === 'function') showToast(`Removed RSVP for ${targetMatch.name || 'match'}.`, 'info');
+  }
+
+  if (typeof renderLiveDashboard === 'function') {
+    renderLiveDashboard();
+  }
+};
+
+// 4-Hour Pre-Match Email Dispatch Processor
+window.checkUpcoming4HourReminders = async function() {
+  const now = Date.now();
+  const fourHoursMs = 4 * 60 * 60 * 1000;
+  
+  let matches = [];
+  try {
+    if (typeof collection === 'function' && typeof getDocs === 'function') {
+      const snap = await getDocs(collection(db, 'scheduledMatches'));
+      snap.forEach(d => {
+        const data = d.data();
+        data._docId = d.id;
+        matches.push(data);
+      });
+    }
+  } catch(e) {}
+
+  const localMatches = JSON.parse(localStorage.getItem('austin_scheduled_matches') || '[]');
+  localMatches.forEach(lm => {
+    if (!matches.some(m => m.id === lm.id)) matches.push(lm);
+  });
+
+  matches.forEach(async (m) => {
+    if (m.reminder4hSent) return;
+    const matchTime = m.timestamp || (m.dateStr ? new Date(`${m.dateStr}T${m.timeStr||'10:00'}`).getTime() : 0);
+    if (!matchTime) return;
+
+    const diffMs = matchTime - now;
+    // Trigger if match is between 0 and 4.5 hours from now
+    if (diffMs > 0 && diffMs <= (4.5 * 60 * 60 * 1000)) {
+      const optedInRSVPs = (m.rsvps || []).filter(r => r.emailRemindersEnabled !== false && r.email);
+      
+      if (optedInRSVPs.length > 0) {
+        console.log(`[4-Hour Pre-Match Email Processor] Dispatching reminder emails for "${m.name}" at ${m.court}:`, optedInRSVPs.map(r => r.email));
+        
+        // Queue emails in Firestore mailQueue collection
+        try {
+          if (typeof addDoc === 'function' && typeof collection === 'function') {
+            for (const recipient of optedInRSVPs) {
+              await addDoc(collection(db, 'mailQueue'), {
+                to: recipient.email,
+                message: {
+                  subject: `🎯 Pétanque Reminder: "${m.name}" at ${m.court} in 4 Hours!`,
+                  html: `
+                    <h2>Austin Pétanque Match Reminder</h2>
+                    <p>Hi <strong>${recipient.name}</strong>,</p>
+                    <p>This is a reminder that your scheduled match <strong>"${m.name}"</strong> at <strong>${m.court}</strong> is starting in ~4 hours!</p>
+                    <ul>
+                      <li><strong>Court:</strong> ${m.court}</li>
+                      <li><strong>Time:</strong> Today at ${m.time || '10:00 AM'}</li>
+                      <li><strong>Game Type:</strong> ${m.type || 'Casual Play'}</li>
+                    </ul>
+                    <p>See you on the pitch!</p>
+                    <hr>
+                    <small>You received this because you opted into 4-hour pre-match email reminders in your Austin Pétanque profile.</small>
+                  `
+                },
+                sentAt: new Date().toISOString()
+              });
+            }
+          }
+        } catch(err) {
+          console.warn('mailQueue error:', err);
+        }
+
+        // Show toast notification if current logged in user is among recipients
+        if (currentUser && optedInRSVPs.some(r => r.uid === currentUser.uid)) {
+          if (typeof showToast === 'function') {
+            showToast(`📧 [Pre-Match Reminder Sent]: Your match "${m.name}" at ${m.court} starts in ~4 hours!`, 'info');
+          }
+        }
+
+        // Mark as sent
+        m.reminder4hSent = true;
+        if (m._docId && typeof doc === 'function' && typeof updateDoc === 'function') {
+          try { await updateDoc(doc(db, 'scheduledMatches', m._docId), { reminder4hSent: true }); } catch(e) {}
+        }
+      }
+    }
+  });
+};
+
+// Periodically check 4-hour reminders every 3 minutes
+setInterval(() => {
+  if (typeof checkUpcoming4HourReminders === 'function') checkUpcoming4HourReminders();
+}, 3 * 60 * 1000);
+
