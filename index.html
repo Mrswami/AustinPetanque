@@ -345,7 +345,7 @@
       <div class="section-header">
         <div class="glass-pill"><i class="fa-solid fa-calculator"></i> Live Match Assistant</div>
         <h2 class="section-title">Dedicated Courtside Scorekeeper</h2>
-        <p class="section-desc">Full-screen, sunlight-optimized score tracking, two-zone boule tracker, m????????ne history, and live spectator broadcast.</p>
+        <p class="section-desc">Full-screen, sunlight-optimized score tracking, two-zone boule tracker, m&egrave;ne history, and live spectator broadcast.</p>
       </div>
 
       <div class="glass-panel" style="padding: 36px 24px; text-align: center; max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 18px;">
@@ -354,7 +354,7 @@
         </div>
         <h3 style="font-size: 1.7rem; font-weight: 800;">Ready for Weekend Boules?</h3>
         <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 480px;">
-          Launch our standalone court app with permanent boule placement, screen wake-lock, sunlight high-contrast mode, m????????ne timeline with undo, and 4-digit live cloud sync.
+          Launch our standalone court app with permanent boule placement, screen wake-lock, sunlight high-contrast mode, m&egrave;ne timeline with undo, and 4-digit live cloud sync.
         </p>
         <div style="display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px;">
           <a href="#score" class="btn-primary" style="padding: 14px 28px; font-size: 1.05rem;">
@@ -430,7 +430,7 @@
         <div class="rule-card glass-panel">
           <div class="rule-icon"><i class="fa-solid fa-shoe-prints"></i></div>
           <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">2. Feet Anchored</h3>
-          <p style="color: var(--text-muted); font-size: 0.95rem;">P&eacute;tanque comes from *p????????s tancats* (feet planted on the ground). Stand inside the circle with both feet flat when throwing.</p>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">P&eacute;tanque comes from *p&egrave;s tancats* (feet planted on the ground). Stand inside the circle with both feet flat when throwing.</p>
         </div>
 
         <div class="rule-card glass-panel">
@@ -458,7 +458,7 @@
         <div id="victory-overlay" class="victory-overlay" style="display: none;">
           <canvas id="victory-canvas" class="victory-canvas"></canvas>
           <div class="victory-content">
-            <div class="victory-trophy">???????????????????</div>
+            <div class="victory-trophy"><i class="fa-solid fa-trophy" style="color: var(--primary-amber);"></i></div>
             <h3 id="victory-title" class="victory-title">Team Red Wins!</h3>
             <p id="victory-subtitle" class="victory-subtitle">Final Match Score: 13 &ndash; 10</p>
             <div class="victory-actions">
@@ -473,7 +473,7 @@
             <h3 id="scoreboard-title" style="font-size: 1.35rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
               <i class="fa-solid fa-bullseye" style="color:var(--primary-amber);"></i> Target: 13 Points (Win by 2)
             </h3>
-            <p id="scoreboard-subtitle" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Classic 3D-printed rotary capsule counter (0??????????????????13). Standalone casual scorekeeper.</p>
+            <p id="scoreboard-subtitle" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">Classic 3D-printed rotary capsule counter (0 &ndash; 13). Standalone casual scorekeeper.</p>
           </div>
           <div class="scoreboard-header-actions">
             <!-- Mode Switcher Pill directly above Reset Match -->
@@ -607,7 +607,7 @@
                 <i class="fa-solid fa-rotate-left"></i> Zero Both Dials
               </button>
               <div class="classic-hint-text">
-                <i class="fa-solid fa-arrows-rotate"></i> Rotate side gear rims or tap windows to step 0??????????????????13
+                <i class="fa-solid fa-arrows-rotate"></i> Rotate side gear rims or tap windows to step 0 &ndash; 13
               </div>
             </div>
 
@@ -627,7 +627,7 @@
             </div>
 
             <div class="score-controls">
-              <button class="btn-circle btn-minus" onclick="updateScore('A', -1)" title="Remove point (?????????????????1)"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle btn-minus" onclick="updateScore('A', -1)" title="Remove point (-1)"><i class="fa-solid fa-minus"></i></button>
               <button class="btn-circle btn-plus" onclick="updateScore('A', 1)" title="Add point (+1)"><i class="fa-solid fa-plus"></i></button>
             </div>
             <button class="has-point-btn red" id="point-btn-a" onclick="setPointHolder('A')">
@@ -641,7 +641,7 @@
             <div class="vs-divider">VS</div>
             <div id="lead-diff" class="lead-diff"></div>
             <button id="new-mene-btn" class="new-mene-btn" onclick="recordAndResetMene()" style="display:none;">
-              <i class="fa-solid fa-rotate-right"></i> Record M????????ne
+              <i class="fa-solid fa-rotate-right"></i> Record M&egrave;ne
             </button>
           </div>
 
@@ -656,7 +656,7 @@
             </div>
 
             <div class="score-controls">
-              <button class="btn-circle btn-minus" onclick="updateScore('B', -1)" title="Remove point (?????????????????1)"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn-circle btn-minus" onclick="updateScore('B', -1)" title="Remove point (-1)"><i class="fa-solid fa-minus"></i></button>
               <button class="btn-circle btn-plus" onclick="updateScore('B', 1)" title="Add point (+1)"><i class="fa-solid fa-plus"></i></button>
             </div>
             <button class="has-point-btn blue" id="point-btn-b" onclick="setPointHolder('B')">
@@ -667,16 +667,16 @@
 
         </div>
 
-        <!-- Visual M????????ne Timeline Strip -->
+        <!-- Visual M&egrave;ne Timeline Strip -->
         <div class="mene-timeline-container" style="display: none;">
           <div class="mene-timeline-header">
-            <span><i class="fa-solid fa-timeline"></i> M????????ne Progression</span>
+            <span><i class="fa-solid fa-timeline"></i> M&egrave;ne Progression</span>
             <button class="undo-mene-btn" id="undo-mene-btn" onclick="undoLastMene()" style="display:none;">
-              <i class="fa-solid fa-arrow-rotate-left"></i> Undo Last M????????ne
+              <i class="fa-solid fa-arrow-rotate-left"></i> Undo Last M&egrave;ne
             </button>
           </div>
           <div class="mene-timeline-strip" id="mene-timeline-strip">
-            <span class="mene-empty-hint">Completed m????????nes will appear here</span>
+            <span class="mene-empty-hint">Completed m&egrave;nes will appear here</span>
           </div>
         </div>
 
@@ -1046,7 +1046,7 @@
               <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Password</label>
               <a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.76rem; color: var(--primary-amber); text-decoration: none;">Forgot?</a>
             </div>
-            <input type="password" id="login-password-input" class="form-input" placeholder="????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????" required style="padding: 10px 14px;">
+            <input type="password" id="login-password-input" class="form-input" placeholder="Enter your password" required style="padding: 10px 14px;">
           </div>
           <button type="submit" class="btn-primary" id="email-login-btn" style="width: 100%; justify-content: center; margin-top: 4px; padding: 12px;">
             <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In with Email
@@ -1065,7 +1065,7 @@
           </div>
           <div class="form-group" style="margin-bottom: 0;">
             <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Password (min 6 chars)</label>
-            <input type="password" id="signup-password-input" class="form-input" placeholder="????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????" minlength="6" required style="padding: 10px 14px;">
+            <input type="password" id="signup-password-input" class="form-input" placeholder="At least 6 characters" minlength="6" required style="padding: 10px 14px;">
           </div>
           <button type="submit" class="btn-primary" id="email-signup-btn" style="width: 100%; justify-content: center; margin-top: 4px; padding: 12px; background: linear-gradient(135deg, #10b981, #059669);">
             <i class="fa-solid fa-user-check"></i> Create Free Account
