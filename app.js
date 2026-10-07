@@ -4203,98 +4203,64 @@ function generateUniqueUsername(name, email) {
 
 
 async function syncUserProfileToFirestore(user, providerType = 'email', customName = null) {
-
   if (!user) return;
 
   const isFounder = (user.email && user.email.toLowerCase() === 'noless42@gmail.com');
-
   const userRole = isFounder ? 'founder' : 'player';
-
   const displayName = customName || user.displayName || user.email?.split('@')[0] || 'Pétanqueur';
 
-
-
-  // Retrieve existing local profile settings if available
-
-  const existingProfileKey = `austin_petanque_profile_${user.uid}`;
-
-  const existingSaved = JSON.parse(localStorage.getItem(existingProfileKey) || '{}');
-
-
-
-  const username = existingSaved.username || user.username || generateUniqueUsername(displayName, user.email);
-
-  const avatar = existingSaved.avatar || user.avatar || 'fa-bowling-ball';
-
-  const bio = existingSaved.bio || user.bio || 'Passionate Austin pétanque player!';
-
-  const favoritePitch = existingSaved.favoritePitch || user.favoritePitch || 'French Legation Museum';
-
-  const playingRole = existingSaved.playingRole || user.playingRole || 'Pointer (Pointeur)';
-
-  const privacyMode = existingSaved.privacyMode || user.privacyMode || 'public'; // 'public' | 'friends-only'
-
-
-
-  const userProfile = {
-
-    uid: user.uid,
-
-    displayName: displayName,
-
-    username: username,
-
-    email: user.email,
-
-    photoURL: user.photoURL || null,
-
-    avatar: avatar,
-
-    bio: bio,
-
-    favoritePitch: favoritePitch,
-
-    playingRole: playingRole,
-
-    privacyMode: privacyMode,
-
-    provider: providerType,
-
-    role: userRole,
-
-    status: 'Active',
-
-    lastLogin: new Date().toISOString()
-
-  };
-
-
-
+  const userDocRef = doc(db, 'users', user.uid);
+  let firestoreData = {};
+  
   try {
-
-    const userDocRef = doc(db, 'users', user.uid);
-
     const existingSnap = await getDoc(userDocRef);
-
-    if (!existingSnap.exists()) {
-
-      userProfile.createdAt = new Date().toISOString();
-
+    if (existingSnap.exists()) {
+      firestoreData = existingSnap.data();
     }
-
-    await setDoc(userDocRef, userProfile, { merge: true });
-
   } catch (err) {
-
-    console.warn('Firestore user profile sync warning:', err);
-
+    console.warn('Firestore fetch user profile warning:', err);
   }
 
+  // Retrieve existing local profile settings if available
+  const existingProfileKey = `austin_petanque_profile_${user.uid}`;
+  const existingSaved = JSON.parse(localStorage.getItem(existingProfileKey) || '{}');
 
+  const username = firestoreData.username || existingSaved.username || user.username || generateUniqueUsername(displayName, user.email);
+  const avatar = firestoreData.avatar || existingSaved.avatar || user.avatar || 'fa-bowling-ball';
+  const bio = firestoreData.bio || existingSaved.bio || user.bio || 'Passionate Austin pétanque player!';
+  const favoritePitch = firestoreData.favoritePitch || existingSaved.favoritePitch || user.favoritePitch || 'French Legation Museum';
+  const playingRole = firestoreData.playingRole || existingSaved.playingRole || user.playingRole || 'Pointer (Pointeur)';
+  const privacyMode = firestoreData.privacyMode || existingSaved.privacyMode || user.privacyMode || 'public'; // 'public' | 'friends-only'
+
+  const userProfile = {
+    uid: user.uid,
+    displayName: firestoreData.displayName || displayName,
+    username: username,
+    email: user.email,
+    photoURL: firestoreData.photoURL || user.photoURL || null,
+    avatar: avatar,
+    bio: bio,
+    favoritePitch: favoritePitch,
+    playingRole: playingRole,
+    privacyMode: privacyMode,
+    provider: providerType,
+    role: userRole,
+    status: 'Active',
+    lastLogin: new Date().toISOString()
+  };
+
+  try {
+    if (!Object.keys(firestoreData).length) {
+      userProfile.createdAt = new Date().toISOString();
+    }
+    await setDoc(userDocRef, userProfile, { merge: true });
+  } catch (err) {
+    console.warn('Firestore user profile sync warning:', err);
+  }
 
   // Save to individual local profile key & global cache
-
   localStorage.setItem(existingProfileKey, JSON.stringify(userProfile));
+
 
 
 
@@ -5351,87 +5317,51 @@ window.loginWithGoogle = async () => {
 
 
       const result = await signInWithPopup(auth, googleProvider);
-
       const user = result.user;
 
-      
+      const userDocRef = doc(db, 'users', user.uid);
+      const existingSnap = await getDoc(userDocRef);
 
-      if (statusMsg) {
-
-        statusMsg.textContent = `Welcome, ${user.displayName || 'Player'}!`;
-
-        statusMsg.style.color = '#10b981';
-
+      if (existingSnap.exists()) {
+        if (statusMsg) {
+          statusMsg.textContent = `Welcome back, ${existingSnap.data().displayName || user.displayName || 'Player'}!`;
+          statusMsg.style.color = '#10b981';
+        }
+        await syncUserProfileToFirestore(user, 'google.com');
+        setTimeout(() => closeAuthModal(), 900);
+      } else {
+        if (statusMsg) {
+          statusMsg.textContent = `Account created! Please choose a username.`;
+          statusMsg.style.color = '#10b981';
+        }
+        // Force them into profile creation UI
+        await syncUserProfileToFirestore(user, 'google.com');
+        setTimeout(() => {
+          updateAuthUI(user);
+          const usernameInput = document.getElementById('profile-username-input');
+          if (usernameInput) {
+             usernameInput.focus();
+             usernameInput.value = ''; 
+             usernameInput.placeholder = 'Choose a unique username';
+          }
+        }, 900);
       }
-
-
-
-      await syncUserProfileToFirestore(user, 'google.com');
-
-
-
-      setTimeout(() => {
-
-        closeAuthModal();
-
-      }, 900);
 
     } catch (err) {
-
       console.warn('Google sign-in error:', err);
-
       if (statusMsg) {
-
         statusMsg.style.color = '#ef4444';
-
-        if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
-
-          statusMsg.style.color = '#f59e0b';
-
-          statusMsg.textContent = 'Notice: Google Auth requires Console activation. Signed in locally for active session!';
-
-          const fallbackUser = {
-
-            uid: 'usr_g_' + Date.now().toString().slice(-6),
-
-            email: 'google.player@austinpetanque.org',
-
-            displayName: 'Google Pétanqueur',
-
-            photoURL: null
-
-          };
-
-          currentUser = fallbackUser;
-
-          updateAuthUI(fallbackUser);
-
-          await syncUserProfileToFirestore(fallbackUser, 'google.com');
-
-          setTimeout(() => closeAuthModal(), 1200);
-
-        } else if (err.code === 'auth/popup-closed-by-user') {
-
+        if (err.code === 'auth/popup-closed-by-user') {
           statusMsg.textContent = 'Sign-in window was closed.';
-
         } else if (err.code === 'auth/popup-blocked') {
-
           statusMsg.textContent = 'Popup was blocked by browser. Please allow popups.';
-
         } else {
-
           statusMsg.textContent = `Sign-in notice: ${err.message || 'Unable to sign in.'}`;
-
         }
-
       }
-
     } finally {
-
       if (googleBtn) googleBtn.disabled = false;
-
     }
-
   };
 
 
@@ -6032,52 +5962,45 @@ function updateAvatarDisplayUI(iconClass, photoURL) {
 
 // ─── Unique Username Handle Live Validation ───
 
-window.onUsernameInputChange = (inputVal) => {
-
+window.onUsernameInputChange = async (inputVal) => {
   const cleanVal = inputVal.toLowerCase().replace(/[^a-z0-9_]/g, '');
-
   const badge = document.getElementById('username-validation-badge');
-
   if (!badge) return;
 
-
-
   if (!cleanVal || cleanVal.length < 3) {
-
     badge.className = 'username-status-badge taken';
-
     badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Min 3 chars';
-
     return;
-
   }
 
-
-
-  // Check uniqueness against other users
-
-  const localUsers = JSON.parse(localStorage.getItem('austin_petanque_local_users') || '[]');
+  badge.className = 'username-status-badge';
+  badge.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
 
   const myUid = currentUser?.uid;
+  let isTaken = false;
 
-  const isTaken = localUsers.some(u => u.uid !== myUid && u.username && u.username.toLowerCase() === cleanVal);
-
-
-
-  if (isTaken) {
-
-    badge.className = 'username-status-badge taken';
-
-    badge.innerHTML = '<i class="fa-solid fa-xmark"></i> Username Taken';
-
-  } else {
-
-    badge.className = 'username-status-badge available';
-
-    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Unique Handle Available';
-
+  try {
+    const q = query(collection(db, 'users'), where('username', '==', cleanVal));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((docSnap) => {
+      if (docSnap.id !== myUid) {
+        isTaken = true;
+      }
+    });
+  } catch (err) {
+    console.warn("Username validation error:", err);
+    // Check uniqueness against other users locally as fallback
+    const localUsers = JSON.parse(localStorage.getItem('austin_petanque_local_users') || '[]');
+    isTaken = localUsers.some(u => u.uid !== myUid && u.username && u.username.toLowerCase() === cleanVal);
   }
 
+  if (isTaken) {
+    badge.className = 'username-status-badge taken';
+    badge.innerHTML = '<i class="fa-solid fa-xmark"></i> Username Taken';
+  } else {
+    badge.className = 'username-status-badge available';
+    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Unique Handle Available';
+  }
 };
 
 
