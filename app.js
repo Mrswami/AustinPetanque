@@ -6391,7 +6391,7 @@ function renderMatchHistoryList(uid) {
 
 const COURTS_CONFIG = [
 
-  { id: 'mueller',  name: 'Browning Hangar at Mueller',  img: 'images/courts/mueller-browning.jpg',  address: '4550 Mueller Blvd',       schedule: 'Fri eve & Sun PM',    icon: 'fa-star' },
+  { id: 'mueller',  name: 'Browning Hangar at Mueller',  img: 'images/courts/mueller-browning-hangar.jpg',  address: '4550 Mueller Blvd',       schedule: 'Fri eve & Sun PM',    icon: 'fa-star' },
 
   { id: 'legation', name: 'French Legation Museum',      img: 'images/courts/french-legation.jpg',   address: '802 San Marcos St',        schedule: 'Wed 9:00 AM (LBC)',   icon: 'fa-landmark' },
 
