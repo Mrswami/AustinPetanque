@@ -5139,6 +5139,22 @@ function initAuth() {
   }
 
   if (modal) {
+    const headerEl = document.getElementById('view-court-header');
+    let hostActionsEl = document.getElementById('view-court-host-actions');
+    if (!hostActionsEl && headerEl) {
+       hostActionsEl = document.createElement('span');
+       hostActionsEl.id = 'view-court-host-actions';
+       hostActionsEl.style.marginLeft = '10px';
+       headerEl.insertBefore(hostActionsEl, document.getElementById('view-court-title'));
+    }
+    if (hostActionsEl) {
+      if (window.currentViewMatch && window.currentViewMatch.requestOnly && currentUser && (window.currentViewMatch.hostUid === currentUser.uid || window.currentViewMatch.hostEmail === currentUser.email)) {
+         hostActionsEl.style.display = 'inline-block';
+         hostActionsEl.innerHTML = `<button class="glass-pill" style="cursor:pointer; background: var(--primary-amber); color: #000; font-size: 0.75rem; padding: 4px 10px;" onclick="openToPublicMatch()"><i class="fa-solid fa-lock-open"></i> Open to Public</button>`;
+      } else {
+         hostActionsEl.style.display = 'none';
+      }
+    }
 
     modal.classList.add('active');
 
@@ -6750,6 +6766,22 @@ window.openScheduleModal = function(prefillCourt = '') {
   const modal = document.getElementById('schedule-game-modal');
 
   if (modal) {
+    const headerEl = document.getElementById('view-court-header');
+    let hostActionsEl = document.getElementById('view-court-host-actions');
+    if (!hostActionsEl && headerEl) {
+       hostActionsEl = document.createElement('span');
+       hostActionsEl.id = 'view-court-host-actions';
+       hostActionsEl.style.marginLeft = '10px';
+       headerEl.insertBefore(hostActionsEl, document.getElementById('view-court-title'));
+    }
+    if (hostActionsEl) {
+      if (window.currentViewMatch && window.currentViewMatch.requestOnly && currentUser && (window.currentViewMatch.hostUid === currentUser.uid || window.currentViewMatch.hostEmail === currentUser.email)) {
+         hostActionsEl.style.display = 'inline-block';
+         hostActionsEl.innerHTML = `<button class="glass-pill" style="cursor:pointer; background: var(--primary-amber); color: #000; font-size: 0.75rem; padding: 4px 10px;" onclick="openToPublicMatch()"><i class="fa-solid fa-lock-open"></i> Open to Public</button>`;
+      } else {
+         hostActionsEl.style.display = 'none';
+      }
+    }
 
     modal.classList.add('active');
 
@@ -6869,6 +6901,8 @@ window.handleScheduleGameSubmit = async function(e) {
 
   const notes = document.getElementById('schedule-notes-input')?.value.trim() || '';
 
+  const requestOnly = document.getElementById('schedule-request-only-checkbox')?.checked || false;
+
 
 
   if (!title || !court || !dateStr || !timeStr) {
@@ -6944,6 +6978,8 @@ window.handleScheduleGameSubmit = async function(e) {
     ],
 
     reminder4hSent: false,
+
+    requestOnly: requestOnly,
 
     createdAt: new Date().toISOString()
 
@@ -7500,6 +7536,10 @@ window.openViewCourtModal = async function(courtName) {
         const cName = data.court || data.location || '';
 
         if (cName.toLowerCase().includes(courtConfig.name.toLowerCase()) || courtConfig.name.toLowerCase().includes(cName.toLowerCase())) {
+      if (!window.currentViewMatch && currentUser && (sm.hostUid === currentUser.uid || sm.hostEmail === currentUser.email)) {
+        window.currentViewMatch = sm;
+      }
+
 
           playingNow.push({
 
@@ -7532,6 +7572,10 @@ window.openViewCourtModal = async function(courtName) {
     const cName = ci.court || ci.location || '';
 
     if (cName.toLowerCase().includes(courtConfig.name.toLowerCase()) || courtConfig.name.toLowerCase().includes(cName.toLowerCase())) {
+      if (!window.currentViewMatch && currentUser && (sm.hostUid === currentUser.uid || sm.hostEmail === currentUser.email)) {
+        window.currentViewMatch = sm;
+      }
+
 
       if (!playingNow.some(p => p.name === ci.name)) {
 
@@ -7559,27 +7603,50 @@ window.openViewCourtModal = async function(courtName) {
 
   let localMatches = JSON.parse(localStorage.getItem('austin_scheduled_matches') || '[]');
 
+  window.currentViewMatch = null;
   localMatches.forEach(sm => {
 
     const cName = sm.court || sm.location || '';
 
     if (cName.toLowerCase().includes(courtConfig.name.toLowerCase()) || courtConfig.name.toLowerCase().includes(cName.toLowerCase())) {
+      if (!window.currentViewMatch && currentUser && (sm.hostUid === currentUser.uid || sm.hostEmail === currentUser.email)) {
+        window.currentViewMatch = sm;
+      }
+
 
       (sm.rsvps || []).forEach(r => {
 
-        if (!playingNow.some(p => p.name === r.name) && !rsvpAccepted.some(p => p.name === r.name)) {
+        if (!playingNow.some(p => p.name === r.name) && !rsvpAccepted.some(p => p.name === r.name) && !rsvpPending.some(p => p.name === r.name)) {
 
-          rsvpAccepted.push({
+          if (r.status === 'pending') {
 
-            id: r.uid || 'r_' + Date.now(),
+            rsvpPending.push({
 
-            name: r.name,
+              id: r.uid || 'r_' + Date.now(),
 
-            avatar: r.avatar || 'fa-user-check',
+              name: r.name,
 
-            status: 'accepted'
+              avatar: r.avatar || 'fa-clock',
 
-          });
+              status: 'pending'
+
+            });
+
+          } else {
+
+            rsvpAccepted.push({
+
+              id: r.uid || 'r_' + Date.now(),
+
+              name: r.name,
+
+              avatar: r.avatar || 'fa-user-check',
+
+              status: 'accepted'
+
+            });
+
+          }
 
         }
 
@@ -7624,15 +7691,7 @@ window.openViewCourtModal = async function(courtName) {
   // Rich initial demo seed if court is empty
 
   if (playingNow.length === 0 && rsvpAccepted.length === 0 && rsvpPending.length === 0) {
-
-    playingNow.push({ id: 'p1', name: 'Jean-Luc P.', avatar: 'fa-bowling-ball', status: 'playing_now' });
-
-    rsvpAccepted.push({ id: 's1', name: 'Pierre Dubois', avatar: 'fa-crown', status: 'accepted' });
-
-    rsvpAccepted.push({ id: 's2', name: 'Claire Moreau', avatar: 'fa-trophy', status: 'accepted' });
-
-    rsvpPending.push({ id: 's3', name: 'Austin Boules Applicant', avatar: 'fa-clock', status: 'pending' });
-
+    // Seed data removed for real-world E2E testing
   }
 
 
@@ -7686,6 +7745,22 @@ window.openViewCourtModal = async function(courtName) {
 
 
   if (modal) {
+    const headerEl = document.getElementById('view-court-header');
+    let hostActionsEl = document.getElementById('view-court-host-actions');
+    if (!hostActionsEl && headerEl) {
+       hostActionsEl = document.createElement('span');
+       hostActionsEl.id = 'view-court-host-actions';
+       hostActionsEl.style.marginLeft = '10px';
+       headerEl.insertBefore(hostActionsEl, document.getElementById('view-court-title'));
+    }
+    if (hostActionsEl) {
+      if (window.currentViewMatch && window.currentViewMatch.requestOnly && currentUser && (window.currentViewMatch.hostUid === currentUser.uid || window.currentViewMatch.hostEmail === currentUser.email)) {
+         hostActionsEl.style.display = 'inline-block';
+         hostActionsEl.innerHTML = `<button class="glass-pill" style="cursor:pointer; background: var(--primary-amber); color: #000; font-size: 0.75rem; padding: 4px 10px;" onclick="openToPublicMatch()"><i class="fa-solid fa-lock-open"></i> Open to Public</button>`;
+      } else {
+         hostActionsEl.style.display = 'none';
+      }
+    }
 
     modal.classList.add('active');
 
@@ -7713,6 +7788,59 @@ window.closeViewCourtModal = function() {
 
 
 
+window.handleHostRsvpAction = async function(uid, action) {
+  if (!window.currentViewMatch) return;
+  const match = window.currentViewMatch;
+  let rsvps = Array.isArray(match.rsvps) ? match.rsvps : [];
+  let idx = rsvps.findIndex(r => r.uid === uid || r.id === uid);
+  if (idx >= 0) {
+    if (action === 'accept') {
+      rsvps[idx].status = 'accepted';
+    } else if (action === 'deny') {
+      rsvps.splice(idx, 1);
+    }
+    const localMatches = JSON.parse(localStorage.getItem('austin_scheduled_matches') || '[]');
+    const matchIdx = localMatches.findIndex(m => m.id === match.id);
+    if (matchIdx >= 0) {
+      localMatches[matchIdx].rsvps = rsvps;
+      localStorage.setItem('austin_scheduled_matches', JSON.stringify(localMatches));
+    }
+    // Update firestore if possible
+    try {
+      if (typeof doc === 'function' && typeof updateDoc === 'function' && typeof db !== 'undefined') {
+        const smDocs = await window.getDocs(window.query(window.collection(db, 'scheduledMatches'), window.where('id', '==', match.id)));
+        if (!smDocs.empty) {
+            await updateDoc(smDocs.docs[0].ref, { rsvps: rsvps });
+        }
+      }
+    } catch(e) {}
+    openViewCourtModal(match.court || match.location);
+  }
+};
+
+window.openToPublicMatch = async function() {
+  if (!window.currentViewMatch) return;
+  const match = window.currentViewMatch;
+  let rsvps = Array.isArray(match.rsvps) ? match.rsvps : [];
+  rsvps.forEach(r => { if (r.status === 'pending') r.status = 'accepted'; });
+  const localMatches = JSON.parse(localStorage.getItem('austin_scheduled_matches') || '[]');
+  const matchIdx = localMatches.findIndex(m => m.id === match.id);
+  if (matchIdx >= 0) {
+    localMatches[matchIdx].rsvps = rsvps;
+    localMatches[matchIdx].requestOnly = false;
+    localStorage.setItem('austin_scheduled_matches', JSON.stringify(localMatches));
+  }
+  try {
+    if (typeof doc === 'function' && typeof updateDoc === 'function' && typeof db !== 'undefined') {
+        const smDocs = await window.getDocs(window.query(window.collection(db, 'scheduledMatches'), window.where('id', '==', match.id)));
+        if (!smDocs.empty) {
+            await updateDoc(smDocs.docs[0].ref, { requestOnly: false, rsvps: rsvps });
+        }
+    }
+  } catch(e) {}
+  openViewCourtModal(match.court || match.location);
+};
+
 function renderRosterList(containerId, list, type) {
 
   const container = document.getElementById(containerId);
@@ -7729,7 +7857,19 @@ function renderRosterList(containerId, list, type) {
 
   const statusColor = type === 'playing_now' ? '#4ade80' : type === 'accepted' ? 'var(--primary-amber)' : '#60a5fa';
 
-  container.innerHTML = list.map(p => `
+  const isHost = window.currentViewMatch && currentUser && (window.currentViewMatch.hostUid === currentUser.uid || window.currentViewMatch.hostEmail === currentUser.email);
+
+  container.innerHTML = list.map(p => {
+    let hostButtons = '';
+    if (isHost && type === 'pending' && p.id) {
+       hostButtons = `
+         <div style="margin-left: auto; display: flex; gap: 6px;">
+           <button class="btn-primary" style="padding: 4px 8px; font-size: 0.7rem; min-height: 0;" onclick="handleHostRsvpAction('${p.id}', 'accept')"><i class="fa-solid fa-check"></i></button>
+           <button class="btn-secondary" style="padding: 4px 8px; font-size: 0.7rem; min-height: 0;" onclick="handleHostRsvpAction('${p.id}', 'deny')"><i class="fa-solid fa-xmark"></i></button>
+         </div>
+       `;
+    }
+    return `
 
     <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.25); padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.05);">
 
@@ -7740,10 +7880,12 @@ function renderRosterList(containerId, list, type) {
       </div>
 
       <span style="font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 120px; color: #fff;">${p.name}</span>
+      
+      ${hostButtons}
 
     </div>
 
-  `).join('');
+  `}).join('');
 
 }
 
@@ -7882,6 +8024,22 @@ window.openRsvpConfirmModal = function(matchId, matchName, matchCourt) {
 
 
   if (modal) {
+    const headerEl = document.getElementById('view-court-header');
+    let hostActionsEl = document.getElementById('view-court-host-actions');
+    if (!hostActionsEl && headerEl) {
+       hostActionsEl = document.createElement('span');
+       hostActionsEl.id = 'view-court-host-actions';
+       hostActionsEl.style.marginLeft = '10px';
+       headerEl.insertBefore(hostActionsEl, document.getElementById('view-court-title'));
+    }
+    if (hostActionsEl) {
+      if (window.currentViewMatch && window.currentViewMatch.requestOnly && currentUser && (window.currentViewMatch.hostUid === currentUser.uid || window.currentViewMatch.hostEmail === currentUser.email)) {
+         hostActionsEl.style.display = 'inline-block';
+         hostActionsEl.innerHTML = `<button class="glass-pill" style="cursor:pointer; background: var(--primary-amber); color: #000; font-size: 0.75rem; padding: 4px 10px;" onclick="openToPublicMatch()"><i class="fa-solid fa-lock-open"></i> Open to Public</button>`;
+      } else {
+         hostActionsEl.style.display = 'none';
+      }
+    }
 
     modal.classList.add('active');
 
@@ -8009,6 +8167,9 @@ async function executeRsvpJoin(matchId, emailRemindersEnabled) {
 
   } else {
 
+    const isRequestOnly = targetMatch.requestOnly === true;
+    const status = isRequestOnly ? 'pending' : 'accepted';
+
     rsvps.push({
 
       uid: currentUser.uid,
@@ -8019,9 +8180,28 @@ async function executeRsvpJoin(matchId, emailRemindersEnabled) {
 
       emailRemindersEnabled: emailRemindersEnabled,
 
-      timestamp: Date.now()
+      timestamp: Date.now(),
+
+      status: status
 
     });
+
+    if (isRequestOnly && targetMatch.hostEmail) {
+      if (typeof addDoc === 'function' && typeof collection === 'function' && typeof db !== 'undefined') {
+        try {
+          addDoc(collection(db, 'mailQueue'), {
+            to: targetMatch.hostEmail,
+            message: {
+              subject: `Join Request: ${targetMatch.name}`,
+              html: `<h3>New Join Request</h3>
+                     <p><strong>${currentUser.displayName || currentUser.email?.split('@')[0] || 'A player'}</strong> has requested to join your match <strong>${targetMatch.name}</strong>.</p>
+                     <p>Since this is a Request-Only game, please review and accept them.</p>`
+            },
+            createdAt: new Date().toISOString()
+          });
+        } catch(e) { console.warn('Error sending host email:', e); }
+      }
+    }
 
   }
 

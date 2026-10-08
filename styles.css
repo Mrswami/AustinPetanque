@@ -3856,3 +3856,16 @@ body.sunlight-mode .engraved-digit {
   z-index: 10001 !important;
   margin: auto !important;
 }
+
+.pitch-roster-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .pitch-roster-grid {
+    grid-template-columns: 1fr;
+  }
+}

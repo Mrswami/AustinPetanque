@@ -1442,6 +1442,11 @@
           <textarea id="schedule-notes-input" class="form-input" rows="2" placeholder="Bring extra boules, snacks welcome, open to beginners..." style="padding: 8px 12px; font-size: 0.85rem; resize: vertical;"></textarea>
         </div>
 
+        <div class="form-group" style="margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="schedule-request-only-checkbox" style="width: 18px; height: 18px;">
+          <label for="schedule-request-only-checkbox" style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">Make this a Request-Only game (Host receives email when someone requests to join)</label>
+        </div>
+
         <div style="background: rgba(255,170,0,0.08); border: 1px dashed var(--primary-amber); padding: 10px 12px; border-radius: 10px; margin-bottom: 16px; font-size: 0.82rem; display: flex; align-items: center; gap: 10px;">
           <i class="fa-solid fa-bell" style="color: var(--primary-amber); font-size: 1.2rem; flex-shrink: 0;"></i>
           <div>
@@ -1525,7 +1530,7 @@
       </div>
 
       <!-- Categorized Roster Sections -->
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+      <div class="pitch-roster-grid">
         
         <!-- 1. Playing Now -->
         <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 12px;">
