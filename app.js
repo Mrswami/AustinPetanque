@@ -7564,9 +7564,6 @@ window.openViewCourtModal = async function(courtName) {
         const cName = data.court || data.location || '';
 
         if (cName.toLowerCase().includes(courtConfig.name.toLowerCase()) || courtConfig.name.toLowerCase().includes(cName.toLowerCase())) {
-      if (!window.currentViewMatch && currentUser && (sm.hostUid === currentUser.uid || sm.hostEmail === currentUser.email)) {
-        window.currentViewMatch = sm;
-      }
 
 
           playingNow.push({
@@ -7600,9 +7597,6 @@ window.openViewCourtModal = async function(courtName) {
     const cName = ci.court || ci.location || '';
 
     if (cName.toLowerCase().includes(courtConfig.name.toLowerCase()) || courtConfig.name.toLowerCase().includes(cName.toLowerCase())) {
-      if (!window.currentViewMatch && currentUser && (sm.hostUid === currentUser.uid || sm.hostEmail === currentUser.email)) {
-        window.currentViewMatch = sm;
-      }
 
 
       if (!playingNow.some(p => p.name === ci.name)) {

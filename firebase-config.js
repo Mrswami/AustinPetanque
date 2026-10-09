@@ -8,7 +8,7 @@ const firebaseConfig = {
   projectId: "kimboocherly-app",
   appId: "1:932445023744:web:18b85f288d0e17985d72e5",
   storageBucket: "kimboocherly-app.firebasestorage.app",
-  apiKey: "AIzaSyAGRi2agpJxb766aZ_-8Gz9gOkiNho34dY",
+  apiKey: "AIzaSyCdv9uYPhhOU3Ve_3_vWCSYBYfGEXWzM3A",
   authDomain: "kimboocherly-app.firebaseapp.com",
   messagingSenderId: "932445023744",
   projectNumber: "932445023744"

@@ -1,5 +1,5 @@
 // Service Worker for Austin Pétanque
-const CACHE_NAME = 'austin-petanque-v28';
+const CACHE_NAME = 'austin-petanque-v29';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
