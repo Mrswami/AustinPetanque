@@ -677,28 +677,21 @@ function initHashRouting() {
     const publicView = document.getElementById('public-view');
 
     const scoreView = document.getElementById('score-view');
-
+    const watchView = document.getElementById('watch-view');
     const adminSection = document.getElementById('admin');
-
     const dockClub = document.getElementById('dock-club');
-
     const dockCourts = document.getElementById('dock-courts');
-
+    const dockWatch = document.getElementById('dock-watch');
     const dockScore = document.getElementById('dock-score');
 
-
-
     // Update bottom dock active item
-
     dockClub?.classList.remove('active');
-
     dockCourts?.classList.remove('active');
-
+    dockWatch?.classList.remove('active');
     dockScore?.classList.remove('active');
 
-
-
     const isScore = baseHash === '#score' || baseHash === '#scoreboard';
+    const isWatch = baseHash === '#watch';
 
     document.body.classList.toggle('route-score', isScore);
 
@@ -725,11 +718,9 @@ function initHashRouting() {
 
 
     if (isScore) {
-
       if (publicView) publicView.style.display = 'none';
-
       if (adminSection) adminSection.style.display = 'none';
-
+      if (watchView) watchView.style.display = 'none';
       if (scoreView) scoreView.style.display = 'flex';
 
       dockScore?.classList.add('active');
@@ -745,16 +736,19 @@ function initHashRouting() {
       const matchParam = urlParams.get('match');
 
       if (matchParam && matchParam !== currentMatchCode) {
-
         connectToLiveMatch(matchParam.toUpperCase());
-
       }
-
-    } else if (baseHash === '#admin') {
-
+    } else if (isWatch) {
       if (publicView) publicView.style.display = 'none';
-
+      if (adminSection) adminSection.style.display = 'none';
       if (scoreView) scoreView.style.display = 'none';
+      if (watchView) watchView.style.display = 'block';
+      dockWatch?.classList.add('active');
+      window.scrollTo(0, 0);
+    } else if (baseHash === '#admin') {
+      if (publicView) publicView.style.display = 'none';
+      if (scoreView) scoreView.style.display = 'none';
+      if (watchView) watchView.style.display = 'none';
 
       if (adminSection) adminSection.style.display = 'block';
 
@@ -803,11 +797,9 @@ function initHashRouting() {
       if (approveId) autoApproveMember(approveId);
 
     } else {
-
       if (publicView) publicView.style.display = 'block';
-
       if (scoreView) scoreView.style.display = 'none';
-
+      if (watchView) watchView.style.display = 'none';
       if (adminSection) adminSection.style.display = 'none';
 
 
@@ -2165,17 +2157,81 @@ function generateMatchCode() {
 
 
 window.openMatchSyncModal = () => {
-
   const modal = document.getElementById('match-sync-modal');
-
   if (modal) modal.classList.add('active');
 
+  const setupView = document.getElementById('host-setup-view');
+  const activeView = document.getElementById('host-active-view');
+
   if (!currentMatchCode) {
-
-    initNewLiveMatch();
-
+    if (setupView) setupView.style.display = 'block';
+    if (activeView) activeView.style.display = 'none';
+  } else {
+    if (setupView) setupView.style.display = 'none';
+    if (activeView) activeView.style.display = 'block';
   }
+};
 
+window.startHostingGame = async () => {
+  if (!currentUser) {
+    alert("You must sign in to host a live match.");
+    closeMatchSyncModal();
+    openAuthModal();
+    return;
+  }
+  
+  // Prevent simultaneous games
+  try {
+    const liveMatchesRef = collection(db, 'live_matches');
+    const q = query(liveMatchesRef, where('hostUid', '==', currentUser.uid));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      alert("You are already hosting a live match. Please finish and save it before starting a new one.");
+      return;
+    }
+  } catch (err) {
+    console.warn('Error checking existing matches:', err);
+  }
+  
+  const courtSelect = document.getElementById('host-court-select');
+  const courtLocation = courtSelect ? courtSelect.value : 'Unknown Court';
+  
+  await initNewLiveMatch(courtLocation);
+  
+  const setupView = document.getElementById('host-setup-view');
+  const activeView = document.getElementById('host-active-view');
+  if (setupView) setupView.style.display = 'none';
+  if (activeView) activeView.style.display = 'block';
+};
+
+window.finishAndSaveGame = async () => {
+  if (!currentMatchCode || !isHost || !currentUser) return;
+  
+  const confirmEnd = confirm("Are you sure you want to finish this match and save it to Past Games?");
+  if (!confirmEnd) return;
+  
+  try {
+    const matchRef = doc(db, 'live_matches', currentMatchCode);
+    const snap = await getDoc(matchRef);
+    
+    if (snap.exists()) {
+      const pastRef = collection(db, 'past_games');
+      await addDoc(pastRef, snap.data());
+      await deleteDoc(matchRef);
+    }
+    
+    // Reset local state
+    if (matchUnsubscribe) { matchUnsubscribe(); matchUnsubscribe = null; }
+    currentMatchCode = null;
+    isHost = false;
+    updateSyncPill(false);
+    resetScore();
+    closeMatchSyncModal();
+    alert("Match successfully saved and archived.");
+  } catch(e) {
+    console.error("Error archiving game:", e);
+    alert("Error saving game. Please try again.");
+  }
 };
 
 
@@ -2252,18 +2308,45 @@ window.copyShareLink = () => {
 
 
 
-async function initNewLiveMatch() {
+async function initNewLiveMatch(courtLocation = 'Unknown Court') {
+  isHost = true;
+  isLive = true;
+  teamAScore = 0;
+  teamBScore = 0;
+  meneHistory = [];
+  bouleStates = Array(6).fill(null);
+  matchWinner = null;
+  updateDisplays();
+  if (typeof renderMeneHistory === 'function') renderMeneHistory();
+  if (typeof renderBoules === 'function') renderBoules();
 
   currentMatchCode = generateMatchCode();
-
   const codeEl = document.getElementById('current-match-code');
-
   if (codeEl) codeEl.textContent = currentMatchCode;
-
   updateSyncPill(true);
 
-  await syncMatchToCloud();
-
+  try {
+    const matchRef = doc(db, 'live_matches', currentMatchCode);
+    await setDoc(matchRef, {
+      matchCode: currentMatchCode,
+      courtLocation: courtLocation,
+      hostUid: currentUser ? currentUser.uid : 'anonymous',
+      startedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      teamAScore,
+      teamBScore,
+      pointHolder,
+      bouleStates,
+      meneHistory,
+      matchWinner
+    });
+    
+    // Start listening for incoming queue requests
+    listenForQueueRequests();
+    
+  } catch (e) {
+    console.warn('Error creating match document:', e);
+  }
 }
 
 
@@ -2448,18 +2531,16 @@ function updateSyncPill(isLive) {
 
 
 
+  const queueBtn = document.getElementById('queue-to-play-btn');
+
   if (isLive && currentMatchCode) {
-
     pill.className = 'sync-status-pill live';
-
     label.textContent = `Live: ${currentMatchCode}`;
-
+    if (queueBtn) queueBtn.style.display = isHost ? 'none' : 'inline-block';
   } else {
-
     pill.className = 'sync-status-pill';
-
     label.textContent = 'Local Match';
-
+    if (queueBtn) queueBtn.style.display = 'none';
   }
 
 }
@@ -2642,374 +2723,264 @@ function saveStoredPlayDates(data) {
 
 // Automatically check if after time of play and mark as finished saving game date in play dates
 
-function evaluateCheckInsStatus() {
-
-  const checkins = getStoredCheckIns();
-
-  const playDates = getStoredPlayDates();
-
-  const now = Date.now();
-
-  let changed = false;
-
-
-
-  checkins.forEach(item => {
-
-    const endTime = item.playTimeEnd || (item.createdAt + (item.playDurationMinutes || 120) * 60000);
-
-    if (now >= endTime && !item.isFinished) {
-
-      item.isFinished = true;
-
-      item.finishedAt = endTime;
-
-      item.status = 'Finished';
-
-      changed = true;
-
-
-
-      const exists = playDates.some(pd => pd.id === item.id || pd.checkinId === item.id);
-
-      if (!exists) {
-
-        const gameDate = item.gameDate || new Date(item.playTimeStart || item.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-
-        const playDateEntry = {
-
-          id: 'pd_' + item.id,
-
-          checkinId: item.id,
-
-          name: item.name,
-
-          court: item.court,
-
-          gameDate: gameDate,
-
-          timeOfPlay: item.timeOfPlay,
-
-          playTimeStart: item.playTimeStart,
-
-          playTimeEnd: item.playTimeEnd,
-
-          finishedAt: endTime,
-
-          status: 'Finished 🏁',
-
-          createdAt: item.createdAt
-
-        };
-
-        playDates.unshift(playDateEntry);
-
-        try {
-
-          addDoc(collection(db, 'play_dates'), playDateEntry).catch(() => {});
-
-        } catch (e) {}
-
-      }
-
-    }
-
-  });
-
-
-
-  if (changed) {
-
-    saveStoredCheckIns(checkins);
-
-    saveStoredPlayDates(playDates);
-
+function parseTimestamp(val) {
+  if (!val) return null;
+  if (typeof val === 'number') return isNaN(val) ? null : val;
+  if (typeof val.toMillis === 'function') return val.toMillis();
+  if (typeof val.seconds === 'number') return val.seconds * 1000;
+  if (typeof val === 'string') {
+    const num = Number(val);
+    if (!isNaN(num) && num > 0) return num;
+    const parsed = Date.parse(val);
+    if (!isNaN(parsed)) return parsed;
   }
-
+  return null;
 }
 
+function getOrCreateGuestUserId() {
+  let gId = localStorage.getItem('austin_petanque_guest_uid');
+  if (!gId) {
+    gId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    localStorage.setItem('austin_petanque_guest_uid', gId);
+  }
+  return gId;
+}
 
+function isMatchHost(item) {
+  if (!item) return false;
+
+  if (currentUser) {
+    if (item.userId && item.userId === currentUser.uid) return true;
+    if (item.uid && item.uid === currentUser.uid) return true;
+    if (item.userEmail && currentUser.email && item.userEmail.toLowerCase() === currentUser.email.toLowerCase()) return true;
+  }
+
+  const guestUid = localStorage.getItem('austin_petanque_guest_uid');
+  if (guestUid && item.userId === guestUid) return true;
+
+  try {
+    const myCheckins = JSON.parse(localStorage.getItem('austin_petanque_my_checkin_ids') || '[]');
+    if (myCheckins.includes(item.id)) return true;
+  } catch(e) {}
+
+  return false;
+}
+
+function evaluateCheckInsStatus() {
+  const checkins = getStoredCheckIns();
+  const playDates = getStoredPlayDates();
+  const now = Date.now();
+  let changed = false;
+
+  checkins.forEach(item => {
+    const startMs = parseTimestamp(item.playTimeStart) || parseTimestamp(item.createdAt) || now;
+    const endMs = parseTimestamp(item.playTimeEnd) || (startMs + (item.playDurationMinutes || 120) * 60000);
+
+    if (now >= endMs && !item.isFinished) {
+      item.isFinished = true;
+      item.finishedAt = endMs;
+      item.status = 'Finished';
+      changed = true;
+
+      const exists = playDates.some(pd => pd.id === item.id || pd.checkinId === item.id);
+      if (!exists) {
+        const gameDate = item.gameDate || new Date(startMs).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        const playDateEntry = {
+          id: 'pd_' + item.id,
+          checkinId: item.id,
+          name: item.name,
+          court: item.court,
+          gameDate: gameDate,
+          timeOfPlay: item.timeOfPlay || `${gameDate} • Concluded`,
+          playTimeStart: startMs,
+          playTimeEnd: endMs,
+          finishedAt: endMs,
+          status: 'Finished 🏁',
+          createdAt: parseTimestamp(item.createdAt) || startMs
+        };
+        playDates.unshift(playDateEntry);
+        try {
+          if (typeof db !== 'undefined') {
+            addDoc(collection(db, 'play_dates'), playDateEntry).catch(() => {});
+          }
+        } catch (e) {}
+      }
+    }
+  });
+
+  if (changed) {
+    saveStoredCheckIns(checkins);
+    saveStoredPlayDates(playDates);
+  }
+}
 
 function renderPitchFeed() {
-
   const feed = document.getElementById('checkin-feed');
-
   if (!feed) return;
-
-
 
   evaluateCheckInsStatus();
 
-
-
   const checkins = getStoredCheckIns();
-
   const playDates = getStoredPlayDates();
-
-
 
   const activeCheckIns = checkins.filter(c => !c.isFinished);
 
-
-
   const activeCountEl = document.getElementById('active-count');
-
   const playdatesCountEl = document.getElementById('playdates-count');
-
   if (activeCountEl) activeCountEl.textContent = activeCheckIns.length;
-
   if (playdatesCountEl) playdatesCountEl.textContent = playDates.length;
 
-
-
   let displayItems = [];
-
   if (currentPitchFeedTab === 'active') {
-
     displayItems = activeCheckIns;
-
   } else if (currentPitchFeedTab === 'playdates') {
-
     displayItems = playDates;
-
   } else {
-
     displayItems = [...activeCheckIns, ...playDates];
-
   }
-
-
 
   if (displayItems.length === 0) {
-
     if (currentPitchFeedTab === 'active') {
-
       feed.innerHTML = `
-
         <div class="checkin-card" style="text-align:center; grid-column: 1 / -1; color: var(--text-dim); padding: 32px 20px;">
-
           <p style="font-size: 1.1rem; margin-bottom: 8px;"><i class="fa-solid fa-tree" style="color: var(--primary-amber);"></i> No players currently on pitch.</p>
-
           <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">Be the first to check in and let everyone know you're playing!</p>
-
           <button class="btn-primary" onclick="openCheckInModal()" style="margin: 0 auto; padding: 8px 18px; font-size: 0.85rem;"><i class="fa-solid fa-location-crosshairs"></i> Post Check-In</button>
-
         </div>`;
-
     } else {
-
       feed.innerHTML = `
-
         <div class="checkin-card" style="text-align:center; grid-column: 1 / -1; color: var(--text-dim); padding: 32px 20px;">
-
           <p style="font-size: 1.1rem; margin-bottom: 8px;"><i class="fa-solid fa-calendar-check" style="color: var(--accent-green);"></i> No archived play dates yet.</p>
-
           <p style="font-size: 0.88rem; color: var(--text-muted);">Completed games will automatically be saved and displayed here.</p>
-
         </div>`;
-
     }
-
     return;
-
   }
 
-
-
   const now = Date.now();
-
   feed.innerHTML = displayItems.map(item => {
-
-    const isFinished = item.isFinished || item.status === 'Finished' || item.status === 'Finished 🏁' || (item.playTimeEnd && now >= item.playTimeEnd);
-
-
+    const startMs = parseTimestamp(item.playTimeStart) || parseTimestamp(item.createdAt) || now;
+    const endMs = parseTimestamp(item.playTimeEnd) || (startMs + (item.playDurationMinutes || 120) * 60000);
+    const isFinished = item.isFinished || item.status === 'Finished' || item.status === 'Finished 🏁' || (endMs && now >= endMs);
 
     if (isFinished) {
-
       return `
-
         <div class="checkin-card finished-card">
-
           <div class="checkin-card-top">
-
             <span class="checkin-name"><i class="fa-solid fa-user-check"></i> ${escapeHtml(item.name || 'Pétanqueur')}</span>
-
             <span class="checkin-badge-finished"><i class="fa-solid fa-flag-checkered"></i> Finished</span>
-
           </div>
-
           <div class="checkin-court"><i class="fa-solid fa-map-pin"></i> ${escapeHtml(item.court || 'Pease Park Pitches')}</div>
-
           <div class="checkin-playtime-tag" style="color: var(--primary-amber); font-weight: 600;">
-
             <i class="fa-solid fa-calendar-day"></i> Game Date: ${escapeHtml(item.gameDate || 'Austin Match')}
-
           </div>
-
           <div class="checkin-playtime-tag">
-
             <i class="fa-solid fa-clock-rotate-left"></i> ${escapeHtml(item.timeOfPlay || 'Completed Session')}
-
           </div>
-
         </div>
-
       `;
-
     } else {
+      let timeRemainingBadge = '';
+      if (endMs) {
+        const timeLeftMin = Math.max(0, Math.round((endMs - now) / 60000));
+        timeRemainingBadge = timeLeftMin > 60
+          ? `⏳ ~${Math.floor(timeLeftMin / 60)}h ${timeLeftMin % 60}m left`
+          : `⏳ ~${timeLeftMin}m left`;
+      } else {
+        timeRemainingBadge = `⏳ Active now`;
+      }
 
-      const timeLeftMin = Math.max(0, Math.round(((item.playTimeEnd || (item.createdAt + 7200000)) - now) / 60000));
-
-      const timeRemainingBadge = timeLeftMin > 60
-
-        ? `⏳ ~${Math.floor(timeLeftMin / 60)}h ${timeLeftMin % 60}m left`
-
-        : `⏳ ~${timeLeftMin}m left`;
-
-
+      const canFinish = isMatchHost(item);
+      const finishBtnHtml = canFinish ? `
+        <button class="btn-finish-chip" onclick="markCheckInFinished('${item.id}')" title="Finish Match (Host Only)">
+          <i class="fa-solid fa-flag-checkered"></i> Finish Match
+        </button>
+      ` : `<span style="font-size:0.72rem; color:var(--text-muted); font-style:italic"><i class="fa-solid fa-user-lock"></i> Host controls match</span>`;
 
       return `
-
         <div class="checkin-card active-card">
-
           <div class="checkin-card-top">
-
             <span class="checkin-name"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(item.name || 'Pétanqueur')}</span>
-
             <span class="checkin-badge-active"><span class="pulse-green-dot"></span> Active</span>
-
           </div>
-
           <div class="checkin-court"><i class="fa-solid fa-map-pin"></i> ${escapeHtml(item.court || 'Pease Park Pitches')}</div>
-
           <div class="checkin-status">${escapeHtml(item.status || 'Playing Now')}</div>
-
           <div class="checkin-playtime-tag">
-
             <i class="fa-solid fa-clock"></i> ${escapeHtml(item.timeOfPlay || 'Today')}
-
           </div>
-
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.06);">
-
             <span style="font-size: 0.75rem; color: var(--text-dim);">${timeRemainingBadge}</span>
-
-            <button class="btn-finish-chip" onclick="markCheckInFinished('${item.id}')" title="Mark game finished">
-
-              <i class="fa-solid fa-flag-checkered"></i> Finish Match
-
-            </button>
-
+            ${finishBtnHtml}
           </div>
-
         </div>
-
       `;
-
     }
-
   }).join('');
-
 }
 
-
-
 window.switchPitchFeedTab = (tab) => {
-
   currentPitchFeedTab = tab;
-
   ['active', 'playdates', 'all'].forEach(t => {
-
     const btn = document.getElementById(`tab-${t === 'active' ? 'active-checkins' : t === 'playdates' ? 'play-dates' : 'all-checkins'}`);
-
     if (btn) {
-
       if (t === tab) btn.classList.add('active');
-
       else btn.classList.remove('active');
-
     }
-
   });
-
   renderPitchFeed();
-
 };
 
-
-
 window.markCheckInFinished = (id) => {
-
   const checkins = getStoredCheckIns();
-
   const item = checkins.find(c => c.id === id);
-
   if (!item) return;
 
+  if (!isMatchHost(item)) {
+    alert("⚠️ Only the match host who created this game can finish it.");
+    return;
+  }
 
+  const confirmFinish = confirm(
+    "⚠️ HOST WARNING:\n\nFinishing this match will immediately remove it from the Active Front-Page Feed and archive it in the Play Dates section.\n\nAre you sure you want to finish this match now?"
+  );
+
+  if (!confirmFinish) return;
 
   const now = Date.now();
-
   item.isFinished = true;
-
   item.finishedAt = now;
-
   item.status = 'Finished';
-
   saveStoredCheckIns(checkins);
 
-
-
   const playDates = getStoredPlayDates();
-
   const exists = playDates.some(pd => pd.id === id || pd.checkinId === id);
-
   if (!exists) {
-
     const gameDate = item.gameDate || new Date(now).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-
     const playDateEntry = {
-
       id: 'pd_' + item.id,
-
       checkinId: item.id,
-
       name: item.name,
-
       court: item.court,
-
       gameDate: gameDate,
-
       timeOfPlay: item.timeOfPlay || `${gameDate} • Concluded`,
-
-      playTimeStart: item.playTimeStart || (now - 3600000),
-
+      playTimeStart: parseTimestamp(item.playTimeStart) || (now - 3600000),
       playTimeEnd: now,
-
       finishedAt: now,
-
       status: 'Finished 🏁',
-
-      createdAt: item.createdAt || now
-
+      createdAt: parseTimestamp(item.createdAt) || now
     };
-
     playDates.unshift(playDateEntry);
-
     saveStoredPlayDates(playDates);
 
     try {
-
-      addDoc(collection(db, 'play_dates'), playDateEntry).catch(() => {});
-
+      if (typeof db !== 'undefined') {
+        addDoc(collection(db, 'play_dates'), playDateEntry).catch(() => {});
+        setDoc(doc(db, 'court_checkins', item.id), { isFinished: true, finishedAt: now, status: 'Finished' }, { merge: true }).catch(() => {});
+      }
     } catch (e) {}
-
   }
 
-
-
   renderPitchFeed();
-
 };
 
 
@@ -3196,48 +3167,35 @@ window.handleCheckInSubmit = async (e) => {
 
 
 
+  const effectiveUserId = currentUser?.uid || getOrCreateGuestUserId();
+
   const newCheckIn = {
-
     id: 'chk_' + now + '_' + Math.random().toString(36).substring(2, 7),
-
     name: name,
-
-    userId: currentUser?.uid || 'guest_' + now,
-
+    userId: effectiveUserId,
     userEmail: currentUser?.email || '',
-
     avatar: currentUser?.photoURL || '',
-
     court: court,
-
     status: status,
-
     timeOfPlay: timeOfPlay,
-
     playTimeStart: playTimeStart,
-
     playDurationMinutes: durationMinutes,
-
     playTimeEnd: playTimeEnd,
-
     gameDate: gameDate,
-
     isFinished: isFinished,
-
     finishedAt: isFinished ? playTimeEnd : null,
-
     createdAt: now
-
   };
 
-
+  try {
+    const myCheckins = JSON.parse(localStorage.getItem('austin_petanque_my_checkin_ids') || '[]');
+    myCheckins.push(newCheckIn.id);
+    localStorage.setItem('austin_petanque_my_checkin_ids', JSON.stringify(myCheckins));
+  } catch(e) {}
 
   // 1. GUARANTEED SUCCESS: Save locally immediately
-
   const checkins = getStoredCheckIns();
-
   checkins.unshift(newCheckIn);
-
   saveStoredCheckIns(checkins);
 
 
@@ -4216,6 +4174,16 @@ async function syncUserProfileToFirestore(user, providerType = 'email', customNa
     const existingSnap = await getDoc(userDocRef);
     if (existingSnap.exists()) {
       firestoreData = existingSnap.data();
+    } else {
+      if (user.email) {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', user.email));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          firestoreData = querySnapshot.docs[0].data();
+          console.log('Seamlessly merged legacy account data for:', user.email);
+        }
+      }
     }
   } catch (err) {
     console.warn('Firestore fetch user profile warning:', err);
@@ -4935,18 +4903,7 @@ function initAuth() {
           statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> The email address is formatted incorrectly. Please check for typos.';
 
         } else if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
-
-          statusMsg.textContent = 'Firebase Notice: Email Auth enabled locally! In Firebase Console, enable Email/Password under Auth. Account signed in for session.';
-
-          const fallbackUser = { uid: 'usr_' + Date.now(), email: email, displayName: email.split('@')[0] };
-
-          currentUser = fallbackUser;
-
-          updateAuthUI(fallbackUser);
-
-          syncUserProfileToFirestore(fallbackUser, 'email');
-
-          setTimeout(() => closeAuthModal(), 1400);
+          statusMsg.textContent = 'Error: Email/Password Auth is NOT enabled in your Firebase Console. Please enable it under Authentication -> Sign-in method.';
 
         } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
 
@@ -5500,44 +5457,79 @@ window.loginWithGoogle = async () => {
     }
   };
 
-  onAuthStateChanged(auth, (user) => {
-
+  onAuthStateChanged(auth, async (user) => {
     currentUser = user;
-
     updateAuthUI(user);
 
     if (user) {
-
       syncUserProfileToFirestore(user, user.providerData?.[0]?.providerId || 'email');
+      
+      // Check if this user is hosting a live match
+      try {
+        const liveMatchesRef = collection(db, 'live_matches');
+        const q = query(liveMatchesRef, where('hostUid', '==', user.uid));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const matchDoc = snap.docs[0];
+          const data = matchDoc.data();
+          
+          // Auto-archive if older than 4 hours
+          const fourHoursMs = 4 * 60 * 60 * 1000;
+          const startedAtDate = data.startedAt ? data.startedAt.toDate() : new Date();
+          
+          if (Date.now() - startedAtDate.getTime() > fourHoursMs) {
+            console.log('Match is older than 4 hours. Auto-archiving...');
+            const pastRef = collection(db, 'past_games');
+            await addDoc(pastRef, data);
+            await deleteDoc(doc(db, 'live_matches', data.matchCode));
+            console.log('Match auto-archived.');
+          } else {
+            // Resume hosting
+            isHost = true;
+            isLive = true;
+            currentMatchCode = data.matchCode;
+            teamAScore = data.teamAScore || 0;
+            teamBScore = data.teamBScore || 0;
+            meneHistory = data.meneHistory || [];
+            bouleStates = data.bouleStates || Array(6).fill(null);
+            pointHolder = data.pointHolder || null;
+            matchWinner = data.matchWinner || null;
+            
+            updateDisplays();
+            if (typeof renderMeneHistory === 'function') renderMeneHistory();
+            if (typeof renderBoules === 'function') renderBoules();
+            
+            const codeEl = document.getElementById('current-match-code');
+            if (codeEl) codeEl.textContent = currentMatchCode;
+            updateSyncPill(true);
+            
+            // Reconnect sync listener
+            syncMatchToCloud();
+            listenForQueueRequests();
+            console.log('Restored live hosting session for Match PIN:', currentMatchCode);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not restore hosting session:', err);
+      }
 
       // Render live dashboard on sign-in or persistent session restore
-
       setTimeout(() => { if (typeof renderLiveDashboard === 'function') renderLiveDashboard(); }, 400);
-
     }
-
   });
-
 }
 
 
 
-function renderAvatarSlot(containerEl, avatarIcon, photoURL) {
-
+function renderAvatarSlot(containerEl, avatarIcon, photoURL, avatarColor) {
   if (!containerEl) return;
-
   if (photoURL && (photoURL.startsWith('http://') || photoURL.startsWith('https://') || (photoURL.startsWith('data:image/') && !photoURL.includes('viewBox="0 0 24 24"')))) {
-
     containerEl.innerHTML = `<img src="${photoURL}" class="nav-avatar-img" alt="Avatar">`;
-
   } else {
-
-    const icon = avatarIcon || selectedAvatarPreset || 'fa-bowling-ball';
-
-    containerEl.innerHTML = `<div class="nav-avatar-icon-wrap"><i class="fa-solid ${icon}"></i></div>`;
-
+    const icon = avatarIcon || window.selectedAvatarPreset || 'fa-bowling-ball';
+    const color = avatarColor || window.selectedAvatarColor || '#3b82f6';
+    containerEl.innerHTML = `<div class="nav-avatar-icon-wrap" style="background: ${color} !important;"><i class="fa-solid ${icon}"></i></div>`;
   }
-
 }
 
 
@@ -5667,10 +5659,9 @@ function updateAuthUI(user) {
 
 
     // Update Avatar Display
-
     updateAvatarDisplayUI(avatar, photoURL);
-
-
+    window.selectedAvatarPreset = avatar;
+    window.selectedAvatarColor = savedProfile.avatarColor || '#3b82f6';
 
     // Highlight active preset
 
@@ -5894,6 +5885,41 @@ let selectedAvatarPreset = 'fa-bowling-ball';
 
 
 
+
+window.selectedAvatarColor = '#3b82f6';
+window.selectAvatarColor = (color) => {
+  window.selectedAvatarColor = color;
+  const items = document.querySelectorAll('.avatar-color-item');
+  items.forEach(item => {
+    item.style.borderColor = item.getAttribute('data-color') === color ? '#fff' : 'transparent';
+  });
+  const displayWrap = document.querySelector('#auth-avatar-display .nav-avatar-icon-wrap');
+  if (displayWrap) displayWrap.style.background = color + ' !important';
+  
+  // also call preview if needed to update the global preview immediately
+  const customUrl = document.getElementById('profile-custom-avatar-url')?.value.trim();
+  if (!customUrl) {
+    const navUserAvatar = document.getElementById('nav-user-avatar');
+    const drawerUserAvatar = document.getElementById('drawer-user-avatar');
+    renderAvatarSlot(navUserAvatar, window.selectedAvatarPreset, null, color);
+    renderAvatarSlot(drawerUserAvatar, window.selectedAvatarPreset, null, color);
+    const authAvatarDisplay = document.getElementById('auth-avatar-display');
+    renderAvatarSlot(authAvatarDisplay, window.selectedAvatarPreset, null, color);
+  }
+};
+
+window.handleAvatarFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    document.getElementById('profile-custom-avatar-url').value = dataUrl;
+    window.previewCustomAvatarUrl(dataUrl);
+  };
+  reader.readAsDataURL(file);
+};
+
 window.selectAvatarPreset = (iconClass) => {
 
   selectedAvatarPreset = iconClass;
@@ -6067,7 +6093,9 @@ window.saveUserProfileSettings = async (e) => {
 
     username: cleanUsername,
 
-    avatar: customAvatarUrl ? null : selectedAvatarPreset,
+    avatar: customAvatarUrl ? null : window.selectedAvatarPreset,
+
+    avatarColor: customAvatarUrl ? null : (window.selectedAvatarColor || '#3b82f6'),
 
     photoURL: customAvatarUrl || currentUser.photoURL || null,
 
@@ -7873,7 +7901,7 @@ function renderRosterList(containerId, list, type) {
 
     <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.25); padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.05);">
 
-      <div style="width: 26px; height: 26px; border-radius: 50%; background: ${statusColor}; color: #000; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; flex-shrink: 0;">
+      <div style="width: 26px; height: 26px; border-radius: 50%; background: ${p.avatarColor || statusColor}; color: #000; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; flex-shrink: 0;">
 
         <i class="fa-solid ${p.avatar || 'fa-user'}"></i>
 
@@ -8170,11 +8198,14 @@ async function executeRsvpJoin(matchId, emailRemindersEnabled) {
     const isRequestOnly = targetMatch.requestOnly === true;
     const status = isRequestOnly ? 'pending' : 'accepted';
 
+    const prof = JSON.parse(localStorage.getItem(`austin_petanque_profile_${currentUser.uid}`) || '{}');
     rsvps.push({
 
       uid: currentUser.uid,
 
       name: currentUser.displayName || currentUser.email?.split('@')[0] || 'Player',
+      avatar: prof.avatar || null,
+      avatarColor: prof.avatarColor || '#3b82f6',
 
       email: currentUser.email || '',
 
@@ -8327,5 +8358,107 @@ window.toggleMatchRSVP = async function(matchId) {
 
 };
 
+// --- QUEUE LOGIC ---
+window.openQueueModal = (matchCode, matchTitle) => {
+  const modal = document.getElementById('queue-modal');
+  if (!modal) return;
+  
+  document.getElementById('queue-match-code').value = matchCode;
+  document.getElementById('queue-match-title').textContent = matchTitle;
+  
+  // Pre-fill name if logged in
+  if (currentUser) {
+    document.getElementById('queue-player-name').value = currentUser.displayName || 'Player';
+  }
+  
+  modal.classList.add('active');
+};
 
+window.closeQueueModal = () => {
+  const modal = document.getElementById('queue-modal');
+  if (modal) modal.classList.remove('active');
+};
 
+window.submitQueueRequest = async () => {
+  const matchCode = document.getElementById('queue-match-code').value;
+  const nameInput = document.getElementById('queue-player-name').value.trim();
+  
+  if (!nameInput) {
+    alert("Please enter a name.");
+    return;
+  }
+  
+  try {
+    const queueRef = collection(db, 'match_queues');
+    await addDoc(queueRef, {
+      matchCode: matchCode,
+      playerName: nameInput,
+      playerUid: currentUser ? currentUser.uid : 'anonymous_' + Math.random().toString(36).substr(2, 9),
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+    
+    closeQueueModal();
+    alert("Request sent! The host has been notified.");
+    
+  } catch (err) {
+    console.error("Queue error:", err);
+    alert("Failed to send request.");
+  }
+};
+
+// --- HOST LOGIC ---
+let queueUnsubscribe = null;
+
+window.listenForQueueRequests = () => {
+  if (!currentMatchCode || !isHost) return;
+  
+  const q = query(collection(db, 'match_queues'), where('matchCode', '==', currentMatchCode), where('status', '==', 'pending'));
+  
+  queueUnsubscribe = onSnapshot(q, (snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+      if (change.type === 'added') {
+        const req = change.doc.data();
+        showQueueNotification(change.doc.id, req.playerName);
+      }
+    });
+  });
+};
+
+window.showQueueNotification = (requestId, playerName) => {
+  const container = document.getElementById('host-toast-container');
+  if (!container) return;
+  
+  const toast = document.createElement('div');
+  toast.className = 'glass-panel';
+  toast.id = `toast-${requestId}`;
+  toast.style.padding = '12px 16px';
+  toast.style.borderLeft = '4px solid var(--primary-amber)';
+  toast.innerHTML = `
+    <div style="font-size: 0.95rem;"><strong>${playerName}</strong> wants to join!</div>
+    <div style="margin-top:8px; display:flex; gap:8px;">
+      <button class="btn-primary" style="padding:4px 12px; font-size:0.8rem;" onclick="acceptQueue('${requestId}')">Accept</button>
+      <button class="btn-outline" style="padding:4px 12px; font-size:0.8rem; color:#ff5252; border-color:#ff5252;" onclick="declineQueue('${requestId}')">Decline</button>
+    </div>
+  `;
+  container.appendChild(toast);
+};
+
+window.acceptQueue = async (requestId) => {
+  try {
+    await setDoc(doc(db, 'match_queues', requestId), { status: 'accepted' }, { merge: true });
+    document.getElementById(`toast-${requestId}`)?.remove();
+    alert("Player accepted! Chat feature coming next.");
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+window.declineQueue = async (requestId) => {
+  try {
+    await setDoc(doc(db, 'match_queues', requestId), { status: 'declined' }, { merge: true });
+    document.getElementById(`toast-${requestId}`)?.remove();
+  } catch (e) {
+    console.error(e);
+  }
+};

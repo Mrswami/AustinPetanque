@@ -154,6 +154,9 @@ body.user-logged-in #drawer-join-btn {
 body.user-logged-in #nav-user-pill {
   display: inline-flex !important;
 }
+body.user-logged-in .hero {
+  display: none !important;
+}
 @media (max-width: 768px) {
   #nav-join-btn {
     display: none !important;
@@ -3867,5 +3870,41 @@ body.sunlight-mode .engraved-digit {
 @media (max-width: 768px) {
   .pitch-roster-grid {
     grid-template-columns: 1fr;
+  }
+  
+  /* Funnel Flow & Reduce Mobile Scrolling (3 scroll max) */
+  .locations-grid, 
+  .events-grid, 
+  .rules-grid, 
+  .court-activity-grid {
+    display: flex !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
+    flex-wrap: nowrap !important;
+    gap: 16px;
+    padding-bottom: 24px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+  
+  .locations-grid::-webkit-scrollbar,
+  .events-grid::-webkit-scrollbar,
+  .rules-grid::-webkit-scrollbar,
+  .court-activity-grid::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  .location-card, 
+  .event-card, 
+  .rule-card, 
+  .court-activity-grid > * {
+    flex: 0 0 88% !important;
+    scroll-snap-align: center;
+    max-width: 88%;
+  }
+  
+  /* Hide unnecessary bulk on mobile landing */
+  #scoreboard {
+    padding: 30px 10px;
   }
 }
